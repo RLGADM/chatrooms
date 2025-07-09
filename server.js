@@ -7,7 +7,12 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://*.netlify.app", "https://*.netlify.com"],
+    origin: [
+      "http://localhost:5173", 
+      "https://charming-khapse-357d4e.netlify.app",
+      /https:\/\/.*\.netlify\.app$/,
+      /https:\/\/.*\.netlify\.com$/
+    ],
     methods: ["GET", "POST"]
   }
 });
@@ -186,4 +191,9 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log(`CORS configuré pour:`, [
+    "http://localhost:5173", 
+    "https://charming-khapse-357d4e.netlify.app",
+    "Netlify domains"
+  ]);
 });

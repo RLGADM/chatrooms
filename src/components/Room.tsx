@@ -7,10 +7,9 @@ interface RoomProps {
   currentUser: User;
   onSendMessage: (message: string) => void;
   onLeaveRoom: () => void;
-  demoMode?: boolean;
 }
 
-const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRoom, demoMode = false }) => {
+const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRoom }) => {
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -48,11 +47,6 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
       <div className="bg-white shadow-sm border-b border-gray-200 p-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {demoMode && (
-              <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
-                Mode Démo
-              </div>
-            )}
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-600">Code du salon:</span>
               <div className="flex items-center space-x-2">
@@ -90,7 +84,7 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
           <div className="flex items-center space-x-2 mb-4">
             <Users className="w-5 h-5 text-blue-600" />
             <h3 className="font-semibold text-gray-800">
-              {demoMode ? 'Utilisateurs' : 'Connectés'} ({room.users.length})
+              Connectés ({room.users.length})
             </h3>
           </div>
           
@@ -115,11 +109,6 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                 </div>
               </div>
             ))}
-            {demoMode && room.users.length === 1 && (
-              <div className="text-sm text-gray-500 mt-4 p-2 bg-gray-50 rounded-lg">
-                En mode démo, vous êtes seul dans ce salon.
-              </div>
-            )}
           </div>
         </div>
 

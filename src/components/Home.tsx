@@ -5,10 +5,9 @@ interface HomeProps {
   onCreateRoom: (username: string) => void;
   onJoinRoom: (username: string, roomCode: string) => void;
   error: string | null;
-  demoMode?: boolean;
 }
 
-const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, error, demoMode = false }) => {
+const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, error }) => {
   const [username, setUsername] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -37,13 +36,8 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, error, demoMode =
           </div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">ChatRooms</h1>
           <p className="text-gray-600">
-            {demoMode ? 'Mode démo - Créez un salon de discussion' : 'Créez ou rejoignez un salon de discussion'}
+            Créez ou rejoignez un salon de discussion
           </p>
-          {demoMode && (
-            <div className="mt-2 text-sm text-amber-600 bg-amber-50 rounded-lg p-2">
-              Mode démo actif - Les données ne sont pas persistantes
-            </div>
-          )}
         </div>
 
         {error && (
@@ -79,9 +73,7 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, error, demoMode =
           </button>
         </form>
 
-        {!demoMode && (
-          <>
-            <div className="relative my-6">
+        <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
           </div>
@@ -90,7 +82,7 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, error, demoMode =
           </div>
         </div>
 
-            <form onSubmit={handleJoinRoom} className="space-y-4">
+        <form onSubmit={handleJoinRoom} className="space-y-4">
           <div>
             <label htmlFor="roomCode" className="block text-sm font-medium text-gray-700 mb-2">
               Code du salon
@@ -115,8 +107,6 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, error, demoMode =
             <span>Rejoindre le salon</span>
           </button>
         </form>
-          </>
-        )}
       </div>
     </div>
   );
