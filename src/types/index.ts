@@ -1,9 +1,28 @@
+export type RoomRole = 'Admin' | 'Héraut' | 'Débutant';
+
+export interface GameParameters {
+  ParametersTimeFirst: number;
+  ParametersTimeSecond: number;
+  ParametersTimeThird: number;
+  ParametersTeamReroll: number;
+  ParametersTeamMaxForbiddenWords: number;
+  ParametersTeamMaxPropositions: number;
+  ParametersPointsMaxScore: number;
+  ParametersPointsRules: 'no-tie' | 'tie';
+  ParametersWordsListSelection: {
+    veryCommon: boolean;
+    lessCommon: boolean;
+    rarelyCommon: boolean;
+  };
+}
+
 export interface User {
   id: string;
   username: string;
   room: string;
   team?: 'red' | 'blue' | 'spectator';
   role?: 'sage' | 'disciple' | 'spectator';
+  roomRole?: RoomRole;
 }
 
 export interface Message {
@@ -33,6 +52,8 @@ export interface Room {
   users: User[];
   messages: Message[];
   gameState?: GameState;
+  gameParameters?: GameParameters;
+  creator: string; // ID du créateur
 }
 
 export interface ServerToClientEvents {
@@ -48,6 +69,10 @@ export interface ServerToClientEvents {
   teamJoinError: (error: string) => void;
   pong: (data: { timestamp: string; socketId: string; userExists: boolean; userInfo: User | null }) => void;
   debugUsersResponse: (data: any) => void;
+  gameParametersSet: (parameters: GameParameters) => void;
+  roomRoleChanged: (data: { userId: string; newRole: RoomRole }) => void;
+  userKicked: (data: { userId: string; reason: string }) => void;
+  userBanned: (data: { userId: string; reason: string }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -62,4 +87,8 @@ export interface ClientToServerEvents {
   gameError: (error: string) => void;
   ping: () => void;
   debugGetUsers: () => void;
+  setGameParameters: (parameters: GameParameters) => void;
+  changeUserRoomRole: (userId: string, newRole: RoomRole) => void;
+  kickUser: (userId: string, reason: string) => void;
+  banUser: (userId: string, reason: string) => void;
 }

@@ -30,7 +30,7 @@ const corsOptions = {
 // Configuration Socket.IO avec debug amélioré
 const io = new Server(server, {
   cors: corsOptions,
-  transports: ['websocket', 'polling'], // Ordre important : WebSocket en premier
+  transports: ['polling', 'websocket'], // Ordre important : Polling en premier pour la stabilité
   allowEIO3: true,
   pingTimeout: 60000,
   pingInterval: 25000,

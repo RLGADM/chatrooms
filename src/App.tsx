@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Home from './components/Home';
 import Room from './components/Room';
+import DemoMode from './components/DemoMode';
 import KeepAlive from './components/KeepAlive';
 import SocketDebugger from './components/SocketDebugger';
-import { Room as RoomType, User, Message, ServerToClientEvents, ClientToServerEvents } from './types';
+import GameConfigModal from './components/GameConfigModal';
+import { Room as RoomType, User, Message, ServerToClientEvents, ClientToServerEvents, GameParameters } from './types';
 
 type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -15,6 +17,9 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [showGameConfig, setShowGameConfig] = useState(false);
+  const [pendingUsername, setPendingUsername] = useState<string | null>(null);
 
   // Configuration du serveur Socket.IO
   const SERVER_URL = import.meta.env.PROD 
@@ -257,17 +262,38 @@ const App: React.FC = () => {
   }, []);
 
   const handleCreateRoom = (username: string) => {
-    if (socket && isConnected) {
+    if (!socket || !isConnected) {
+      setError('Connexion au serveur en cours. Veuillez patienter.');
+      return;
+    }
+    
+    // Stocker le nom d'utilisateur et ouvrir la modal de configuration
+    setPendingUsername(username);
+    setShowGameConfig(true);
+  };
+
+  const handleGameConfigConfirm = (parameters: GameParameters) => {
+    if (socket && isConnected && pendingUsername) {
       setCurrentUser({
         id: socket.id || '',
-        username,
-        room: ''
+        username: pendingUsername,
+        room: '',
+        roomRole: 'Admin' // Le créateur est automatiquement Admin
       });
-      socket.emit('createRoom', username);
+      
+      // Émettre la création de salon avec les paramètres
+      socket.emit('createRoom', pendingUsername);
+      socket.emit('setGameParameters', parameters);
+      
       setError(null);
-    } else {
-      setError('Connexion au serveur en cours. Veuillez patienter.');
+      setPendingUsername(null);
+      setShowGameConfig(false);
     }
+  };
+
+  const handleGameConfigCancel = () => {
+    setPendingUsername(null);
+    setShowGameConfig(false);
   };
 
   const handleJoinRoom = (username: string, roomCode: string) => {
@@ -275,7 +301,8 @@ const App: React.FC = () => {
       setCurrentUser({
         id: socket.id || '',
         username,
-        room: roomCode
+        room: roomCode,
+        roomRole: 'Débutant' // Les nouveaux joueurs sont Débutants par défaut
       });
       socket.emit('joinRoom', username, roomCode);
       setError(null);
@@ -299,6 +326,15 @@ const App: React.FC = () => {
     setCurrentRoom(null);
     setError(null);
   };
+
+  const handleDemoMode = () => {
+    setIsDemoMode(true);
+  };
+
+  // Mode démo
+  if (isDemoMode) {
+    return <DemoMode />;
+  }
 
   if (isConnecting) {
     return (
@@ -374,8 +410,15 @@ const App: React.FC = () => {
       <Home
         onCreateRoom={handleCreateRoom}
         onJoinRoom={handleJoinRoom}
+        onDemoMode={handleDemoMode}
         error={error}
         isConnected={isConnected}
+      />
+      
+      <GameConfigModal
+        isOpen={showGameConfig}
+        onClose={handleGameConfigCancel}
+        onConfirm={handleGameConfigConfirm}
       />
     </>
   );

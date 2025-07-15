@@ -4,11 +4,12 @@ import { Users, Plus, LogIn, Sparkles, MessageCircle, Shield, Wifi } from 'lucid
 interface HomeProps {
   onCreateRoom: (username: string) => void;
   onJoinRoom: (username: string, roomCode: string) => void;
+  onDemoMode: () => void;
   error: string | null;
   isConnected: boolean;
 }
 
-const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, error, isConnected }) => {
+const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error, isConnected }) => {
   const [username, setUsername] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -288,6 +289,23 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, error, isConnecte
               <span>{isCreating ? 'Création...' : 'Créer un salon'}</span>
             </button>
           </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500 font-medium">ou</span>
+            </div>
+          </div>
+
+          <button
+            onClick={onDemoMode}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mb-6"
+          >
+            <Sparkles className="w-5 h-5" />
+            <span>Mode Démo</span>
+          </button>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

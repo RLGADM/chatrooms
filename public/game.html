@@ -34,7 +34,7 @@
       
       /* Custom scrollbar */
       .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
+        width: 5px;
       }
       
       .custom-scrollbar::-webkit-scrollbar-track {
@@ -57,35 +57,35 @@
     <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] animate-pulse-slow pointer-events-none"></div>
     
     <!-- Header -->
-    <header class="relative z-10 p-6">
+    <header class="relative z-10 p-4">
       <div class="flex items-center justify-between">
         <!-- Left Side -->
-        <div class="flex items-center space-x-4">
-          <h1 class="text-white text-3xl font-black tracking-wider" style="font-family: 'Montserrat', sans-serif;">KENSHO</h1>
-          <div class="bg-white/20 glass px-4 py-2 rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300">
+        <div class="flex items-center space-x-3">
+          <h1 class="text-white text-2xl font-black tracking-wider" style="font-family: 'Montserrat', sans-serif;">KENSHO</h1>
+          <div class="bg-white/20 glass px-3 py-1.5 rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300">
             <span class="text-white text-sm font-semibold">Salon : <span class="text-yellow-300 font-bold" id="gameCode">{{GAME_CODE}}</span></span>
           </div>
-          <button id="copyUrlBtn" class="bg-white/20 glass hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 border border-white/30 flex items-center space-x-2 hover-scale">
-            <i data-lucide="copy" class="w-4 h-4"></i>
+          <button id="copyUrlBtn" class="bg-white/20 glass hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 border border-white/30 flex items-center space-x-2 hover-scale">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
             <span>Copier URL</span>
           </button>
-          <div class="bg-white/20 glass px-4 py-2 rounded-full border border-white/30">
+          <div class="bg-white/20 glass px-3 py-1.5 rounded-full border border-white/30">
             <span class="text-white text-sm font-semibold">Admin : <span class="text-green-300 font-bold" id="adminName">{{ADMIN_NAME}}</span></span>
           </div>
         </div>
         
         <!-- Right Side -->
-        <div class="flex items-center space-x-4">
-          <button id="playersBtn" class="bg-white/20 glass hover:bg-white/30 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 border border-white/30 flex items-center space-x-2 hover-scale">
-            <i data-lucide="users" class="w-4 h-4"></i>
+        <div class="flex items-center space-x-3">
+          <button id="playersBtn" class="bg-white/20 glass hover:bg-white/30 text-white px-3 py-1.5 rounded-lg font-semibold transition-all duration-300 border border-white/30 flex items-center space-x-2 hover-scale">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
             <span>Joueurs</span>
           </button>
-          <button id="settingsBtn" class="bg-white/20 glass hover:bg-white/30 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 border border-white/30 flex items-center space-x-2 hover-scale">
-            <i data-lucide="settings" class="w-4 h-4"></i>
+          <button id="settingsBtn" class="bg-white/20 glass hover:bg-white/30 text-white px-3 py-1.5 rounded-lg font-semibold transition-all duration-300 border border-white/30 flex items-center space-x-2 hover-scale">
+            <i data-lucide="settings" class="w-3.5 h-3.5"></i>
             <span>Paramètres</span>
           </button>
-          <button id="leaveBtn" class="bg-red-500/80 glass hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 hover-scale">
-            <i data-lucide="log-out" class="w-4 h-4"></i>
+          <button id="leaveBtn" class="bg-red-500/80 glass hover:bg-red-600 text-white px-3 py-1.5 rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2 hover-scale">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
             <span>Quitter</span>
           </button>
         </div>
@@ -93,40 +93,40 @@
     </header>
 
     <!-- Status Bar -->
-    <div class="relative z-10 px-6 mb-6">
+    <div class="relative z-10 px-4 mb-4">
       <div class="max-w-7xl mx-auto">
-        <div class="bg-white/10 glass rounded-2xl p-4 shadow-xl border border-white/20">
-          <div class="grid grid-cols-4 gap-4 items-center">
+        <div class="bg-white/10 glass rounded-xl p-3 shadow-xl border border-white/20">
+          <div class="grid grid-cols-4 gap-3 items-center">
             
             <!-- Phase de jeu -->
             <div class="col-span-1">
-              <div class="bg-blue-500/20 glass rounded-xl p-3 border border-blue-300/30 text-center hover:bg-blue-500/30 transition-all duration-300">
-                <div class="flex items-center justify-center mb-2">
-                  <button id="phaseControlBtn" class="text-blue-300 hover:text-white transition-colors flex items-center justify-center mr-2">
-                    <i data-lucide="play-circle" class="w-5 h-5"></i>
+              <div class="bg-blue-500/20 glass rounded-lg p-2.5 border border-blue-300/30 text-center hover:bg-blue-500/30 transition-all duration-300">
+                <div class="flex items-center justify-center mb-1.5">
+                  <button id="phaseControlBtn" class="text-blue-300 hover:text-white transition-colors flex items-center justify-center mr-1.5">
+                    <i data-lucide="play-circle" class="w-4 h-4"></i>
                   </button>
-                  <span class="text-blue-200 text-sm font-semibold">Phase</span>
+                  <span class="text-blue-200 text-xs font-semibold">Phase</span>
                 </div>
-                <h3 class="text-white font-bold text-sm" id="currentPhase">Attente début de la manche</h3>
+                <h3 class="text-white font-bold text-xs" id="currentPhase">Attente début de la manche</h3>
               </div>
             </div>
             
             <!-- Temps restant (2 colonnes) -->
             <div class="col-span-2">
-              <div class="bg-orange-500/20 glass rounded-xl p-3 border border-orange-300/30 hover:bg-orange-500/30 transition-all duration-300">
-                <div class="flex items-center justify-between mb-2">
+              <div class="bg-orange-500/20 glass rounded-lg p-2.5 border border-orange-300/30 hover:bg-orange-500/30 transition-all duration-300">
+                <div class="flex items-center justify-between mb-1.5">
                   <div class="flex items-center">
-                    <i data-lucide="timer" class="w-5 h-5 text-orange-300 mr-2"></i>
-                    <span class="text-orange-200 text-sm font-semibold">Temps</span>
+                    <i data-lucide="timer" class="w-4 h-4 text-orange-300 mr-1.5"></i>
+                    <span class="text-orange-200 text-xs font-semibold">Temps</span>
                   </div>
-                  <h3 class="text-white font-bold text-xl" id="timerDisplay">--:--</h3>
+                  <h3 class="text-white font-bold text-lg" id="timerDisplay">--:--</h3>
                 </div>
                 
                 <!-- Progress Bar -->
                 <div class="relative">
-                  <div class="bg-white/20 rounded-full h-3 overflow-hidden">
+                  <div class="bg-white/20 rounded-full h-2.5 overflow-hidden">
                     <div 
-                      class="h-3 rounded-full transition-all duration-1000 bg-gradient-to-r from-green-400 to-red-500" 
+                      class="h-2.5 rounded-full transition-all duration-1000 bg-gradient-to-r from-green-400 to-red-500" 
                       id="progressBar"
                       style="width: 0%"
                     ></div>
@@ -137,12 +137,12 @@
             
             <!-- Score -->
             <div class="col-span-1">
-              <div class="bg-purple-500/20 glass rounded-xl p-3 border border-purple-300/30 text-center hover:bg-purple-500/30 transition-all duration-300">
+              <div class="bg-purple-500/20 glass rounded-lg p-2.5 border border-purple-300/30 text-center hover:bg-purple-500/30 transition-all duration-300">
                 <div class="flex items-center justify-center mb-1">
-                  <i data-lucide="trophy" class="w-5 h-5 text-purple-300 mr-2"></i>
-                  <span class="text-purple-200 text-sm font-semibold">Score</span>
+                  <i data-lucide="trophy" class="w-4 h-4 text-purple-300 mr-1.5"></i>
+                  <span class="text-purple-200 text-xs font-semibold">Score</span>
                 </div>
-                <h3 class="text-white font-bold text-lg" id="scoreDisplay">0 - 0</h3>
+                <h3 class="text-white font-bold text-base" id="scoreDisplay">0 - 0</h3>
               </div>
             </div>
           </div>
@@ -151,32 +151,32 @@
     </div>
 
     <!-- Main Game Area -->
-    <main class="relative z-10 px-6 pb-8">
+    <main class="relative z-10 px-4 pb-6">
       <div class="max-w-7xl mx-auto">
-        <div class="grid lg:grid-cols-5 gap-6">
+        <div class="grid lg:grid-cols-5 gap-4">
           
           <!-- Left Column: Équipe Rouge -->
           <div class="lg:col-span-1">
-            <div class="bg-white/10 glass rounded-2xl p-6 shadow-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
-              <div class="text-center mb-6">
-                <div class="bg-red-500/20 glass px-6 py-3 rounded-full border border-red-300/30 inline-block hover:bg-red-500/30 transition-all duration-300">
-                  <h3 class="text-red-200 font-bold text-lg tracking-wide">ÉQUIPE ROUGE</h3>
+            <div class="bg-white/10 glass rounded-xl p-4 shadow-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
+              <div class="text-center mb-4">
+                <div class="bg-red-500/20 glass px-4 py-2 rounded-full border border-red-300/30 inline-block hover:bg-red-500/30 transition-all duration-300">
+                  <h3 class="text-red-200 font-bold text-base tracking-wide">ÉQUIPE ROUGE</h3>
                 </div>
               </div>
               
               <!-- Sage -->
-              <div class="mb-6">
-                <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-white/90 text-sm font-semibold flex items-center">
-                    <i data-lucide="crown" class="w-4 h-4 mr-2 text-yellow-400"></i>
+              <div class="mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-white/90 text-xs font-semibold flex items-center">
+                    <i data-lucide="crown" class="w-3.5 h-3.5 mr-1.5 text-yellow-400"></i>
                     Sage
                   </h4>
-                  <button class="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-yellow-300/30 hover:border-yellow-300/50 hover-scale join-sage-red">
+                  <button class="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-200 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 border border-yellow-300/30 hover:border-yellow-300/50 hover-scale join-sage-red">
                     Rejoindre
                   </button>
                 </div>
-                <div class="bg-white/10 glass rounded-xl p-4 border border-white/20 opacity-50" id="redSage">
-                  <div class="text-center text-white/60 text-sm py-4">
+                <div class="bg-white/10 glass rounded-lg p-3 border border-white/20 opacity-50" id="redSage">
+                  <div class="text-center text-white/60 text-xs py-3">
                     Aucun Sage assigné
                   </div>
                 </div>
@@ -184,16 +184,16 @@
               
               <!-- Disciples -->
               <div>
-                <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-white/90 text-sm font-semibold flex items-center">
-                    <i data-lucide="users" class="w-4 h-4 mr-2 text-blue-400"></i>
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-white/90 text-xs font-semibold flex items-center">
+                    <i data-lucide="users" class="w-3.5 h-3.5 mr-1.5 text-blue-400"></i>
                     Disciples
                   </h4>
-                  <button class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-blue-300/30 hover:border-blue-300/50 hover-scale join-disciple-red">
+                  <button class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-200 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 border border-blue-300/30 hover:border-blue-300/50 hover-scale join-disciple-red">
                     Rejoindre
                   </button>
                 </div>
-                <div class="space-y-3" id="redDisciples">
+                <div class="space-y-2" id="redDisciples">
                   <!-- Les disciples seront ajoutés dynamiquement -->
                 </div>
               </div>
@@ -203,72 +203,72 @@
           <!-- Center Columns: Game Area -->
           <div class="lg:col-span-3">
             <!-- Proposal Input -->
-            <div class="bg-white/10 glass rounded-2xl p-4 shadow-xl border border-white/20 mb-6 hover:bg-white/15 transition-all duration-300">
-              <div class="flex space-x-3">
+            <div class="bg-white/10 glass rounded-xl p-3 shadow-xl border border-white/20 mb-4 hover:bg-white/15 transition-all duration-300">
+              <div class="flex space-x-2">
                 <input 
                   type="text" 
                   id="proposalInput"
                   placeholder="Tapez votre réponse..."
-                  class="flex-1 px-4 py-3 bg-white/20 glass border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-semibold focus:bg-white/30 transition-all duration-300"
+                  class="flex-1 px-3 py-2.5 bg-white/20 glass border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-semibold focus:bg-white/30 transition-all duration-300"
                 />
-                <button id="submitProposal" class="bg-green-500/80 glass hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover-scale">
-                  <i data-lucide="check" class="w-5 h-5"></i>
+                <button id="submitProposal" class="bg-green-500/80 glass hover:bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold transition-all duration-300 hover-scale">
+                  <i data-lucide="check" class="w-4 h-4"></i>
                 </button>
               </div>
             </div>
             
             <!-- Game Area Split -->
-            <div class="grid grid-cols-2 gap-6">
+            <div class="grid grid-cols-2 gap-4">
               
               <!-- History -->
-              <div class="bg-white/10 glass rounded-2xl p-6 shadow-xl border border-white/20 h-[600px] hover:bg-white/15 transition-all duration-300">
-                <h3 class="text-white font-bold text-xl mb-4 flex items-center">
-                  <i data-lucide="history" class="w-6 h-6 mr-3 text-blue-400"></i>
+              <div class="bg-white/10 glass rounded-xl p-4 shadow-xl border border-white/20 h-[480px] hover:bg-white/15 transition-all duration-300">
+                <h3 class="text-white font-bold text-lg mb-3 flex items-center">
+                  <i data-lucide="history" class="w-5 h-5 mr-2 text-blue-400"></i>
                   Historique
                 </h3>
                 
-                <div class="space-y-3 h-[520px] overflow-y-auto custom-scrollbar" id="gameHistory">
+                <div class="space-y-2 h-[420px] overflow-y-auto custom-scrollbar" id="gameHistory">
                   <!-- L'historique sera ajouté dynamiquement -->
                 </div>
               </div>
 
               <!-- Game Interaction -->
-              <div class="bg-white/10 glass rounded-2xl p-6 shadow-xl border border-white/20 h-[600px] flex flex-col hover:bg-white/15 transition-all duration-300">
-                <h3 class="text-white font-bold text-xl mb-4 flex items-center">
-                  <i data-lucide="gamepad-2" class="w-6 h-6 mr-3 text-purple-400"></i>
+              <div class="bg-white/10 glass rounded-xl p-4 shadow-xl border border-white/20 h-[480px] flex flex-col hover:bg-white/15 transition-all duration-300">
+                <h3 class="text-white font-bold text-lg mb-3 flex items-center">
+                  <i data-lucide="gamepad-2" class="w-5 h-5 mr-2 text-purple-400"></i>
                   Zone de jeu
                 </h3>
                 
                 <!-- Word Display -->
-                <div class="mb-6">
-                  <div class="bg-gray-500/20 glass rounded-2xl p-6 border border-gray-300/30 text-center hover:bg-gray-500/30 transition-all duration-300" id="wordDisplay">
-                    <div class="flex items-center justify-center mb-3">
-                      <i data-lucide="target" class="w-8 h-8 text-gray-300 mr-3"></i>
-                      <span class="text-gray-200 text-lg font-semibold">En attente</span>
+                <div class="mb-4">
+                  <div class="bg-gray-500/20 glass rounded-xl p-4 border border-gray-300/30 text-center hover:bg-gray-500/30 transition-all duration-300" id="wordDisplay">
+                    <div class="flex items-center justify-center mb-2">
+                      <i data-lucide="target" class="w-6 h-6 text-gray-300 mr-2"></i>
+                      <span class="text-gray-200 text-base font-semibold">En attente</span>
                     </div>
-                    <h4 class="text-gray-400 font-bold text-3xl">---</h4>
+                    <h4 class="text-gray-400 font-bold text-2xl">---</h4>
                   </div>
                 </div>
                 
                 <!-- Forbidden Words -->
-                <div class="bg-white/10 glass rounded-2xl p-4 border border-white/20 mb-6 flex-1">
-                  <div class="flex items-center mb-3">
-                    <i data-lucide="shield-x" class="w-5 h-5 text-red-300 mr-2"></i>
-                    <span class="text-white font-semibold">Mots interdits par l'équipe</span>
+                <div class="bg-white/10 glass rounded-xl p-3 border border-white/20 mb-4 flex-1">
+                  <div class="flex items-center mb-2">
+                    <i data-lucide="shield-x" class="w-4 h-4 text-red-300 mr-1.5"></i>
+                    <span class="text-white font-semibold text-sm">Mots interdits par l'équipe</span>
                   </div>
-                  <div class="grid grid-cols-2 gap-2 h-full content-start" id="forbiddenWords">
+                  <div class="grid grid-cols-2 gap-1.5 h-full content-start" id="forbiddenWords">
                     <!-- Forbidden words will be added dynamically -->
                   </div>
                 </div>
                 
                 <!-- Game Controls -->
-                <div class="grid grid-cols-2 gap-3">
-                  <button id="startButton" class="bg-green-500/20 glass hover:bg-green-500/40 text-green-200 p-4 rounded-xl font-semibold transition-all duration-300 border border-green-300/30 flex items-center justify-center space-x-2 hover-scale">
-                    <i data-lucide="play" class="w-5 h-5"></i>
+                <div class="grid grid-cols-2 gap-2">
+                  <button id="startButton" class="bg-green-500/20 glass hover:bg-green-500/40 text-green-200 p-3 rounded-lg font-semibold transition-all duration-300 border border-green-300/30 flex items-center justify-center space-x-1.5 hover-scale">
+                    <i data-lucide="play" class="w-4 h-4"></i>
                     <span>Commencer</span>
                   </button>
-                  <button id="pauseButton" class="bg-red-500/20 glass text-red-200 p-4 rounded-xl font-semibold border border-red-300/30 flex items-center justify-center space-x-2 opacity-50 cursor-not-allowed" disabled>
-                    <i data-lucide="pause" class="w-5 h-5"></i>
+                  <button id="pauseButton" class="bg-red-500/20 glass text-red-200 p-3 rounded-lg font-semibold border border-red-300/30 flex items-center justify-center space-x-1.5 opacity-50 cursor-not-allowed" disabled>
+                    <i data-lucide="pause" class="w-4 h-4"></i>
                     <span>Pause</span>
                   </button>
                 </div>
@@ -278,26 +278,26 @@
 
           <!-- Right Column: Équipe Bleue -->
           <div class="lg:col-span-1">
-            <div class="bg-white/10 glass rounded-2xl p-6 shadow-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
-              <div class="text-center mb-6">
-                <div class="bg-blue-500/20 glass px-6 py-3 rounded-full border border-blue-300/30 inline-block hover:bg-blue-500/30 transition-all duration-300">
-                  <h3 class="text-blue-200 font-bold text-lg tracking-wide">ÉQUIPE BLEUE</h3>
+            <div class="bg-white/10 glass rounded-xl p-4 shadow-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
+              <div class="text-center mb-4">
+                <div class="bg-blue-500/20 glass px-4 py-2 rounded-full border border-blue-300/30 inline-block hover:bg-blue-500/30 transition-all duration-300">
+                  <h3 class="text-blue-200 font-bold text-base tracking-wide">ÉQUIPE BLEUE</h3>
                 </div>
               </div>
               
               <!-- Sage -->
-              <div class="mb-6">
-                <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-white/90 text-sm font-semibold flex items-center">
-                    <i data-lucide="crown" class="w-4 h-4 mr-2 text-yellow-400"></i>
+              <div class="mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-white/90 text-xs font-semibold flex items-center">
+                    <i data-lucide="crown" class="w-3.5 h-3.5 mr-1.5 text-yellow-400"></i>
                     Sage
                   </h4>
-                  <button class="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-yellow-300/30 hover:border-yellow-300/50 hover-scale join-sage-blue">
+                  <button class="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-200 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 border border-yellow-300/30 hover:border-yellow-300/50 hover-scale join-sage-blue">
                     Rejoindre
                   </button>
                 </div>
-                <div class="bg-white/10 glass rounded-xl p-4 border border-white/20 opacity-50" id="blueSage">
-                  <div class="text-center text-white/60 text-sm py-4">
+                <div class="bg-white/10 glass rounded-lg p-3 border border-white/20 opacity-50" id="blueSage">
+                  <div class="text-center text-white/60 text-xs py-3">
                     Aucun Sage assigné
                   </div>
                 </div>
@@ -305,43 +305,43 @@
               
               <!-- Disciples -->
               <div>
-                <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-white/90 text-sm font-semibold flex items-center">
-                    <i data-lucide="users" class="w-4 h-4 mr-2 text-blue-400"></i>
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-white/90 text-xs font-semibold flex items-center">
+                    <i data-lucide="users" class="w-3.5 h-3.5 mr-1.5 text-blue-400"></i>
                     Disciples
                   </h4>
-                  <button class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-blue-300/30 hover:border-blue-300/50 hover-scale join-disciple-blue">
+                  <button class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-200 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 border border-blue-300/30 hover:border-blue-300/50 hover-scale join-disciple-blue">
                     Rejoindre
                   </button>
                 </div>
-                <div class="space-y-3" id="blueDisciples">
+                <div class="space-y-2" id="blueDisciples">
                   <!-- Les disciples seront ajoutés dynamiquement -->
                 </div>
               </div>
             </div>
             
             <!-- Spectateurs -->
-            <div class="bg-white/10 glass rounded-2xl p-6 shadow-xl border border-white/20 hover:bg-white/15 transition-all duration-300 mt-6">
-              <div class="text-center mb-6">
-                <div class="bg-gray-500/20 glass px-6 py-3 rounded-full border border-gray-300/30 inline-block hover:bg-gray-500/30 transition-all duration-300">
-                  <h3 class="text-gray-200 font-bold text-lg tracking-wide">SPECTATEURS</h3>
+            <div class="bg-white/10 glass rounded-xl p-4 shadow-xl border border-white/20 hover:bg-white/15 transition-all duration-300 mt-4">
+              <div class="text-center mb-4">
+                <div class="bg-gray-500/20 glass px-4 py-2 rounded-full border border-gray-300/30 inline-block hover:bg-gray-500/30 transition-all duration-300">
+                  <h3 class="text-gray-200 font-bold text-base tracking-wide">SPECTATEURS</h3>
                 </div>
               </div>
               
-              <div class="flex items-center justify-between mb-3">
-                <h4 class="text-white/90 text-sm font-semibold flex items-center">
-                  <i data-lucide="eye" class="w-4 h-4 mr-2 text-gray-400"></i>
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-white/90 text-xs font-semibold flex items-center">
+                  <i data-lucide="eye" class="w-3.5 h-3.5 mr-1.5 text-gray-400"></i>
                   Observateurs
                 </h4>
-                <button class="bg-gray-500/20 hover:bg-gray-500/40 text-gray-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-gray-300/30 hover:border-gray-300/50 hover-scale join-spectator">
+                <button class="bg-gray-500/20 hover:bg-gray-500/40 text-gray-200 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-300 border border-gray-300/30 hover:border-gray-300/50 hover-scale join-spectator">
                   Rejoindre
                 </button>
               </div>
               
-              <div class="space-y-3" id="spectators">
+              <div class="space-y-2" id="spectators">
                 <!-- Les spectateurs seront ajoutés dynamiquement -->
-                <div class="bg-white/10 glass rounded-xl p-4 border border-white/20 opacity-50">
-                  <div class="text-center text-white/60 text-sm py-2">
+                <div class="bg-white/10 glass rounded-lg p-3 border border-white/20 opacity-50">
+                  <div class="text-center text-white/60 text-xs py-2">
                     Aucun spectateur
                   </div>
                 </div>
@@ -353,26 +353,26 @@
     </main>
 
     <!-- Footer -->
-    <footer class="relative z-10 px-6 py-4">
+    <footer class="relative z-10 px-4 py-3">
       <div class="max-w-7xl mx-auto text-center">
-        <p class="text-white/60 text-sm">
-          © 2025 Kensho – Salon de jeu en temps réel
+        <p class="text-white/60 text-xs">
+          © 2025 Kensho – by Winry
         </p>
       </div>
     </footer>
 
     <!-- Players Modal -->
     <div id="playersModal" class="fixed inset-0 bg-black/50 glass z-50 hidden flex items-center justify-center p-4">
-      <div class="bg-white/95 glass rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-white/20">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-3xl font-bold text-gray-800">Gestion des joueurs</h2>
-            <button id="closePlayersModal" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full transition-all duration-300 hover-scale">
-              <i data-lucide="x" class="w-6 h-6"></i>
+      <div class="bg-white/95 glass rounded-2xl max-w-xl w-full max-h-[70vh] overflow-y-auto shadow-2xl border border-white/20">
+        <div class="p-5">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-2xl font-bold text-gray-800">Gestion des joueurs</h2>
+            <button id="closePlayersModal" class="bg-red-500 hover:bg-red-600 text-white p-2.5 rounded-full transition-all duration-300 hover-scale">
+              <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
           
-          <div class="space-y-4" id="playersModalContent">
+          <div class="space-y-3" id="playersModalContent">
             <!-- Les joueurs seront ajoutés dynamiquement -->
           </div>
         </div>
@@ -381,32 +381,32 @@
 
     <!-- Settings Modal -->
     <div id="settingsModal" class="fixed inset-0 bg-black/50 glass z-50 hidden flex items-center justify-center p-4">
-      <div class="bg-white/95 glass rounded-3xl max-w-4xl w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-white/20">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-3xl font-bold text-gray-800">Paramètres de la partie</h2>
-            <button id="closeSettingsModal" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full transition-all duration-300 hover-scale">
-              <i data-lucide="x" class="w-6 h-6"></i>
+      <div class="bg-white/95 glass rounded-2xl max-w-3xl w-full max-h-[70vh] overflow-y-auto shadow-2xl border border-white/20">
+        <div class="p-5">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-2xl font-bold text-gray-800">Paramètres de la partie</h2>
+            <button id="closeSettingsModal" class="bg-red-500 hover:bg-red-600 text-white p-2.5 rounded-full transition-all duration-300 hover-scale">
+              <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
           
           <!-- Reset Button -->
-          <div class="mb-6">
-            <button id="resetGameBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 hover-scale">
-              <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+          <div class="mb-5">
+            <button id="resetGameBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2 hover-scale">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
               <span>Réinitialiser la partie</span>
             </button>
           </div>
           
           <!-- Settings Grid -->
-          <div class="grid md:grid-cols-2 gap-6">
+          <div class="grid md:grid-cols-2 gap-5">
             <!-- Time Management -->
-            <div class="bg-gray-50 rounded-2xl p-6">
-              <h3 class="font-bold text-gray-800 mb-4 text-lg">Gestion du temps</h3>
-              <div class="space-y-4">
+            <div class="bg-gray-50 rounded-xl p-5">
+              <h3 class="font-bold text-gray-800 mb-3 text-base">Gestion du temps</h3>
+              <div class="space-y-3">
                 <div>
-                  <label class="block text-gray-700 font-semibold mb-2">Temps phase 1 :</label>
-                  <select id="phase1Time" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <label class="block text-gray-700 font-semibold mb-1.5 text-sm">Temps phase 1 :</label>
+                  <select id="phase1Time" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     <option value="30">30s</option>
                     <option value="45">45s</option>
                     <option value="60">60s</option>
@@ -415,8 +415,8 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-gray-700 font-semibold mb-2">Temps phase 2 :</label>
-                  <select id="phase2Time" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <label class="block text-gray-700 font-semibold mb-1.5 text-sm">Temps phase 2 :</label>
+                  <select id="phase2Time" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     <option value="60">60s</option>
                     <option value="90" selected>90s</option>
                     <option value="120">120s</option>
@@ -425,8 +425,8 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-gray-700 font-semibold mb-2">Temps phase 3 :</label>
-                  <select id="phase3Time" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <label class="block text-gray-700 font-semibold mb-1.5 text-sm">Temps phase 3 :</label>
+                  <select id="phase3Time" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     <option value="30">30s</option>
                     <option value="60">60s</option>
                     <option value="90">90s</option>
@@ -437,28 +437,28 @@
             </div>
             
             <!-- Word Types -->
-            <div class="bg-gray-50 rounded-2xl p-6">
-              <h3 class="font-bold text-gray-800 mb-4 text-lg">Types de mots</h3>
-              <div class="space-y-4">
-                <label class="flex items-center space-x-3">
-                  <input type="checkbox" id="veryCommon" checked class="w-5 h-5 accent-blue-600 rounded" />
-                  <span class="text-gray-700 font-medium">Mots très courants</span>
+            <div class="bg-gray-50 rounded-xl p-5">
+              <h3 class="font-bold text-gray-800 mb-3 text-base">Types de mots</h3>
+              <div class="space-y-3">
+                <label class="flex items-center space-x-2.5">
+                  <input type="checkbox" id="veryCommon" checked class="w-4 h-4 accent-blue-600 rounded" />
+                  <span class="text-gray-700 font-medium text-sm">Mots très courants</span>
                 </label>
-                <label class="flex items-center space-x-3">
-                  <input type="checkbox" id="lessCommon" checked class="w-5 h-5 accent-blue-600 rounded" />
-                  <span class="text-gray-700 font-medium">Mots moins courants</span>
+                <label class="flex items-center space-x-2.5">
+                  <input type="checkbox" id="lessCommon" checked class="w-4 h-4 accent-blue-600 rounded" />
+                  <span class="text-gray-700 font-medium text-sm">Mots moins courants</span>
                 </label>
-                <label class="flex items-center space-x-3">
-                  <input type="checkbox" id="rarelyCommon" class="w-5 h-5 accent-blue-600 rounded" />
-                  <span class="text-gray-700 font-medium">Mots rarement courants</span>
+                <label class="flex items-center space-x-2.5">
+                  <input type="checkbox" id="rarelyCommon" class="w-4 h-4 accent-blue-600 rounded" />
+                  <span class="text-gray-700 font-medium text-sm">Mots rarement courants</span>
                 </label>
               </div>
             </div>
           </div>
           
           <!-- Validate Button -->
-          <div class="mt-6 text-center">
-            <button id="validateSettingsBtn" class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover-scale">
+          <div class="mt-5 text-center">
+            <button id="validateSettingsBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-all duration-300 hover-scale">
               Valider et réinitialiser
             </button>
           </div>
@@ -635,23 +635,23 @@
           
           sageElement.innerHTML = `
             <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 bg-${team === 'red' ? 'red' : 'blue'}-500 rounded-full flex items-center justify-center shadow-lg">
-                  <span class="text-white font-bold text-lg">${sage.name.charAt(0).toUpperCase()}</span>
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-${team === 'red' ? 'red' : 'blue'}-500 rounded-full flex items-center justify-center shadow-lg">
+                  <span class="text-white font-bold text-sm">${sage.name.charAt(0).toUpperCase()}</span>
                 </div>
                 <div>
-                  <p class="text-white font-semibold">${sage.name}</p>
+                  <p class="text-white font-semibold text-sm">${sage.name}</p>
                   <p class="text-${team === 'red' ? 'red' : 'blue'}-200 text-xs">Guide spirituel</p>
                 </div>
               </div>
-              <i data-lucide="crown" class="w-5 h-5 text-yellow-400"></i>
+              <i data-lucide="crown" class="w-4 h-4 text-yellow-400"></i>
             </div>
           `;
-          sageElement.className = `${bgColor} glass rounded-xl p-4 border transition-all duration-300 ${highlight}`;
+          sageElement.className = `${bgColor} glass rounded-lg p-3 border transition-all duration-300 ${highlight}`;
           sageElement.style.opacity = '1';
         } else {
-          sageElement.innerHTML = '<div class="text-center text-white/60 text-sm py-4">Aucun Sage assigné</div>';
-          sageElement.className = 'bg-white/10 glass rounded-xl p-4 border border-white/20';
+          sageElement.innerHTML = '<div class="text-center text-white/60 text-xs py-3">Aucun Sage assigné</div>';
+          sageElement.className = 'bg-white/10 glass rounded-lg p-3 border border-white/20';
           sageElement.style.opacity = '0.5';
         }
         
@@ -667,23 +667,63 @@
         disciples.forEach(disciple => {
           const highlight = disciple.isCurrentPlayer ? 'ring-2 ring-blue-400/50' : '';
           const discipleDiv = document.createElement('div');
-          discipleDiv.className = `bg-white/10 glass rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 ${highlight}`;
+          discipleDiv.className = `bg-white/10 glass rounded-lg p-3 border border-white/20 hover:bg-white/15 transition-all duration-300 ${highlight}`;
           discipleDiv.innerHTML = `
             <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
-                  <span class="text-white font-bold">${disciple.name.charAt(0).toUpperCase()}</span>
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
+                  <span class="text-white font-bold text-sm">${disciple.name.charAt(0).toUpperCase()}</span>
                 </div>
                 <div>
-                  <p class="text-white font-semibold">${disciple.name}</p>
+                  <p class="text-white font-semibold text-sm">${disciple.name}</p>
                   <p class="text-white/60 text-xs">${disciple.isCurrentPlayer ? 'Vous' : 'Apprenant'}</p>
                 </div>
               </div>
-              <i data-lucide="user" class="w-4 h-4 text-green-400"></i>
+              <i data-lucide="user" class="w-3.5 h-3.5 text-green-400"></i>
             </div>
           `;
           disciplesElement.appendChild(discipleDiv);
         });
+        
+        lucide.createIcons();
+      }
+
+      function updateSpectatorsDisplay() {
+        const spectatorsElement = document.getElementById('spectators');
+        const spectators = gameState.spectators;
+        
+        spectatorsElement.innerHTML = '';
+        
+        if (spectators.length === 0) {
+          spectatorsElement.innerHTML = `
+            <div class="bg-white/10 glass rounded-lg p-3 border border-white/20 opacity-50">
+              <div class="text-center text-white/60 text-xs py-2">
+                Aucun spectateur
+              </div>
+            </div>
+          `;
+        } else {
+          spectators.forEach(spectator => {
+            const highlight = spectator.isCurrentPlayer ? 'ring-2 ring-gray-400/50' : '';
+            const spectatorDiv = document.createElement('div');
+            spectatorDiv.className = `bg-white/10 glass rounded-lg p-3 border border-white/20 hover:bg-white/15 transition-all duration-300 ${highlight}`;
+            spectatorDiv.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <div class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">${spectator.name.charAt(0).toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <p class="text-white font-semibold text-sm">${spectator.name}</p>
+                    <p class="text-white/60 text-xs">${spectator.isCurrentPlayer ? 'Vous' : 'Observateur'}</p>
+                  </div>
+                </div>
+                <i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i>
+              </div>
+            `;
+            spectatorsElement.appendChild(spectatorDiv);
+          });
+        }
         
         lucide.createIcons();
       }
@@ -807,7 +847,7 @@
       function addHistoryEntry(type, message, color) {
         const historyElement = document.getElementById('gameHistory');
         const entry = document.createElement('div');
-        entry.className = 'bg-white/10 glass rounded-xl p-3 border border-white/20 hover:bg-white/20 transition-all duration-300';
+        entry.className = 'bg-white/10 glass rounded-lg p-2.5 border border-white/20 hover:bg-white/20 transition-all duration-300';
         
         const icons = {
           users: 'users',
@@ -819,13 +859,13 @@
         };
         
         entry.innerHTML = `
-          <div class="flex items-start space-x-3">
-            <div class="w-6 h-6 bg-${color}-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <i data-lucide="${icons[type] || 'circle'}" class="w-3 h-3 text-white"></i>
+          <div class="flex items-start space-x-2">
+            <div class="w-5 h-5 bg-${color}-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i data-lucide="${icons[type] || 'circle'}" class="w-2.5 h-2.5 text-white"></i>
             </div>
             <div class="flex-1">
-              <p class="text-white text-sm font-medium">${message}</p>
-              <p class="text-white/60 text-xs mt-1">
+              <p class="text-white text-xs font-medium">${message}</p>
+              <p class="text-white/60 text-xs mt-0.5">
                 ${new Date().toLocaleTimeString()}
               </p>
             </div>
@@ -880,15 +920,15 @@
         allPlayers.forEach(player => {
           const playerDiv = document.createElement('div');
           const bgClass = player.isCurrentPlayer ? 'bg-blue-50 border-2 border-blue-300' : 'bg-gray-50';
-          playerDiv.className = `${bgClass} rounded-xl p-4 flex items-center justify-between`;
+          playerDiv.className = `${bgClass} rounded-lg p-3 flex items-center justify-between`;
           playerDiv.innerHTML = `
-            <div class="flex items-center space-x-3">
-              <div class="w-12 h-12 bg-${player.team === 'Rouge' ? 'red' : 'blue'}-500 rounded-full flex items-center justify-center">
-                <span class="text-white font-bold text-lg">${player.name.charAt(0).toUpperCase()}</span>
+            <div class="flex items-center space-x-2.5">
+              <div class="w-10 h-10 bg-${player.team === 'Rouge' ? 'red' : 'blue'}-500 rounded-full flex items-center justify-center">
+                <span class="text-white font-bold text-base">${player.name.charAt(0).toUpperCase()}</span>
               </div>
               <div>
-                <p class="font-semibold text-gray-800">${player.name}${player.isCurrentPlayer ? ' (Vous)' : ''}</p>
-                <p class="text-gray-600 text-sm">Équipe ${player.team} - ${player.role}</p>
+                <p class="font-semibold text-gray-800 text-sm">${player.name}${player.isCurrentPlayer ? ' (Vous)' : ''}</p>
+                <p class="text-gray-600 text-xs">Équipe ${player.team} - ${player.role}</p>
               </div>
             </div>
           `;

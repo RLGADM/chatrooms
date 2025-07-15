@@ -6,7 +6,7 @@ interface KeepAliveProps {
 
 const KeepAlive: React.FC<KeepAliveProps> = ({ serverUrl }) => {
   useEffect(() => {
-    // Ping le serveur toutes les 5 minutes pour le maintenir actif
+    // Ping le serveur toutes les 10 minutes pour le maintenir actif
     const interval = setInterval(async () => {
       try {
         console.log('Pinging server to keep it alive...');
@@ -25,7 +25,7 @@ const KeepAlive: React.FC<KeepAliveProps> = ({ serverUrl }) => {
       } catch (error) {
         console.log('Failed to ping server:', error);
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 10 * 60 * 1000); // 10 minutes
 
     // Ping initial après 30 secondes
     const initialPing = setTimeout(async () => {
