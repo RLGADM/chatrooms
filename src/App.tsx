@@ -347,7 +347,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-3">
-            Connexion au serveur
+            Connexion au serveur de jeu.
           </h2>
           <p className="text-gray-600 mb-4">
             Établissement de la connexion...
