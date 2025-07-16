@@ -458,176 +458,6 @@ io.on('connection', (socket) => {
     console.log('=== END JOIN TEAM EVENT ===');
   });
 
-  // Changer le rôle d'un utilisateur dans le salon
-  socket.on('changeUserRoomRole', (userId, newRole) => {
-    console.log(`=== CHANGE USER ROOM ROLE EVENT ===`);
-    console.log(`Socket ${socket.id} wants to change role of user ${userId} to ${newRole}`);
-    
-    const currentUser = users.get(socket.id);
-    if (!currentUser) {
-      console.log('Current user not found for socket:', socket.id);
-      socket.emit('roleChangeError', 'Utilisateur non trouvé');
-      return;
-    }
-    
-    // Vérifier que l'utilisateur actuel est Admin
-    if (currentUser.roomRole !== 'Admin') {
-      console.log('Permission denied - user is not admin:', currentUser.roomRole);
-      socket.emit('roleChangeError', 'Seuls les Admins peuvent changer les rôles');
-      return;
-    }
-    
-    const targetUser = users.get(userId);
-    if (!targetUser) {
-      console.log('Target user not found:', userId);
-      socket.emit('roleChangeError', 'Utilisateur cible non trouvé');
-      return;
-    }
-    
-    // Vérifier que les utilisateurs sont dans la même room
-    if (currentUser.room !== targetUser.room) {
-      console.log('Users not in same room');
-      socket.emit('roleChangeError', 'Utilisateurs pas dans le même salon');
-      return;
-    }
-    
-    // Empêcher un utilisateur de changer son propre rôle
-    if (currentUser.id === targetUser.id) {
-      console.log('User trying to change own role');
-      socket.emit('roleChangeError', 'Vous ne pouvez pas changer votre propre rôle');
-      return;
-    }
-    
-    console.log(`Changing role of ${targetUser.username} from ${targetUser.roomRole || 'Débutant'} to ${newRole}`);
-    
-    // Mettre à jour le rôle
-    const oldRole = targetUser.roomRole || 'Débutant';
-    targetUser.roomRole = newRole;
-    users.set(userId, targetUser);
-    
-    // Mettre à jour dans la room
-    const room = rooms.get(currentUser.room);
-    if (room) {
-      const userIndex = room.users.findIndex(u => u.id === userId);
-      if (userIndex !== -1) {
-        room.users[userIndex].roomRole = newRole;
-      }
-      
-      // Envoyer un message système
-      const message = {
-        id: Date.now().toString(),
-        username: 'Système',
-        message: `${currentUser.username} a changé le rôle de ${targetUser.username} de ${oldRole} à ${newRole}`,
-        timestamp: new Date()
-      };
-      
-      addMessageToRoom(currentUser.room, message);
-      
-      // Diffuser les mises à jour
-      io.to(currentUser.room).emit('newMessage', message);
-      io.to(currentUser.room).emit('usersUpdate', room.users);
-      io.to(currentUser.room).emit('roomRoleChanged', { userId, newRole });
-      
-      console.log(`Role change successful: ${targetUser.username} is now ${newRole}`);
-    }
-    
-    console.log('=== END CHANGE USER ROOM ROLE EVENT ===');
-  });
-
-  // Expulser un utilisateur
-  socket.on('kickUser', (userId, reason) => {
-    console.log(`=== KICK USER EVENT ===`);
-    console.log(`Socket ${socket.id} wants to kick user ${userId} for reason: ${reason}`);
-    
-    const currentUser = users.get(socket.id);
-    if (!currentUser || currentUser.roomRole !== 'Admin') {
-      socket.emit('kickError', 'Seuls les Admins peuvent expulser des utilisateurs');
-      return;
-    }
-    
-    const targetUser = users.get(userId);
-    if (!targetUser || currentUser.room !== targetUser.room) {
-      socket.emit('kickError', 'Utilisateur non trouvé ou pas dans le même salon');
-      return;
-    }
-    
-    if (currentUser.id === targetUser.id) {
-      socket.emit('kickError', 'Vous ne pouvez pas vous expulser vous-même');
-      return;
-    }
-    
-    // Envoyer un message à l'utilisateur expulsé
-    io.to(userId).emit('userKicked', { reason });
-    
-    // Déconnecter l'utilisateur
-    const targetSocket = io.sockets.sockets.get(userId);
-    if (targetSocket) {
-      targetSocket.disconnect(true);
-    }
-    
-    // Message système
-    const message = {
-      id: Date.now().toString(),
-      username: 'Système',
-      message: `${targetUser.username} a été expulsé par ${currentUser.username}. Raison: ${reason}`,
-      timestamp: new Date()
-    };
-    
-    addMessageToRoom(currentUser.room, message);
-    io.to(currentUser.room).emit('newMessage', message);
-    
-    console.log(`User ${targetUser.username} kicked by ${currentUser.username}`);
-    console.log('=== END KICK USER EVENT ===');
-  });
-
-  // Bannir un utilisateur
-  socket.on('banUser', (userId, reason) => {
-    console.log(`=== BAN USER EVENT ===`);
-    console.log(`Socket ${socket.id} wants to ban user ${userId} for reason: ${reason}`);
-    
-    const currentUser = users.get(socket.id);
-    if (!currentUser || currentUser.roomRole !== 'Admin') {
-      socket.emit('banError', 'Seuls les Admins peuvent bannir des utilisateurs');
-      return;
-    }
-    
-    const targetUser = users.get(userId);
-    if (!targetUser || currentUser.room !== targetUser.room) {
-      socket.emit('banError', 'Utilisateur non trouvé ou pas dans le même salon');
-      return;
-    }
-    
-    if (currentUser.id === targetUser.id) {
-      socket.emit('banError', 'Vous ne pouvez pas vous bannir vous-même');
-      return;
-    }
-    
-    // TODO: Implémenter un système de bannissement par IP
-    // Pour l'instant, on fait juste un kick
-    
-    // Envoyer un message à l'utilisateur banni
-    io.to(userId).emit('userBanned', { reason });
-    
-    // Déconnecter l'utilisateur
-    const targetSocket = io.sockets.sockets.get(userId);
-    if (targetSocket) {
-      targetSocket.disconnect(true);
-    }
-    
-    // Message système
-    const message = {
-      id: Date.now().toString(),
-      username: 'Système',
-      message: `${targetUser.username} a été banni par ${currentUser.username}. Raison: ${reason}`,
-      timestamp: new Date()
-    };
-    
-    addMessageToRoom(currentUser.room, message);
-    io.to(currentUser.room).emit('newMessage', message);
-    
-    console.log(`User ${targetUser.username} banned by ${currentUser.username}`);
-    console.log('=== END BAN USER EVENT ===');
-  });
   // Démarrer le jeu
   socket.on('startGame', () => {
     const user = users.get(socket.id);
@@ -636,12 +466,7 @@ io.on('connection', (socket) => {
     const room = rooms.get(user.room);
     if (!room || !room.gameState) return;
     
-    // Vérifier si l'utilisateur est le créateur
-    const creator = room.users[0];
-    if (user.id !== creator?.id) {
-      socket.emit('gameError', 'Seul le créateur peut démarrer la partie');
-      return;
-    }
+    // Tout le monde peut démarrer la partie maintenant
     
     if (room.gameState.currentPhase === 0) {
       room.gameState.currentPhase = 1;
@@ -661,12 +486,7 @@ io.on('connection', (socket) => {
     const room = rooms.get(user.room);
     if (!room || !room.gameState) return;
     
-    // Vérifier si l'utilisateur est le créateur
-    const creator = room.users[0];
-    if (user.id !== creator?.id) {
-      socket.emit('gameError', 'Seul le créateur peut mettre en pause la partie');
-      return;
-    }
+    // Tout le monde peut mettre en pause la partie maintenant
     
     room.gameState.isPlaying = false;
     io.to(user.room).emit('gameStateUpdate', room.gameState);
