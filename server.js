@@ -15,7 +15,7 @@ const io = new Server(server, {
     origin: [
       "http://localhost:5173",
       "https://localhost:5173",
-      "https://kenshou.netlify.app/",
+      "https://kenshou.netlify.app",
       "https://kensho-hab0.onrender.com"
     ],
     methods: ["GET", "POST"],
