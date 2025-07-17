@@ -96,12 +96,26 @@ const App: React.FC = () => {
     setHydrated(true);
   }, []);
   // useEffect(() => {2
+  
   useEffect(() => {
     if (socket && currentUser && currentRoom && isConnected && hydrated) {
       console.log('🔁 Reconnexion à la room...');
-      socket.emit('joinRoom', currentUser.username, currentRoom.code);
+
+      socket.emit(
+        'joinRoom',
+        currentUser.username,
+        currentRoom.code,
+        () => {
+          console.log('✅ Confirmation serveur : utilisateur ajouté à la room');
+
+          // Maintenant qu’on est sûr que le serveur a traité joinRoom :
+          socket.emit('joinTeam', { team: 'spectator' });
+        }
+      );
     }
-  }, [socket, currentUser, currentRoom, isConnected]);
+  }, [socket, currentUser, currentRoom, isConnected, hydrated]);
+
+
 
   // ✅ Ici tu mets ton socket.on('connect', ...) en dehors du useEffect, ou dans un autre useEffect
   useEffect(() => {

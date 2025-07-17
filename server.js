@@ -564,87 +564,93 @@ io.on('connection', (socket) => {
   // });
 
   // Rejoindre un salon
-  socket.on('joinRoom', (username, roomCode) => {
-    console.log(`[JOIN ROOM] ${username} tente de rejoindre ${roomCode}`);
+socket.on('joinRoom', ({ username, roomCode }, ack) => {
+  console.log(`[JOIN ROOM] ${username} tente de rejoindre ${roomCode}`);
 
-    const user = {
-      id: socket.id,
-      username,
-      room: roomCode
-    };
+  const user = {
+    id: socket.id, // le vrai socket ID du client connecté
+    username,
+    room: roomCode
+  };
 
-    // Ajouter l'utilisateur à la room (crée la room si elle n'existe pas)
-    addUserToRoom(user, roomCode);
+  addUserToRoom(user, roomCode);
+  socket.join(roomCode);
+  users.set(socket.id, user);
 
-    // Joindre la socket.io room
-    socket.join(roomCode);
-
-    // Optionnel mais recommandé : stocker dans la map users
-    users.set(socket.id, user);
-  });
+  if (ack) ack(); // confirme au client que c’est bon
+});
 
 
   // Rejoindre une équipe
-  socket.on('joinTeam', (team, role) => {
-    console.log(`=== JOIN TEAM EVENT ===`);
-    console.log(`Socket ${socket.id} wants to join team ${team} as ${role}`);
-    console.log('All users in Map:', Array.from(users.entries()).map(([id, user]) => ({ id, username: user.username, room: user.room })));
-    const user = users.get(socket.id);
-    if (!user) {
-      console.log('User not found for socket:', socket.id);
-      console.log('Available users:', Array.from(users.keys()));
-      console.log('Socket rooms:', Array.from(socket.rooms));
-      socket.emit('teamJoinError', 'Utilisateur non trouvé');
-      return;
-    }
-    
-    console.log('User found:', user);
-    console.log('User room:', user.room);
-    
-    console.log(`User ${user.username} attempting to join team ${team} as ${role}`);
-    
-    const result = handleTeamJoin(socket.id, user.room, team, role);
-    
-    if (result?.error) {
-      console.log('Team join error:', result.error);
-      socket.emit('teamJoinError', result.error);
-      return;
-    }
-    
-    if (result?.success) {
-      console.log('Team join successful, sending updates...');
-      const teamName = team === 'red' ? 'Rouge' : team === 'blue' ? 'Bleue' : 'Spectateurs';
-      const roleName = role === 'sage' ? 'Sage' : role === 'disciple' ? 'Disciple' : 'Spectateur';
-      
-      // Envoyer un message dans l'historique
-      const message = {
-        id: Date.now().toString(),
-        username: 'Système',
-        message: `${user.username} est devenu ${roleName} ${team !== 'spectator' ? `de l'équipe ${teamName}` : ''}`,
-        timestamp: new Date()
-      };
-      
-      const room = rooms.get(user.room);
-      if (room) {
-        addMessageToRoom(user.room, message);
-        console.log('Broadcasting updates to room:', user.room);
-        // Diffuser à tous les utilisateurs de la room
-        io.to(user.room).emit('newMessage', message);
-        io.to(user.room).emit('gameStateUpdate', result.gameState);
-        io.to(user.room).emit('usersUpdate', room.users);
-        // Envoyer la confirmation à l'utilisateur qui a changé d'équipe
-        socket.emit('teamJoinSuccess', { team, role, gameState: result.gameState });
-        console.log('Team join successful for user:', user.username);
-      } else {
-        console.log('Room not found when trying to broadcast updates');
-      }
+socket.on('joinTeam', (team, role, ack) => {
+  console.log(`=== JOIN TEAM EVENT ===`);
+  console.log(`Socket ${socket.id} wants to join team ${team} as ${role}`);
+  console.log('All users in Map:', Array.from(users.entries()).map(([id, user]) => ({ id, username: user.username, room: user.room })));
+
+  const user = users.get(socket.id);
+  if (!user) {
+    console.log('User not found for socket:', socket.id);
+    console.log('Available users:', Array.from(users.keys()));
+    console.log('Socket rooms:', Array.from(socket.rooms));
+
+    if (ack) ack({ success: false, error: 'Utilisateur non trouvé' });
+    socket.emit('teamJoinError', 'Utilisateur non trouvé');
+    return;
+  }
+
+  console.log('User found:', user);
+  console.log('User room:', user.room);
+
+  console.log(`User ${user.username} attempting to join team ${team} as ${role}`);
+
+  const result = handleTeamJoin(socket.id, user.room, team, role);
+
+  if (result?.error) {
+    console.log('Team join error:', result.error);
+    if (ack) ack({ success: false, error: result.error });
+    socket.emit('teamJoinError', result.error);
+    return;
+  }
+
+  if (result?.success) {
+    console.log('Team join successful, sending updates...');
+    const teamName = team === 'red' ? 'Rouge' : team === 'blue' ? 'Bleue' : 'Spectateurs';
+    const roleName = role === 'sage' ? 'Sage' : role === 'disciple' ? 'Disciple' : 'Spectateur';
+
+    // Envoyer un message dans l'historique
+    const message = {
+      id: Date.now().toString(),
+      username: 'Système',
+      message: `${user.username} est devenu ${roleName} ${team !== 'spectator' ? `de l'équipe ${teamName}` : ''}`,
+      timestamp: new Date()
+    };
+
+    const room = rooms.get(user.room);
+    if (room) {
+      addMessageToRoom(user.room, message);
+      console.log('Broadcasting updates to room:', user.room);
+      io.to(user.room).emit('newMessage', message);
+      io.to(user.room).emit('gameStateUpdate', result.gameState);
+      io.to(user.room).emit('usersUpdate', room.users);
+
+      if (ack) ack({ success: true, team, role, gameState: result.gameState });
+      socket.emit('teamJoinSuccess', { team, role, gameState: result.gameState });
+      console.log('Team join successful for user:', user.username);
     } else {
-      console.log('Team join failed for unknown reason');
-      console.log('Result:', result);
-      socket.emit('teamJoinError', 'Erreur inconnue lors du changement d\'équipe');
+      console.log('Room not found when trying to broadcast updates');
+      if (ack) ack({ success: false, error: 'Room not found when broadcasting updates' });
+      socket.emit('teamJoinError', 'Room introuvable lors de la diffusion');
     }
-    console.log('=== END JOIN TEAM EVENT ===');
-  });
+  } else {
+    console.log('Team join failed for unknown reason');
+    console.log('Result:', result);
+    if (ack) ack({ success: false, error: 'Erreur inconnue lors du changement d\'équipe' });
+    socket.emit('teamJoinError', 'Erreur inconnue lors du changement d\'équipe');
+  }
+
+  console.log('=== END JOIN TEAM EVENT ===');
+});
+
 
   // Démarrer le jeu
   socket.on('startGame', () => {
