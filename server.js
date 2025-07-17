@@ -27,46 +27,57 @@ const io = new Server(server, {
   pingInterval: 25000
 });
 
-// log
+// log ou plus du tout
 io.on('connection', (socket) => {
-  console.log(`🔌 Nouvelle connexion: socket id = ${socket.id}`);
+  console.log('Nouvelle connexion:', socket.id);
+
+  socket.on('createRoom', ({ username, gameMode, parameters }) => {
+    const roomCode = generateRoomCode();
+    const creatorUser = {
+      id: socket.id,
+      username,
+      roomRole: 'Admin',
+      isAdmin: true,
+      team: 'spectator',
+      role: 'spectator'
+    };
+
+    // Crée la room avec le créateur dedans
+    createRoom(roomCode, parameters, creatorUser);
+
+    // Rejoins la socket à la room socket.io (pour le broadcast)
+    socket.join(roomCode);
+
+    // Envoie la confirmation au client
+    socket.emit('roomCreated', { roomCode });
+
+    console.log(`Room créée : ${roomCode} par ${username}`);
+  });
 
   socket.on('joinRoom', (username, roomCode) => {
-    console.log(`[joinRoom] Reçu de socket ${socket.id} - username: ${username}, roomCode: ${roomCode}`);
-
-    // Exemple de gestion, à adapter à ta logique métier
-    if (!rooms.has(roomCode)) {
-      console.log(`[joinRoom] La salle ${roomCode} n'existe pas.`);
-      socket.emit('error', 'Room not found');
+    const room = rooms.get(roomCode);
+    if (!room) {
+      socket.emit('error', `La salle ${roomCode} n'existe pas.`);
       return;
     }
 
-    socket.join(roomCode);
-    console.log(`[joinRoom] Socket ${socket.id} a rejoint la salle ${roomCode}`);
-  });
+    const user = {
+      id: socket.id,
+      username,
+      roomRole: 'Player',
+      isAdmin: false,
+      team: null,
+      role: null
+    };
 
-  socket.on('joinTeam', (teamName, role) => {
-    console.log(`[joinTeam] Reçu de socket ${socket.id} - team: ${teamName}, role: ${role}`);
-
-    // Exemple simple de validation (à adapter)
-    if (!teamName || !role) {
-      console.log(`[joinTeam] Données invalides de la part de ${socket.id}`);
-      socket.emit('error', 'Invalid team or role');
-      return;
+    if (addUserToRoom(user, roomCode)) {
+      socket.join(roomCode);
+      socket.emit('roomJoined', { roomCode });
+      console.log(`${username} a rejoint la salle ${roomCode}`);
+      // Diffuse à tout le monde dans la room la liste des users, etc.
+    } else {
+      socket.emit('error', 'Utilisateur déjà dans la salle');
     }
-
-    // Logique métier ici...
-
-    console.log(`[joinTeam] Socket ${socket.id} a demandé à rejoindre l'équipe ${teamName} avec le rôle ${role}`);
-  });
-
-  // Log tous les événements reçus (utile pour debug)
-  socket.onAny((event, ...args) => {
-    console.log(`⚡ Event reçu: ${event} | Arguments:`, args);
-  });
-
-  socket.on('disconnect', (reason) => {
-    console.log(`❌ Déconnexion socket ${socket.id} - Raison: ${reason}`);
   });
 });
 
@@ -134,16 +145,17 @@ function isUsernameAvailable(username, roomCode) {
   return !room.users.some(user => user.username === username);
 }
 // chat way
-function createRoom(roomCode, gameParameters = getDefaultGameParameters()) {
+function createRoom(roomCode, gameParameters = getDefaultGameParameters(), creatorUser)) {
   const room = {
     code: roomCode,
-    users: [],
+    users: [creatorUser],
     messages: [],
     gameParameters,
     gameState: initializeGameState(gameParameters)
   };
   rooms.set(roomCode, room);
   gameStates.set(roomCode, room.gameState);
+  console.log(`🆕 Salle créée : ${roomCode}`);
   return room;
 }
 
