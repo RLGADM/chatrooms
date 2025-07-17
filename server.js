@@ -7,6 +7,7 @@ import { Server } from 'socket.io';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const indexURL = path.join(__dirname, 'index.html');
 //Bonjour
 const app = express();
 
@@ -21,9 +22,10 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(__dirname));
+
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const server = createServer(app);
