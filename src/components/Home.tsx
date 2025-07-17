@@ -6,6 +6,9 @@ import { GameParameters } from '../types/index';
 import GameConfigModal from './GameConfigModal';
 import { io, Socket } from "socket.io-client";
 
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5173";
+const [isConfigModalOpen, setConfigModalOpen] = useState(false);
+
 //chat pour cookie
 // Fonction pour lire un cookie par nom
 function getCookie(name: string): string | undefined {
@@ -51,14 +54,25 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error
   const [roomCode, setRoomCode] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
-
-  //chat gpt pour cookie
+  //chat pour socket
+  const [socket, setSocket] = useState<Socket | null>(null);
+  
   useEffect(() => {
-    const savedUsername = getCookie('username');
-    if (savedUsername && savedUsername !== username) {
-      setUsername(savedUsername);
-    }
-  }, []);
+  const newSocket = io(SERVER_URL);
+  setSocket(newSocket);
+
+  return () => {
+    newSocket.disconnect(); // proprement
+  };
+}, []); // 👈 FERMETURE correcte du useEffect socket
+
+// Cookie - récupération
+useEffect(() => {
+  const savedUsername = getCookie('username');
+  if (savedUsername && savedUsername !== username) {
+    setUsername(savedUsername);
+  }
+}, []);
 
   // A chaque fois que username change, enregistrer dans un cookie
   useEffect(() => {
