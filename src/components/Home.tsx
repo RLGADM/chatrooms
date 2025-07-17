@@ -1,6 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Plus, LogIn, Sparkles, MessageCircle, Shield, Wifi } from 'lucide-react';
 
+//chat pour cookie
+// Fonction pour lire un cookie par nom
+function getCookie(name: string): string | undefined {
+  const matches = document.cookie.match(
+    new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)')
+  );
+  return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
+// Fonction pour écrire un cookie avec expiration en jours
+function setCookie(name: string, value: string, days: number) {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/`;
+}
+
+
+//bolt
 interface HomeProps {
   onCreateRoom: (username: string) => void;
   onJoinRoom: (username: string, roomCode: string) => void;
@@ -15,6 +33,29 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error
   const [roomCode, setRoomCode] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+
+  //chat gpt pour cookie
+  useEffect(() => {
+    const savedUsername = getCookie('username');
+    if (savedUsername && savedUsername !== username) {
+      setUsername(savedUsername);
+    }
+  }, []);
+
+  // A chaque fois que username change, enregistrer dans un cookie
+  useEffect(() => {
+    if (username) {
+      setCookie('username', username, 30); // 30 jours d'expiration
+    }
+  }, [username]);
+
+  useEffect(() => {
+  if (username) {
+    setCookie('username', username, 30); // Sauvegarde pour 30 jours
+  }
+}, [username]);
+
+// bolt
 
   const handleCreateRoom = (e: React.FormEvent) => {
     e.preventDefault();
