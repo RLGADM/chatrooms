@@ -1,15 +1,13 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
+import express from 'express';
+import cors from 'cors';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 //Bonjour
-
-const express = require('express');
-const cors = require('cors');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
-
 const app = express();
 
 // CORS pour Express
@@ -22,6 +20,11 @@ app.use(cors({
   ],
   credentials: true
 }));
+
+app.use(express.static(path.join(__dirname, 'dist')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 const server = createServer(app);
 
@@ -41,6 +44,11 @@ const io = new Server(server, {
   allowEIO3: true,
   pingTimeout: 60000,
   pingInterval: 25000
+});
+
+// Petite route santé pour Render
+app.get('/health', (req, res) => {
+  res.send('OK');
 });
 
 
@@ -751,7 +759,7 @@ socket.on('joinTeam', (team, role, ack) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
