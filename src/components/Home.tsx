@@ -56,7 +56,9 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error
   const [isJoining, setIsJoining] = useState(false);
  //chat pour verifier si gameConfig est défini
   const [isConfigModalOpen, setConfigModalOpen] = useState(false); 
-  
+  //chat pour room
+  const [users, setUsers] = useState<{ id: string; username: string; room: string }[]>([]);
+  const [inRoom, setInRoom] = useState(false);
   //chat pour socket
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -95,10 +97,40 @@ useEffect(() => {
   }, [username]);
 
   useEffect(() => {
-  if (username) {
-    setCookie('username', username, 30); // Sauvegarde pour 30 jours
-  }
-}, [username]);
+  if (!socket) return;
+
+
+  //rejoindre la romm KO, tentative chat
+  interface RoomData {
+  code: string;
+  users: { id: string; username: string; room: string }[];
+  gameMode: 'standard' | 'custom';
+  parameters: GameParameters;
+  gameState?: unknown; // à adapter si tu as un type précis
+}
+  const handleRoomJoined = (roomData: RoomData) => {
+    console.log('Salon rejoint:', roomData);
+
+    // 1. Stocke les infos (code de la room, utilisateurs, etc.)
+    setRoomCode(roomData.code);
+    setUsers(roomData.users);
+    setGameMode(roomData.gameMode);
+    setParameters(roomData.parameters);
+
+    // 2. Redirige vers la salle (si tu utilises React Router)
+    // navigate(`/room/${roomData.code}`);
+
+    // 3. Ou change l'affichage via un état local
+    setInRoom(true);
+  };
+
+  socket.on('roomJoined', handleRoomJoined);
+
+  return () => {
+    socket.off('roomJoined', handleRoomJoined);
+  };
+}, [socket]);
+
 
 // chat pour gameParams
 const [gameConfig, setGameConfig] = useState<{
@@ -252,7 +284,7 @@ const [parameters, setParameters] = useState<GameParameters>({
       </div>
 
       {/* CSS Animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes floatAcross {
           0% {
             transform: translateX(-20px) translateY(0px) rotate(0deg);
@@ -406,6 +438,7 @@ const [parameters, setParameters] = useState<GameParameters>({
               isOpen={isConfigModalOpen}
               onClose={() => setConfigModalOpen(false)}
               onConfirm={(selectedMode, selectedParameters) => {
+                console.log('Création de salon reçue:', { selectedMode, selectedParameters, username });
                 setConfigModalOpen(false);
                 if (socket) {
                   socket.emit('createRoom', {

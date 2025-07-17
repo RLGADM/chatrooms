@@ -459,7 +459,7 @@ io.on('connection', (socket) => {
     //ancien bolt
     //console.log('User after addUserToRoom:', users.get(socket.id));
     //console.log('Current users in Map after create:', Array.from(users.entries()).map(([id, u]) => ({ id, username: u.username, room: u.room, team: u.team, role: u.role })));
-    
+    console.log('ROOM DATA SENT TO CLIENT:', room);
     socket.emit('roomJoined', room);
     // Envoyer le gameState après un court délai pour s'assurer que le client est prêt
     setTimeout(() => {

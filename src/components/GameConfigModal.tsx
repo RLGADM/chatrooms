@@ -37,7 +37,7 @@ interface GameConfigModalProps {
 // }
 
 const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onConfirm }) => {
-  const [gameMode, setGameMode] = useState<'standard' | 'custom' | null>(null);
+  const [gameMode, setGameMode] = useState<'standard' | 'custom'>('standard');
   const [parameters, setParameters] = useState<GameParameters>({
     ParametersTimeFirst: 20,
     ParametersTimeSecond: 90,
@@ -63,7 +63,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onCo
     setGameMode('custom');
   };
 
-  const handleParameterChange = (key: keyof GameParameters, value: any) => {
+  const handleParameterChange = (key: keyof GameParameters, value: unknown) => {
     setParameters(prev => ({
       ...prev,
       [key]: value
@@ -82,6 +82,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onCo
 
   const handleConfirm = () => {
     if (gameMode !== null) {
+      console.log('handleConfirm called with:', gameMode, parameters);
       onConfirm(gameMode, parameters);
       onClose();
     } else {
@@ -103,7 +104,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onCo
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white/95 backdrop-blur-xl rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
+      <div className="bg-white/95 backdrop-blur-xl rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
         <div className="p-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
