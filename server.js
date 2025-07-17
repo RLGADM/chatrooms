@@ -71,26 +71,62 @@ function isUsernameAvailable(username, roomCode) {
   if (!room) return true;
   return !room.users.some(user => user.username === username);
 }
-
-// Crée un nouveau salon
-function createRoom(roomCode) {
+// chat way
+function createRoom(roomCode, gameParameters = getDefaultGameParameters()) {
   const room = {
     code: roomCode,
     users: [],
     messages: [],
-    gameState: initializeGameState()
+    gameParameters,
+    gameState: initializeGameState(gameParameters)
   };
   rooms.set(roomCode, room);
   gameStates.set(roomCode, room.gameState);
   return room;
 }
 
-// Ajoute un utilisateur à un salon
-function addUserToRoom(user, roomCode) {
-  let room = rooms.get(roomCode);
-  if (!room) {
-    room = createRoom(roomCode);
+// bolt way
+// Crée un nouveau salon
+// function createRoom(roomCode) {
+//   const room = {
+//     code: roomCode,
+//     users: [],
+//     messages: [],
+//     gameState: initializeGameState()
+//   };
+//   rooms.set(roomCode, room);
+//   gameStates.set(roomCode, room.gameState);
+//   return room;
+// }
+//chat way
+function addUserToRoom(user, roomCode, gameParameters) {
+  if (!gameParameters) {
+    gameParameters = {
+      ParametersTimeFirst: 20,
+      ParametersTimeSecond: 90,
+      ParametersTimeThird: 120,
+      ParametersTeamReroll: 2,
+      ParametersTeamMaxForbiddenWords: 6,
+      ParametersTeamMaxPropositions: 5,
+      ParametersPointsMaxScore: 3,
+      ParametersPointsRules: 'no-tie',
+      ParametersWordsListSelection: {
+        veryCommon: true,
+        lessCommon: true,
+        rarelyCommon: false
+      }
+    };
   }
+
+  let room = rooms.get(roomCode);
+  //chat way
+    if (!room) {
+    room = createRoom(roomCode, gameParameters);
+  }
+  //bolt way 
+  // if (!room) {
+  //   room = createRoom(roomCode);
+  // }
   
   // S'assurer que le gameState existe
   if (!room.gameState) {
@@ -120,6 +156,43 @@ function addUserToRoom(user, roomCode) {
   console.log('User object in Map:', users.get(user.id));
   return room;
 }
+
+// bolt way
+// Ajoute un utilisateur à un salon
+// function addUserToRoom(user, roomCode) {
+//   let room = rooms.get(roomCode);
+//   if (!room) {
+//     room = createRoom(roomCode);
+//   }
+  
+//   // S'assurer que le gameState existe
+//   if (!room.gameState) {
+//     console.log('GameState missing, reinitializing...');
+//     room.gameState = initializeGameState();
+//   }
+  
+//   // Tous les nouveaux utilisateurs sont automatiquement spectateurs
+//   user.team = 'spectator';
+//   user.role = 'spectator';
+  
+//   // Ajouter l'utilisateur aux spectateurs du gameState
+//   room.gameState.spectators.push({
+//     id: user.id,
+//     username: user.username,
+//     room: user.room,
+//     team: 'spectator',
+//     role: 'spectator'
+//   });
+  
+//   room.users.push(user);
+//   // S'assurer que l'utilisateur est bien enregistré dans la Map users avec toutes les propriétés
+//   const userWithTeam = { ...user, team: 'spectator', role: 'spectator' };
+//   users.set(user.id, userWithTeam);
+//   console.log(`User ${user.username} added to room ${roomCode}`);
+//   console.log(`User ${user.username} registered in users Map with ID: ${user.id}`);
+//   console.log('User object in Map:', users.get(user.id));
+//   return room;
+// }
 
 // Supprime un utilisateur d'un salon
 function removeUserFromRoom(userId) {
@@ -319,9 +392,12 @@ io.on('connection', (socket) => {
       totalRooms: rooms.size
     });
   });
-
-  // Créer un salon
-  socket.on('createRoom', (username) => {
+    
+  
+    //créer un salon chat
+    socket.on('createRoom', (data) => {
+    const { username, gameMode, parameters } = data;
+    
     let roomCode;
     do {
       roomCode = generateRoomCode();
@@ -332,19 +408,39 @@ io.on('connection', (socket) => {
       return;
     }
 
+    //chat rajout pour gameParams
+    if (!rooms.has(roomCode)) {
+    rooms.set(roomCode, {
+      code: roomCode,
+      users: [],
+      gameState: {},
+      gameMode: gameMode || 'standard',
+      parameters: parameters || getDefaultParameters(), // fonction à définir
+      // autres propriétés si besoin
+    });
+  } 
+  //toujours chat
+    const room = rooms.get(roomCode);
+
+  //de base bolt
     const user = {
       id: socket.id,
       username,
       room: roomCode
     };
+    //chat
+    room.users.push(user);
 
     socket.join(roomCode);
-    
-    const room = addUserToRoom(user, roomCode);
+    //bolt way
+    //const room = addUserToRoom(user, roomCode);
     
     console.log(`${username} a créé et rejoint le salon ${roomCode}`);
-    console.log('User after addUserToRoom:', users.get(socket.id));
-    console.log('Current users in Map after create:', Array.from(users.entries()).map(([id, u]) => ({ id, username: u.username, room: u.room, team: u.team, role: u.role })));
+    console.log('Current users in room:', room.users);
+    
+    //ancien bolt
+    //console.log('User after addUserToRoom:', users.get(socket.id));
+    //console.log('Current users in Map after create:', Array.from(users.entries()).map(([id, u]) => ({ id, username: u.username, room: u.room, team: u.team, role: u.role })));
     
     socket.emit('roomJoined', room);
     // Envoyer le gameState après un court délai pour s'assurer que le client est prêt
@@ -355,6 +451,43 @@ io.on('connection', (socket) => {
     socket.to(roomCode).emit('userJoined', user);
     io.to(roomCode).emit('usersUpdate', room.users);
   });
+
+
+  // Créer un salon bolt
+  // socket.on('createRoom', (username) => {
+  //   let roomCode;
+  //   do {
+  //     roomCode = generateRoomCode();
+  //   } while (rooms.has(roomCode));
+
+  //   if (!isUsernameAvailable(username, roomCode)) {
+  //     socket.emit('usernameTaken');
+  //     return;
+  //   }
+
+  //   const user = {
+  //     id: socket.id,
+  //     username,
+  //     room: roomCode
+  //   };
+
+  //   socket.join(roomCode);
+    
+  //   const room = addUserToRoom(user, roomCode);
+    
+  //   console.log(`${username} a créé et rejoint le salon ${roomCode}`);
+  //   console.log('User after addUserToRoom:', users.get(socket.id));
+  //   console.log('Current users in Map after create:', Array.from(users.entries()).map(([id, u]) => ({ id, username: u.username, room: u.room, team: u.team, role: u.role })));
+    
+  //   socket.emit('roomJoined', room);
+  //   // Envoyer le gameState après un court délai pour s'assurer que le client est prêt
+  //   setTimeout(() => {
+  //     socket.emit('gameStateUpdate', room.gameState);
+  //     io.to(roomCode).emit('gameStateUpdate', room.gameState);
+  //   }, 100);
+  //   socket.to(roomCode).emit('userJoined', user);
+  //   io.to(roomCode).emit('usersUpdate', room.users);
+  // });
 
   // Rejoindre un salon
   socket.on('joinRoom', (username, roomCode) => {

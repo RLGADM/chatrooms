@@ -270,16 +270,39 @@ const App: React.FC = () => {
     initializeConnection();
   }, []);
 
-  const handleCreateRoom = (username: string) => {
-    if (!socket || !isConnected) {
-      setError('Connexion au serveur en cours. Veuillez patienter.');
-      return;
-    }
+//chat pour handleCreateRoom
+const handleCreateRoom = (
+  username: string,
+  gameMode: 'standard' | 'custom',
+  parameters: GameParameters
+) => {
+  if (!socket || !isConnected) {
+    setError('Connexion au serveur en cours. Veuillez patienter.');
+    return;
+  }
+
+  // 👇 Exemple : envoyer tout ça via le socket
+  socket.emit('createRoom', {
+    username,
+    gameMode,
+    parameters,
+  });
+
+  console.log('Création de salon :', { username, gameMode, parameters });
+};
+
+
+  // bolt
+  // const handleCreateRoom = (username: string) => {
+  //   if (!socket || !isConnected) {
+  //     setError('Connexion au serveur en cours. Veuillez patienter.');
+  //     return;
+  //   }
     
-    // Stocker le nom d'utilisateur et ouvrir la modal de configuration
-    setPendingUsername(username);
-    setShowGameConfig(true);
-  };
+  //   // Stocker le nom d'utilisateur et ouvrir la modal de configuration
+  //   setPendingUsername(username);
+  //   setShowGameConfig(true);
+  // };
 
   const handleGameConfigConfirm = (parameters: GameParameters) => {
     if (socket && isConnected && pendingUsername) {

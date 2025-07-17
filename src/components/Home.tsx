@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, LogIn, Sparkles, MessageCircle, Shield, Wifi } from 'lucide-react';
 
+//chat pour gameParams
+import { GameParameters } from '../types/index';
+
 //chat pour cookie
 // Fonction pour lire un cookie par nom
 function getCookie(name: string): string | undefined {
@@ -17,15 +20,28 @@ function setCookie(name: string, value: string, days: number) {
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/`;
 }
 
-
-//bolt
+// chat pour HomeProps
 interface HomeProps {
-  onCreateRoom: (username: string) => void;
+  onCreateRoom: (
+    username: string,
+    gameMode: 'standard' | 'custom',
+    parameters: GameParameters
+  ) => void;
   onJoinRoom: (username: string, roomCode: string) => void;
   onDemoMode: () => void;
   error: string | null;
   isConnected: boolean;
 }
+
+
+//bolt
+// interface HomeProps {
+//   onCreateRoom: (username: string) => void;
+//   onJoinRoom: (username: string, roomCode: string) => void;
+//   onDemoMode: () => void;
+//   error: string | null;
+//   isConnected: boolean;
+// }
 
 
 const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error, isConnected }) => {
@@ -54,6 +70,31 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error
     setCookie('username', username, 30); // Sauvegarde pour 30 jours
   }
 }, [username]);
+
+// chat pour gameParams
+const [gameConfig, setGameConfig] = useState<{
+  mode: 'standard' | 'custom';
+  parameters: GameParameters;
+} | null>(null);
+// chat pour import gameParams
+const [gameMode, setGameMode] = useState<'standard' | 'custom'>('standard');
+
+const [parameters, setParameters] = useState<GameParameters>({
+  ParametersTimeFirst: 20,
+  ParametersTimeSecond: 90,
+  ParametersTimeThird: 120,
+  ParametersTeamReroll: 2,
+  ParametersTeamMaxForbiddenWords: 6,
+  ParametersTeamMaxPropositions: 5,
+  ParametersPointsMaxScore: 3,
+  ParametersPointsRules: 'no-tie',
+  ParametersWordsListSelection: {
+    veryCommon: true,
+    lessCommon: true,
+    rarelyCommon: false
+  }
+});
+
 
 // bolt
 

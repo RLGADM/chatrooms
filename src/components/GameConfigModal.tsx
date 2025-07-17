@@ -2,6 +2,27 @@ import React, { useState } from 'react';
 import { X, Settings, Clock, Users, Trophy, BookOpen, Sparkles } from 'lucide-react';
 import { GameParameters } from '../types';
 
+//ajout fonction par défaut
+function getDefaultParameters(): GameParameters {
+  return {
+    ParametersTimeFirst: 20,
+    ParametersTimeSecond: 90,
+    ParametersTimeThird: 120,
+    ParametersTeamReroll: 2,
+    ParametersTeamMaxForbiddenWords: 6,
+    ParametersTeamMaxPropositions: 5,
+    ParametersPointsMaxScore: 3,
+    ParametersPointsRules: 'no-tie',
+    ParametersWordsListSelection: {
+      veryCommon: true,
+      lessCommon: true,
+      rarelyCommon: false,
+    },
+  };
+}
+
+
+
 interface GameConfigModalProps {
   isOpen: boolean;
   onClose: () => void;

@@ -68,7 +68,7 @@ export interface ServerToClientEvents {
   teamJoinSuccess: (data: { team: string; role: string; gameState: GameState }) => void;
   teamJoinError: (error: string) => void;
   pong: (data: { timestamp: string; socketId: string; userExists: boolean; userInfo: User | null }) => void;
-  debugUsersResponse: (data: any) => void;
+  //debugUsersResponse: (data: any) => void;
   gameParametersSet: (parameters: GameParameters) => void;
   roomRoleChanged: (data: { userId: string; newRole: RoomRole }) => void;
   userKicked: (data: { userId: string; reason: string }) => void;
@@ -76,7 +76,14 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  createRoom: (username: string) => void;
+  //chat pour params
+  createRoom: (payload: {
+  username: string;
+  gameMode: 'standard' | 'custom';
+  parameters: GameParameters;
+}) => void;
+  //bolt
+  //createRoom: (username: string) => void;
   joinRoom: (username: string, roomCode: string) => void;
   sendMessage: (message: string) => void;
   disconnect: () => void;
