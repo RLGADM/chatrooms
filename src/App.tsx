@@ -24,7 +24,7 @@ const App: React.FC = () => {
   // Configuration du serveur Socket.IO
   const SERVER_URL = import.meta.env.PROD 
     ? 'https://chatrooms-server.onrender.com'
-    : 'http://localhost:3001';
+    : 'https://chatrooms-server.onrender.com';
 
   useEffect(() => {
     // Fonction pour réveiller le serveur
