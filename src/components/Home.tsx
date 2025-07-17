@@ -56,6 +56,9 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error
   const [isJoining, setIsJoining] = useState(false);
   //chat pour socket
   const [socket, setSocket] = useState<Socket | null>(null);
+
+ //chat pour verifier si gameConfig est défini
+  const [isConfigModalOpen, setConfigModalOpen] = useState(false); 
   
   useEffect(() => {
   const newSocket = io(SERVER_URL);
@@ -110,8 +113,6 @@ const [parameters, setParameters] = useState<GameParameters>({
     rarelyCommon: false
   }
 });
-//chat pour verifier si gameConfig est défini
-const [isConfigModalOpen, setConfigModalOpen] = useState(false);
 
 
 // bolt
