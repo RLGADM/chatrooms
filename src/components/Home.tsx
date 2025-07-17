@@ -54,12 +54,12 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error
   const [roomCode, setRoomCode] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
-  //chat pour socket
-  const [socket, setSocket] = useState<Socket | null>(null);
-
  //chat pour verifier si gameConfig est défini
   const [isConfigModalOpen, setConfigModalOpen] = useState(false); 
   
+  //chat pour socket
+  const [socket, setSocket] = useState<Socket | null>(null);
+
   useEffect(() => {
   const newSocket = io(SERVER_URL);
   setSocket(newSocket);
@@ -68,7 +68,17 @@ const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error
     newSocket.disconnect(); // proprement
   };
 }, []); // 👈 FERMETURE correcte du useEffect socket
-
+  // Fonction qui sera passée au modal
+  const handleConfirmConfig = (selectedMode: 'standard' | 'custom', selectedParameters: GameParameters) => {
+    setConfigModalOpen(false);
+    if (socket) {
+      socket.emit('createRoom', {
+        username,  // ton pseudo stocké dans ce composant
+        gameMode: selectedMode,
+        parameters: selectedParameters
+      });
+    }
+  };
 // Cookie - récupération
 useEffect(() => {
   const savedUsername = getCookie('username');
@@ -397,11 +407,15 @@ const [parameters, setParameters] = useState<GameParameters>({
               onClose={() => setConfigModalOpen(false)}
               onConfirm={(selectedMode, selectedParameters) => {
                 setConfigModalOpen(false);
-                socket.emit('createRoom', {
-                  username,
-                  gameMode: selectedMode,
-                  parameters: selectedParameters
-                });
+                if (socket) {
+                  socket.emit('createRoom', {
+                    username,
+                    gameMode: selectedMode,
+                    parameters: selectedParameters
+                  });
+                } else {
+                  console.warn('Socket non connecté au moment de la création du salon');
+                }
               }}
             />
             {/* bolt way */}

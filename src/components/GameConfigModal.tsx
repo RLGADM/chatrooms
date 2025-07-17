@@ -81,8 +81,13 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onCo
   };
 
   const handleConfirm = () => {
-    onConfirm(parameters);
-    onClose();
+    if (gameMode !== null) {
+      onConfirm(gameMode, parameters);
+      onClose();
+    } else {
+      // Optionnel : afficher une erreur ou ne rien faire
+      console.warn('Veuillez sélectionner un mode de jeu avant de valider.');
+    }
   };
 
   const canConfirm = gameMode !== null && (
@@ -161,7 +166,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onCo
             </div>
           </div>
               {/* //chat add pour verif pop up */}
-          <GameConfigModal
+          {/* <GameConfigModal
             isOpen={isConfigModalOpen}
             onClose={() => setConfigModalOpen(false)}
             onConfirm={(selectedMode, selectedParameters) => {
@@ -172,7 +177,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onCo
                 parameters: selectedParameters
               });
             }}
-          />
+          /> */}
 
           {/* Custom Parameters de bolt*/}
           {gameMode === 'custom' && (
