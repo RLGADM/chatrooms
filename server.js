@@ -145,7 +145,7 @@ function isUsernameAvailable(username, roomCode) {
   return !room.users.some(user => user.username === username);
 }
 // chat way
-function createRoom(roomCode, gameParameters = getDefaultGameParameters(), creatorUser)) {
+function createRoom(roomCode, gameParameters = getDefaultGameParameters(), creatorUser) {
   const room = {
     code: roomCode,
     users: [creatorUser],
