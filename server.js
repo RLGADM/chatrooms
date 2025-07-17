@@ -565,17 +565,7 @@ io.on('connection', (socket) => {
 
   // Rejoindre un salon
   socket.on('joinRoom', (username, roomCode) => {
-    const room = rooms.get(roomCode);
-    
-    if (!room) {
-      socket.emit('roomNotFound');
-      return;
-    }
-
-    if (!isUsernameAvailable(username, roomCode)) {
-      socket.emit('usernameTaken');
-      return;
-    }
+    console.log(`[JOIN ROOM] ${username} tente de rejoindre ${roomCode}`);
 
     const user = {
       id: socket.id,
@@ -583,23 +573,16 @@ io.on('connection', (socket) => {
       room: roomCode
     };
 
-    socket.join(roomCode);
-    
+    // Ajouter l'utilisateur à la room (crée la room si elle n'existe pas)
     addUserToRoom(user, roomCode);
-    
-    console.log(`${username} a rejoint le salon ${roomCode}`);
-    console.log('User after addUserToRoom:', users.get(socket.id));
-    console.log('Current users in Map after join:', Array.from(users.entries()).map(([id, u]) => ({ id, username: u.username, room: u.room, team: u.team, role: u.role })));
-    
-    socket.emit('roomJoined', room);
-    // Envoyer le gameState après un court délai pour s'assurer que le client est prêt
-    setTimeout(() => {
-      socket.emit('gameStateUpdate', room.gameState);
-      io.to(roomCode).emit('gameStateUpdate', room.gameState);
-    }, 100);
-    socket.to(roomCode).emit('userJoined', user);
-    io.to(roomCode).emit('usersUpdate', room.users);
+
+    // Joindre la socket.io room
+    socket.join(roomCode);
+
+    // Optionnel mais recommandé : stocker dans la map users
+    users.set(socket.id, user);
   });
+
 
   // Rejoindre une équipe
   socket.on('joinTeam', (team, role) => {
