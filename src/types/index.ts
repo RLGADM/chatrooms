@@ -25,6 +25,16 @@ export interface User {
   roomRole?: RoomRole;
 }
 
+export interface RoomData {
+  code: string;
+  users: User[];
+  messages: Message[];
+  gameMode: 'standard' | 'custom';
+  parameters: GameParameters;
+  gameState?: unknown; // à préciser si tu veux typer le jeu en cours
+  creator: string; // ID du créateur
+}
+
 export interface Message {
   id: string;
   username: string;
@@ -51,10 +61,19 @@ export interface Room {
   code: string;
   users: User[];
   messages: Message[];
-  gameState?: GameState;
-  gameParameters?: GameParameters;
+  gameMode: 'standard' | 'custom';
+  parameters: GameParameters;
+  gameState?: unknown; // à préciser si tu veux typer le jeu en cours
   creator: string; // ID du créateur
 }
+// export interface Room {
+//   code: string;
+//   users: User[];
+//   messages: Message[];
+//   gameState?: GameState;
+//   gameParameters: GameParameters;
+//   creator: string; // ID du créateur
+// }
 
 export interface ServerToClientEvents {
   roomJoined: (room: Room) => void;

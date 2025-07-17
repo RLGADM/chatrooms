@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Users, Plus, LogIn, Sparkles, MessageCircle, Shield, Wifi } from 'lucide-react';
 
 //chat pour gameParams
-import { GameParameters } from '../types/index';
+//import { GameParameters } from '../types/index';
+import { GameParameters, RoomData as RoomType, User, Message, ServerToClientEvents, ClientToServerEvents } from '../types';
 import GameConfigModal from './GameConfigModal';
 import { io, Socket } from "socket.io-client";
+import { getDefaultParameters } from '../utils/defaultParameters'; // ou '../types/defaults'
 
+// moi pour import RoomData
+// aitre chose
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5173";
 
 
@@ -51,14 +55,17 @@ interface HomeProps {
 
 const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error, isConnected }) => {
   const [username, setUsername] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
   const [roomCode, setRoomCode] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
  //chat pour verifier si gameConfig est défini
   const [isConfigModalOpen, setConfigModalOpen] = useState(false); 
   //chat pour room
-  const [users, setUsers] = useState<{ id: string; username: string; room: string }[]>([]);
+  const [parameters, setParameters] = useState<GameParameters>(getDefaultParameters());
   const [inRoom, setInRoom] = useState(false);
+
+
   //chat pour socket
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -101,14 +108,8 @@ useEffect(() => {
 
 
   //rejoindre la romm KO, tentative chat
-  interface RoomData {
-  code: string;
-  users: { id: string; username: string; room: string }[];
-  gameMode: 'standard' | 'custom';
-  parameters: GameParameters;
-  gameState?: unknown; // à adapter si tu as un type précis
-}
-  const handleRoomJoined = (roomData: RoomData) => {
+
+  const handleRoomJoined = (roomData: RoomType) => {
     console.log('Salon rejoint:', roomData);
 
     // 1. Stocke les infos (code de la room, utilisateurs, etc.)
@@ -116,6 +117,7 @@ useEffect(() => {
     setUsers(roomData.users);
     setGameMode(roomData.gameMode);
     setParameters(roomData.parameters);
+    
 
     // 2. Redirige vers la salle (si tu utilises React Router)
     // navigate(`/room/${roomData.code}`);
@@ -140,22 +142,6 @@ const [gameConfig, setGameConfig] = useState<{
 // chat pour import gameParams
 const [gameMode, setGameMode] = useState<'standard' | 'custom'>('standard');
 
-const [parameters, setParameters] = useState<GameParameters>({
-  ParametersTimeFirst: 20,
-  ParametersTimeSecond: 90,
-  ParametersTimeThird: 120,
-  ParametersTeamReroll: 2,
-  ParametersTeamMaxForbiddenWords: 6,
-  ParametersTeamMaxPropositions: 5,
-  ParametersPointsMaxScore: 3,
-  ParametersPointsRules: 'no-tie',
-  ParametersWordsListSelection: {
-    veryCommon: true,
-    lessCommon: true,
-    rarelyCommon: false
-  }
-});
-
 
 // bolt
 
@@ -163,7 +149,7 @@ const [parameters, setParameters] = useState<GameParameters>({
     e.preventDefault();
     if (username.trim() && isConnected) {
       setIsCreating(true);
-      onCreateRoom(username.trim());
+      onCreateRoom(username.trim(), gameMode, parameters);
       setTimeout(() => setIsCreating(false), 3000);
     }
   };
@@ -522,7 +508,7 @@ const [parameters, setParameters] = useState<GameParameters>({
 
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500">
-              Application de chat temps réel sécurisée
+              Kensho by Winry
             </p>
           </div>
         </div>

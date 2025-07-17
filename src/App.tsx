@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Home from './components/Home';
-import Room from './components/Room';
 import DemoMode from './components/DemoMode';
 import KeepAlive from './components/KeepAlive';
+import RoomCreated from './components/RoomCreated';
 import SocketDebugger from './components/SocketDebugger';
 import GameConfigModal from './components/GameConfigModal';
-import { Room as RoomType, User, Message, ServerToClientEvents, ClientToServerEvents, GameParameters } from './types';
+import { Room as RoomType, User, Message, ServerToClientEvents, ClientToServerEvents, GameParameters, Room } from './types';
+import { getDefaultParameters } from './utils/defaultParameters';
+
 
 type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -20,7 +22,16 @@ const App: React.FC = () => {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [showGameConfig, setShowGameConfig] = useState(false);
   const [pendingUsername, setPendingUsername] = useState<string | null>(null);
+  const [inRoom, setInRoom] = useState(false)
+  // chat test pour join room
+// const [inRoom, setInRoom] = useState(false);
+// const [roomCode, setRoomCode] = useState('');
+// const [users, setUsers] = useState([]);
+// const [gameMode, setGameMode] = useState<'standard' | 'custom'>('standard');
+// const [parameters, setParameters] = useState<any>({});
+// chat deuxièle test pour join room
 
+ 
   // Configuration du serveur Socket.IO
   // const SERVER_URL = import.meta.env.PROD 
   //   ? 'https://kensho-hab0.onrender.com'
@@ -161,34 +172,37 @@ const App: React.FC = () => {
         }
       }, 5000);
     });
-
-    newSocket.on('roomJoined', (room: RoomType) => {
-      console.log('Salon rejoint:', room);
-      setCurrentRoom(room);
-      // S'assurer que le gameState est initialisé
-      if (!room.gameState) {
-        room.gameState = {
-          currentPhase: 0,
-          phases: [
-            "Attente début de la manche",
-            "Phase 1 - Choix du mot", 
-            "Phase 2 - Choix des mots interdits",
-            "Phase 3 - Discours du Sage"
-          ],
-          teams: {
-            red: { sage: null, disciples: [] },
-            blue: { sage: null, disciples: [] }
-          },
-          spectators: room.users.map(user => ({ ...user, team: 'spectator', role: 'spectator' })),
-          timer: null,
-          timeRemaining: 0,
-          totalTime: 0,
-          isPlaying: false,
-          score: { red: 0, blue: 0 }
-        };
-      }
-      setError(null);
-    });
+    // Nouvelle version de roomJoined
+        
+    
+    // ancienne version de roomJoined
+    // newSocket.on('roomJoined', (room: Room) => {
+    //   console.log('Salon rejoint:', room);
+    //   setCurrentRoom(room);
+    //   // S'assurer que le gameState est initialisé
+    //   if (!room.gameState) {
+    //     room.gameState = {
+    //       currentPhase: 0,
+    //       phases: [
+    //         "Attente début de la manche",
+    //         "Phase 1 - Choix du mot", 
+    //         "Phase 2 - Choix des mots interdits",
+    //         "Phase 3 - Discours du Sage"
+    //       ],
+    //       teams: {
+    //         red: { sage: null, disciples: [] },
+    //         blue: { sage: null, disciples: [] }
+    //       },
+    //       spectators: room.users.map(user => ({ ...user, team: 'spectator', role: 'spectator' })),
+    //       timer: null,
+    //       timeRemaining: 0,
+    //       totalTime: 0,
+    //       isPlaying: false,
+    //       score: { red: 0, blue: 0 }
+    //     };
+    //   }
+    //   setError(null);
+    // });
 
     newSocket.on('userJoined', (user: User) => {
       console.log('Utilisateur rejoint:', user);
@@ -290,7 +304,46 @@ const handleCreateRoom = (
 
   console.log('Création de salon :', { username, gameMode, parameters });
 };
+    useEffect(() => {
+      if (!socket) return;
 
+      const handleRoomJoined = (room: RoomType) => {
+        console.log('Salon rejoint:', room);
+
+        // Initialiser gameState si non défini
+        if (!room.gameState) {
+          room.gameState = {
+            currentPhase: 0,
+            phases: [
+              "Attente début de la manche",
+              "Phase 1 - Choix du mot", 
+              "Phase 2 - Choix des mots interdits",
+              "Phase 3 - Discours du Sage"
+            ],
+            teams: {
+              red: { sage: null, disciples: [] },
+              blue: { sage: null, disciples: [] }
+            },
+            spectators: room.users.map(user => ({ ...user, team: 'spectator', role: 'spectator' })),
+            timer: null,
+            timeRemaining: 0,
+            totalTime: 0,
+            isPlaying: false,
+            score: { red: 0, blue: 0 }
+          };
+        }
+
+        setCurrentRoom(room);
+        setInRoom(true);
+        setError(null);
+      };
+
+      socket.on('roomJoined', handleRoomJoined);
+
+      return () => {
+        socket.off('roomJoined', handleRoomJoined);
+      };
+    }, [socket]);
 
   // bolt
   // const handleCreateRoom = (username: string) => {
@@ -314,7 +367,11 @@ const handleCreateRoom = (
       });
       
       // Émettre la création de salon avec les paramètres
-      socket.emit('createRoom', pendingUsername);
+      socket.emit('createRoom', {
+        username: pendingUsername,
+        gameMode: 'standard', // ou 'custom' si nécessaire
+        parameters: getDefaultParameters() // si tu as une fonction ou un objet par défaut
+      });
       socket.emit('setGameParameters', parameters);
       
       setError(null);
@@ -334,7 +391,6 @@ const handleCreateRoom = (
         id: socket.id || '',
         username,
         room: roomCode,
-        roomRole: 'Débutant' // Les nouveaux joueurs sont Débutants par défaut
       });
       socket.emit('joinRoom', username, roomCode);
       setError(null);
@@ -379,7 +435,7 @@ const handleCreateRoom = (
             </div>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-3">
-            Connexion au serveur Kensho.
+            Connexion au serveur Kensho
           </h2>
           <p className="text-gray-600 mb-4">
             Établissement de la connexion...
@@ -420,10 +476,10 @@ const handleCreateRoom = (
     );
   }
 
-  if (currentRoom && currentUser) {
+  if (inRoom && currentRoom && currentUser) {
     return (
       <>
-        <Room
+        <RoomCreated
           room={currentRoom}
           currentUser={currentUser}
           onSendMessage={handleSendMessage}
@@ -433,7 +489,7 @@ const handleCreateRoom = (
         <SocketDebugger socket={socket} isConnected={isConnected} />
       </>
     );
-  }
+  } else {
 
   return (
     <>
@@ -446,14 +502,9 @@ const handleCreateRoom = (
         error={error}
         isConnected={isConnected}
       />
-      
-      <GameConfigModal
-        isOpen={showGameConfig}
-        onClose={handleGameConfigCancel}
-        onConfirm={handleGameConfigConfirm}
-      />
     </>
-  );
-};
+   );
+  };
+}
 
 export default App;
