@@ -108,7 +108,7 @@ const rooms = new Map();
 const users = new Map();
 
 // Structure pour stocker l'état du jeu par salon
-const gameState = new Map();
+const gameStates = new Map();
 
 // Génère un code de salon aléatoire
 function generateRoomCode() {
