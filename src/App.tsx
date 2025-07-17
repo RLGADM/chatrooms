@@ -86,16 +86,16 @@ const App: React.FC = () => {
     });
 
     // Debug: Écouter tous les événements
-    newSocket.onAny((eventName, ...args) => {
-      console.log(`[CLIENT EVENT IN] ${eventName}:`, args);
-    });
+    //newSocket.onAny((eventName, ...args) => {
+      //console.log(`[CLIENT EVENT IN] ${eventName}:`, args);
+    //});
 
     // Intercepter les émissions pour debug
-    const originalEmit = newSocket.emit.bind(newSocket);
-    newSocket.emit = function(eventName: string, ...args: any[]) {
-      console.log(`[CLIENT EVENT OUT] ${eventName}:`, args);
-      return originalEmit(eventName, ...args);
-    };
+    // const originalEmit = newSocket.emit.bind(newSocket);
+    // newSocket.emit = function(eventName: string, ...args: any[]) {
+    //   console.log(`[CLIENT EVENT OUT] ${eventName}:`, args);
+    //   return originalEmit(eventName, ...args);
+    // };
 
     newSocket.on('connect', () => {
       console.log('Connecté au serveur');
