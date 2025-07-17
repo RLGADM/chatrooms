@@ -434,7 +434,9 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                     </button>
                     <span className="text-blue-200 text-sm font-semibold">Phase</span>
                   </div>
-                  <h3 className="text-white font-bold text-sm">{gameState.phases[gameState.currentPhase]}</h3>
+                  <h3 className="text-white font-bold text-sm">
+                  {gameState?.phases?.[gameState.currentPhase] || "Phase inconnue"}
+                </h3>
                 </div>
               </div>
               
@@ -468,7 +470,9 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                     <Trophy className="w-5 h-5 text-purple-300 mr-2" />
                     <span className="text-purple-200 text-sm font-semibold">Score</span>
                   </div>
-                  <h3 className="text-white font-bold text-lg">{gameState.score.red} - {gameState.score.blue}</h3>
+                  <h3 className="text-white font-bold text-lg">
+                  {gameState?.score?.red ?? 0} - {gameState?.score?.blue ?? 0}
+                </h3>
                 </div>
               </div>
             </div>
@@ -505,8 +509,8 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                       {isJoiningTeam ? 'En cours...' : 'Rejoindre'}
                     </button>
                   </div>
-                  <div className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 ${gameState.teams.red.sage ? 'opacity-100' : 'opacity-50'}`}>
-                    {gameState.teams.red.sage ? (
+                  <div className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 ${gameState?.teams?.red?.sage ? 'opacity-100' : 'opacity-50'}`}>
+                    {gameState?.teams?.red?.sage ? (
                       renderUserCard(gameState.teams.red.sage, 'red', 'sage')
                     ) : (
                       <div className="text-center text-white/60 text-sm py-4">
@@ -532,14 +536,14 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                     </button>
                   </div>
                   <div className="space-y-3">
-                    {gameState.teams.red.disciples.length === 0 ? (
+                    {(!gameState?.teams?.red?.disciples || gameState.teams.red.disciples.length === 0) ? (
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 opacity-50">
                         <div className="text-center text-white/60 text-sm py-2">
                           Aucun disciple
                         </div>
                       </div>
                     ) : (
-                      gameState.teams.red.disciples.map(disciple => (
+                      gameState?.teams?.red?.disciples?.map(disciple => (
                         <div key={disciple.id}>
                           {renderUserCard(disciple, 'red', 'disciple')}
                         </div>
@@ -585,7 +589,7 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                     scrollbarWidth: 'thin',
                     scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)'
                   }}>
-                    {room.messages.length === 0 ? (
+                    {(!room?.messages || room.messages.length === 0) ? (
                       <div className="text-center text-white/60 py-12">
                         <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p className="text-lg font-medium mb-2">Aucun message pour le moment</p>
@@ -689,8 +693,8 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                       {isJoiningTeam ? 'En cours...' : 'Rejoindre'}
                     </button>
                   </div>
-                  <div className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 ${gameState.teams.blue.sage ? 'opacity-100' : 'opacity-50'}`}>
-                    {gameState.teams.blue.sage ? (
+                  <div className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 ${gameState?.teams?.blue?.sage ? 'opacity-100' : 'opacity-50'}`}>
+                    {gameState?.teams?.blue?.sage ? (
                       renderUserCard(gameState.teams.blue.sage, 'blue', 'sage')
                     ) : (
                       <div className="text-center text-white/60 text-sm py-4">
@@ -716,14 +720,14 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                     </button>
                   </div>
                   <div className="space-y-3">
-                    {gameState.teams.blue.disciples.length === 0 ? (
+                    {gameState?.teams?.blue?.disciples?.length === 0 ? (
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 opacity-50">
                         <div className="text-center text-white/60 text-sm py-2">
                           Aucun disciple
                         </div>
                       </div>
                     ) : (
-                      gameState.teams.blue.disciples.map(disciple => (
+                      gameState?.teams?.blue?.disciples?.map(disciple => (
                         <div key={disciple.id}>
                           {renderUserCard(disciple, 'blue', 'disciple')}
                         </div>
@@ -756,18 +760,18 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                 </div>
                 
                 <div className="space-y-3">
-                  {gameState.spectators.length === 0 ? (
+                  {gameState?.spectators?.length === 0 ? (
                     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 opacity-50">
                       <div className="text-center text-white/60 text-sm py-2">
                         Aucun spectateur
                       </div>
                     </div>
                   ) : (
-                    gameState.spectators.map(spectator => (
+                    gameState?.spectators?.map(spectator => (
                       <div key={spectator.id}>
                         {renderUserCard(spectator, 'spectator', 'spectator')}
                       </div>
-                    ))
+                    )) 
                   )}
                 </div>
               </div>
@@ -808,10 +812,7 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
                   <RefreshCw className="w-8 h-8 text-orange-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">Voulez-vous réinitialiser la partie ?</h3>
-                <p className="text-gray-600">
-                  Cette action va remettre à zéro tous les scores, les équipes et l'état du jeu. 
-                  Cette action est irréversible.
-                </p>
+
               </div>
               
               {/* Action Buttons */}

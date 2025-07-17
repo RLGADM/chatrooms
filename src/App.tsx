@@ -23,7 +23,39 @@ const App: React.FC = () => {
   const [showGameConfig, setShowGameConfig] = useState(false);
   const [pendingUsername, setPendingUsername] = useState<string | null>(null);
   const [inRoom, setInRoom] = useState(false)
+
+  //hydrated
+  const [hydrated, setHydrated] = useState(false);
+  // chat test pour join room localstorage
+  useEffect(() => {
+  const storedUser = localStorage.getItem('currentUser');
+  const storedRoom = localStorage.getItem('currentRoom');
+  //hydratation
+
+  if (storedUser && storedRoom) {
+    try {
+      setCurrentUser(JSON.parse(storedUser));
+      setCurrentRoom(JSON.parse(storedRoom));
+      setInRoom(true);
+      console.log("🎯 Hydratation depuis localStorage réussie");
+    } catch (err) {
+      console.error("Erreur parsing localStorage:", err);
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('currentRoom');
+    }
+  }
+}, []);
+
   // chat test pour join room
+  const joinRoom = (user: User, room: RoomType) => {
+  setCurrentUser(user);
+  setCurrentRoom(room);
+  setInRoom(true);
+
+  // Sauvegarde dans le localStorage
+  localStorage.setItem('currentUser', JSON.stringify(user));
+  localStorage.setItem('currentRoom', JSON.stringify(room));
+};
 // const [inRoom, setInRoom] = useState(false);
 // const [roomCode, setRoomCode] = useState('');
 // const [users, setUsers] = useState([]);
@@ -44,6 +76,44 @@ const App: React.FC = () => {
   //   withCredentials: true
   // });
 
+  // useEffect(() => {room
+  useEffect(() => {
+    const storedUser = localStorage.getItem('currentUser');
+    const storedRoom = localStorage.getItem('currentRoom');
+  
+    if (storedUser && storedRoom) {
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+        setCurrentRoom(JSON.parse(storedRoom));
+        setInRoom(true);
+        console.log("🎯 Hydratation depuis localStorage réussie");
+      } catch (err) {
+        console.error("Erreur parsing localStorage:", err);
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('currentRoom');
+      }
+    }
+    setHydrated(true);
+  }, []);
+  // useEffect(() => {2
+  useEffect(() => {
+    if (socket && currentUser && currentRoom && isConnected && hydrated) {
+      console.log('🔁 Reconnexion à la room...');
+      socket.emit('joinRoom', currentUser.username, currentRoom.code);
+    }
+  }, [socket, currentUser, currentRoom, isConnected]);
+
+  // ✅ Ici tu mets ton socket.on('connect', ...) en dehors du useEffect, ou dans un autre useEffect
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('connect', () => {
+      console.log('✅ Connecté au serveur');
+      setIsConnected(true);
+    });
+    return () => {
+      socket.off('connect');
+    };
+  }, [socket]);
 
   // reprise bolt
   useEffect(() => {
@@ -124,15 +194,12 @@ const App: React.FC = () => {
       setIsConnected(true);
       setIsConnecting(false);
       setError(null);
+      console.log('currentUser au reconnect:', currentUser);
+      console.log('currentRoom au reconnect:', currentRoom);
       
       // Si on était dans une room, essayer de la rejoindre
-      if (currentUser && currentRoom) {
-        console.log('Reconnecting to room after server wake up...');
-        setTimeout(() => {
-          newSocket.emit('joinRoom', currentUser.username, currentRoom.code);
-        }, 1000);
-      }
     });
+
 
     newSocket.on('disconnect', () => {
       console.log('Déconnecté du serveur');
@@ -333,9 +400,17 @@ const handleCreateRoom = (
           };
         }
 
-        setCurrentRoom(room);
+        const me = room.users.find(user => user.id === socket?.id);
+          if (me) {
+            joinRoom(me, room);
+          } else {
+            console.warn("Utilisateur non trouvé dans la room après jonction.");
+          }
+
         setInRoom(true);
         setError(null);
+        console.log({ isConnected, inRoom, currentRoom, currentUser });
+
       };
 
       socket.on('roomJoined', handleRoomJoined);

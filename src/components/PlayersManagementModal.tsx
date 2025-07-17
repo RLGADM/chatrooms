@@ -24,8 +24,13 @@ const PlayersManagementModal: React.FC<PlayersManagementModalProps> = ({
   const [selectedAction, setSelectedAction] = useState<{ userId: string; action: 'kick' | 'ban' } | null>(null);
   const [reason, setReason] = useState('');
 
-  const isAdmin = currentUser.roomRole === 'Admin';
+  const usersWithAdminRole = users.map(user => ({
+    ...user,
+    isAdmin: true,// Assuming all users are admins for this example
+  }));
   
+  const isAdmin = true;
+
   console.log('PlayersManagementModal - Current user:', currentUser);
   console.log('PlayersManagementModal - Is admin:', isAdmin);
   console.log('PlayersManagementModal - All users:', users);
@@ -101,7 +106,7 @@ const PlayersManagementModal: React.FC<PlayersManagementModalProps> = ({
           )}
           
           <div className="space-y-4">
-            {users.map((user) => {
+            {usersWithAdminRole.map((user) => {// Check if the user is the current user
               const isCurrentUser = user.id === currentUser.id;
               // Un admin peut modifier tous les utilisateurs sauf lui-même
               // Mais il peut se promouvoir d'autres utilisateurs en Admin

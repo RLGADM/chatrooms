@@ -23,6 +23,7 @@ export interface User {
   team?: 'red' | 'blue' | 'spectator';
   role?: 'sage' | 'disciple' | 'spectator';
   roomRole?: RoomRole;
+  isAdmin?: boolean; // Indique si l'utilisateur est un administrateur de la salle
 }
 
 export interface RoomData {
