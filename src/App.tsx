@@ -22,9 +22,12 @@ const App: React.FC = () => {
   const [pendingUsername, setPendingUsername] = useState<string | null>(null);
 
   // Configuration du serveur Socket.IO
-  const SERVER_URL = import.meta.env.PROD 
-    ? 'https://chatrooms-server.onrender.com'
-    : 'https://chatrooms-server.onrender.com';
+  // const SERVER_URL = import.meta.env.PROD 
+  //   ? 'https://kensho-hab0.onrender.com'
+  //   : 'https://kensho-hab0.onrender.com';
+
+  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5173';
+
 
   useEffect(() => {
     // Fonction pour réveiller le serveur
