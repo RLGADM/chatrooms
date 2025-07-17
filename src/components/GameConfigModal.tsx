@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { X, Settings, Clock, Users, Trophy, BookOpen, Sparkles } from 'lucide-react';
 import { GameParameters } from '../types';
 
+//add chat pour pop up
+
 //ajout fonction par défaut
 // function getDefaultParameters(): GameParameters {
 //   return {
@@ -21,13 +23,18 @@ import { GameParameters } from '../types';
 //   };
 // }
 
-
-
+// chat v2
 interface GameConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (parameters: GameParameters) => void;
+  onConfirm: (gameMode: 'standard' | 'custom', parameters: GameParameters) => void;
 }
+// chat v1
+// interface GameConfigModalPropsOld {
+//   isOpen: boolean;
+//   onClose: () => void;
+//   onConfirm: (parameters: GameParameters) => void;
+// }
 
 const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onConfirm }) => {
   const [gameMode, setGameMode] = useState<'standard' | 'custom' | null>(null);
@@ -153,8 +160,21 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onCo
               </button>
             </div>
           </div>
+              {/* //chat add pour verif pop up */}
+          <GameConfigModal
+            isOpen={isConfigModalOpen}
+            onClose={() => setConfigModalOpen(false)}
+            onConfirm={(selectedMode, selectedParameters) => {
+              setConfigModalOpen(false);
+              socket.emit('createRoom', {
+                username,
+                gameMode: selectedMode,
+                parameters: selectedParameters
+              });
+            }}
+          />
 
-          {/* Custom Parameters */}
+          {/* Custom Parameters de bolt*/}
           {gameMode === 'custom' && (
             <div className="space-y-8">
               {/* Gestion du temps */}

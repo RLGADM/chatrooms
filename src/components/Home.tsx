@@ -3,6 +3,8 @@ import { Users, Plus, LogIn, Sparkles, MessageCircle, Shield, Wifi } from 'lucid
 
 //chat pour gameParams
 import { GameParameters } from '../types/index';
+import GameConfigModal from './GameConfigModal';
+import { io, Socket } from "socket.io-client";
 
 //chat pour cookie
 // Fonction pour lire un cookie par nom
@@ -94,6 +96,8 @@ const [parameters, setParameters] = useState<GameParameters>({
     rarelyCommon: false
   }
 });
+//chat pour verifier si gameConfig est défini
+const [isConfigModalOpen, setConfigModalOpen] = useState(false);
 
 
 // bolt
@@ -362,15 +366,39 @@ const [parameters, setParameters] = useState<GameParameters>({
                 disabled={!isConnected}
               />
             </div>
-
+            {/* chat way */}
             <button
-              type="submit"
+              type="button"
+              onClick={() => setConfigModalOpen(true)}
               disabled={!username.trim() || isCreating || !isConnected}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <Plus className="w-5 h-5" />
               <span>{isCreating ? 'Création...' : 'Créer un salon'}</span>
             </button>
+
+            <GameConfigModal
+              isOpen={isConfigModalOpen}
+              onClose={() => setConfigModalOpen(false)}
+              onConfirm={(selectedMode, selectedParameters) => {
+                setConfigModalOpen(false);
+                socket.emit('createRoom', {
+                  username,
+                  gameMode: selectedMode,
+                  parameters: selectedParameters
+                });
+              }}
+            />
+            {/* bolt way */}
+
+            {/* <button
+              type="submit"
+              disabled={!username.trim() || isCreating || !isConnected}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <Plus className="w-5 h-5" />
+              <span>{isCreating ? 'Création...' : 'Créer un salon'}</span>
+            </button> */}
           </form>
 
           {!import.meta.env.PROD && (
