@@ -7,7 +7,7 @@ import GameConfigModal from './GameConfigModal';
 import { io, Socket } from "socket.io-client";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5173";
-const [isConfigModalOpen, setConfigModalOpen] = useState(false);
+
 
 //chat pour cookie
 // Fonction pour lire un cookie par nom
