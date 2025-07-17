@@ -86,6 +86,29 @@ useEffect(() => {
       newSocket.disconnect();
     };
   }, []);
+
+  // verif fetch
+  useEffect(() => {
+    fetch('https://kensho-hab0.onrender.com/health', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // ✅ Important si tu utilises cookies ou sessions
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Erreur lors du check de /health');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('✅ Serveur en ligne:', data);
+      })
+      .catch(error => {
+        console.error('❌ Erreur de santé serveur:', error);
+      });
+  }, []);
   //hydrated
   const [hydrated, setHydrated] = useState(false);
   // chat test pour join room localstorage

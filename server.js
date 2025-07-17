@@ -24,6 +24,15 @@ app.use(cors({
 
 app.use(express.static(__dirname));
 
+app.get('/health', (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });

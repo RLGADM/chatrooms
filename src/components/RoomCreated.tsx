@@ -375,7 +375,11 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
               <span>{copied ? 'Copié !' : 'Copier le Code'}</span>
             </button>
             <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
-              <span className="text-white text-sm font-semibold">Admin : <span className="text-green-300 font-bold">{room.users.find(u => u.roomRole === 'Admin')?.username || 'N/A'}</span></span>
+              <span className="text-white text-sm font-semibold">
+                Admin : <span className="text-green-300 font-bold">
+                  {room?.users?.find(u => u.roomRole === 'Admin')?.username || 'N/A'}
+                </span>
+              </span>
             </div>
           </div>
           
