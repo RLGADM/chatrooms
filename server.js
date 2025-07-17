@@ -65,6 +65,24 @@ function generateRoomCode() {
   return result;
 }
 
+// chat add function gameParameters
+function getDefaultParameters() {
+  return {
+    ParametersTimeFirst: 20,
+    ParametersTimeSecond: 90,
+    ParametersTimeThird: 120,
+    ParametersTeamReroll: 2,
+    ParametersTeamMaxForbiddenWords: 6,
+    ParametersTeamMaxPropositions: 5,
+    ParametersPointsMaxScore: 3,
+    ParametersPointsRules: 'no-tie',
+    ParametersWordsListSelection: {
+      veryCommon: true,
+      lessCommon: true,
+      rarelyCommon: false
+    }
+  };
+}
 // Vérifie si un nom d'utilisateur est disponible dans un salon
 function isUsernameAvailable(username, roomCode) {
   const room = rooms.get(roomCode);
