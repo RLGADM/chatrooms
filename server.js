@@ -27,6 +27,50 @@ const io = new Server(server, {
   pingInterval: 25000
 });
 
+// log
+io.on('connection', (socket) => {
+  console.log(`🔌 Nouvelle connexion: socket id = ${socket.id}`);
+
+  socket.on('joinRoom', (username, roomCode) => {
+    console.log(`[joinRoom] Reçu de socket ${socket.id} - username: ${username}, roomCode: ${roomCode}`);
+
+    // Exemple de gestion, à adapter à ta logique métier
+    if (!rooms.has(roomCode)) {
+      console.log(`[joinRoom] La salle ${roomCode} n'existe pas.`);
+      socket.emit('error', 'Room not found');
+      return;
+    }
+
+    socket.join(roomCode);
+    console.log(`[joinRoom] Socket ${socket.id} a rejoint la salle ${roomCode}`);
+  });
+
+  socket.on('joinTeam', (teamName, role) => {
+    console.log(`[joinTeam] Reçu de socket ${socket.id} - team: ${teamName}, role: ${role}`);
+
+    // Exemple simple de validation (à adapter)
+    if (!teamName || !role) {
+      console.log(`[joinTeam] Données invalides de la part de ${socket.id}`);
+      socket.emit('error', 'Invalid team or role');
+      return;
+    }
+
+    // Logique métier ici...
+
+    console.log(`[joinTeam] Socket ${socket.id} a demandé à rejoindre l'équipe ${teamName} avec le rôle ${role}`);
+  });
+
+  // Log tous les événements reçus (utile pour debug)
+  socket.onAny((event, ...args) => {
+    console.log(`⚡ Event reçu: ${event} | Arguments:`, args);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log(`❌ Déconnexion socket ${socket.id} - Raison: ${reason}`);
+  });
+});
+
+
 app.use(cors());
 app.use(express.json());
 
