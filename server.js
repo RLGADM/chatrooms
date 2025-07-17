@@ -328,70 +328,70 @@ function handleTeamJoin(userId, roomCode, team, role) {
   console.log('room found:', !!room);
   console.log('user found:', !!user);
   console.log('room.gameState exists:', !!(room && room.gameState));
-  
-  if (!room || !user || !room.gameState) return null;
-  
+
+  // 🛑 Vérifications de base
+  if (!room || !user || !room.gameState) return { error: "Données de base manquantes" };
+
+  if (!room.users || !Array.isArray(room.users)) {
+    console.log('room.users est vide ou invalide');
+    return { error: "Utilisateurs de la room invalides" };
+  }
+
   console.log(`User ${user.username} joining team ${team} as ${role}`);
   console.log('Current gameState teams:', JSON.stringify(room.gameState.teams, null, 2));
   console.log('Current gameState spectators:', JSON.stringify(room.gameState.spectators, null, 2));
-  
-  // Vérifier si le rôle de sage est déjà pris
-  if (role === 'sage' && room.gameState.teams[team].sage) {
+
+  // 🚫 Vérifie si un Sage est déjà présent dans l'équipe
+  if (role === 'sage' && room.gameState.teams[team]?.sage) {
     console.log('Sage role already taken for team:', team);
     return { error: 'Il y a déjà un Sage dans cette équipe !' };
   }
-  
-  console.log('Removing user from current positions...');
-  // Retirer l'utilisateur de sa position actuelle
-  room.gameState.spectators = room.gameState.spectators.filter(u => u.id !== userId);
-  room.gameState.teams.red.disciples = room.gameState.teams.red.disciples.filter(u => u.id !== userId);
-  room.gameState.teams.blue.disciples = room.gameState.teams.blue.disciples.filter(u => u.id !== userId);
-  
+
+  // 🧹 Supprime l'utilisateur de toutes ses positions actuelles
+  room.gameState.spectators = room.gameState.spectators.filter(u => u?.id !== userId);
+  room.gameState.teams.red.disciples = room.gameState.teams.red.disciples.filter(u => u?.id !== userId);
+  room.gameState.teams.blue.disciples = room.gameState.teams.blue.disciples.filter(u => u?.id !== userId);
+
   if (room.gameState.teams.red.sage?.id === userId) {
-    console.log('Removing user from red sage position');
     room.gameState.teams.red.sage = null;
   }
   if (room.gameState.teams.blue.sage?.id === userId) {
-    console.log('Removing user from blue sage position');
     room.gameState.teams.blue.sage = null;
   }
-  
-  console.log('Adding user to new position...');
-  // Ajouter à la nouvelle position
-  const userWithTeam = { 
+
+  // 🧩 Ajoute l'utilisateur à sa nouvelle place
+  const userWithTeam = {
     id: user.id,
     username: user.username,
     room: user.room,
-    team, 
-    role 
+    team,
+    role
   };
-  
+
   if (team === 'spectator') {
-    console.log('Adding to spectators');
     room.gameState.spectators.push(userWithTeam);
   } else if (role === 'sage') {
-    console.log(`Adding as sage to team ${team}`);
     room.gameState.teams[team].sage = userWithTeam;
   } else {
-    console.log(`Adding as disciple to team ${team}`);
     room.gameState.teams[team].disciples.push(userWithTeam);
   }
-  
-  // Mettre à jour l'utilisateur dans la base
+
+  // 🔄 Met à jour l'utilisateur global
   users.set(userId, { ...user, team, role });
-  
-  // Mettre à jour l'utilisateur dans la liste des utilisateurs de la room
-  const userIndex = room.users.findIndex(u => u.id === userId);
+
+  // ✅ Corrige la ligne problématique : vérifie que `u` est bien défini
+  const userIndex = room.users.findIndex(u => u && u.id === userId);
   if (userIndex !== -1) {
-    console.log('Updating user in room.users');
     room.users[userIndex] = { ...room.users[userIndex], team, role };
   }
-  
+
   console.log('Updated gameState teams:', JSON.stringify(room.gameState.teams, null, 2));
   console.log('Updated gameState spectators:', JSON.stringify(room.gameState.spectators, null, 2));
   console.log('=== END HANDLE TEAM JOIN DEBUG ===');
+
   return { success: true, gameState: room.gameState };
 }
+
 
 // Fonction pour initialiser le gameState d'une room
 function initializeGameState() {
