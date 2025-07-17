@@ -306,40 +306,69 @@ function addUserToRoom(user, roomCode, gameParameters) {
 
 // Supprime un utilisateur d'un salon
 function removeUserFromRoom(userId) {
+  if (!userId) {
+    console.warn("[removeUserFromRoom] userId est undefined !");
+    return null;
+  }
+
   const user = users.get(userId);
-  if (!user) return null;
-  
+  if (!user) {
+    console.warn(`[removeUserFromRoom] Utilisateur avec ID ${userId} introuvable dans la Map users.`);
+    return null;
+  }
+
   const room = rooms.get(user.room);
-  if (room) {
+  if (!room) {
+    console.warn(`[removeUserFromRoom] Salle ${user.room} introuvable.`);
+  } else {
+    console.log(`[removeUserFromRoom] Suppression de l'utilisateur ${user.username} (${userId}) de la salle ${user.room}.`);
+
+    // Retirer de la liste des utilisateurs
     room.users = room.users.filter(u => u.id !== userId);
-    
-    // Retirer l'utilisateur du gameState
+
     if (room.gameState) {
-      // Retirer des spectateurs
-      room.gameState.spectators = room.gameState.spectators.filter(u => u.id !== userId);
-      
-      // Retirer des équipes
-      room.gameState.teams.red.disciples = room.gameState.teams.red.disciples.filter(u => u.id !== userId);
-      room.gameState.teams.blue.disciples = room.gameState.teams.blue.disciples.filter(u => u.id !== userId);
-      
-      if (room.gameState.teams.red.sage?.id === userId) {
-        room.gameState.teams.red.sage = null;
+      const gs = room.gameState;
+
+      // Supprimer des spectateurs
+      gs.spectators = gs.spectators.filter(u => u.id !== userId);
+
+      // Supprimer des disciples
+      gs.teams.red.disciples = gs.teams.red.disciples.filter(u => u.id !== userId);
+      gs.teams.blue.disciples = gs.teams.blue.disciples.filter(u => u.id !== userId);
+
+      // Supprimer les sages si c’est le même utilisateur
+      if (gs.teams.red.sage?.id === userId) {
+        console.log(`➡️ Le sage de l'équipe rouge (${gs.teams.red.sage.username}) a été supprimé.`);
+        gs.teams.red.sage = null;
       }
-      if (room.gameState.teams.blue.sage?.id === userId) {
-        room.gameState.teams.blue.sage = null;
+
+      if (gs.teams.blue.sage?.id === userId) {
+        console.log(`➡️ Le sage de l'équipe bleue (${gs.teams.blue.sage.username}) a été supprimé.`);
+        gs.teams.blue.sage = null;
       }
     }
-    
-    // Supprime le salon s'il est vide
+
+    // Si plus aucun utilisateur dans la salle, supprimer la salle
     if (room.users.length === 0) {
-      rooms.delete(user.room);
-      gameStates.delete(user.room);
+      console.log(`[🕒] La room ${user.room} est vide. Suppression dans 1 minute...`);
+      setTimeout(() => {
+        const currentRoom = rooms.get(user.room);
+        if (currentRoom && currentRoom.users.length === 0) {
+          console.log(`[✅] Suppression de la room ${user.room}`);
+          rooms.delete(user.room);
+          gameStates.delete(user.room);
+        } else {
+          console.log(`[❌] Suppression annulée, des utilisateurs ont rejoint la room ${user.room}`);
+        }
+      }, 60000); // 60 000 ms = 1 min
     }
   }
-  
+
   users.delete(userId);
+  console.log(`[removeUserFromRoom] Utilisateur ${user.username} supprimé du système.`);
   return user;
 }
+
 
 // Ajoute un message à un salon
 function addMessageToRoom(roomCode, message) {
