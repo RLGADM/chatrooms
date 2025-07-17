@@ -22,19 +22,22 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.static(__dirname));
+app.use(express.json());
+
+app.use(express.static(path.join(__dirname, 'dist')));
 
 app.get('/health', (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.json({
-    status: 'OK',
+  res.json({ 
+    status: 'OK', 
     timestamp: new Date().toISOString(),
+    rooms: rooms.size,
+    users: users.size
   });
 });
 
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 const server = createServer(app);
