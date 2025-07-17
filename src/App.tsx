@@ -369,43 +369,43 @@ useEffect(() => {
         if (!prev) return prev;
         return {
           ...prev,
-          users: [...prev.users, user]
+          users: [...(prev.users ?? []), user]
         };
       });
     });
 
-    newSocket.on('userLeft', (userId: string) => {
-      console.log('Utilisateur parti:', userId);
-      setCurrentRoom(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          users: prev.users.filter(user => user.id !== userId)
-        };
-      });
-    });
+newSocket.on('userLeft', (userId: string) => {
+  console.log('Utilisateur parti:', userId);
+  setCurrentRoom(prev => {
+    if (!prev) return prev;
+    return {
+      ...prev,
+      users: (prev.users ?? []).filter(user => user.id !== userId)
+    };
+  });
+});
 
-    newSocket.on('usersUpdate', (users: User[]) => {
-      console.log('Mise à jour des utilisateurs:', users);
-      setCurrentRoom(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          users
-        };
-      });
-    });
+newSocket.on('usersUpdate', (users: User[]) => {
+  console.log('Mise à jour des utilisateurs:', users);
+  setCurrentRoom(prev => {
+    if (!prev) return prev;
+    return {
+      ...prev,
+      users
+    };
+  });
+});
 
-    newSocket.on('newMessage', (message: Message) => {
-      console.log('Nouveau message:', message);
-      setCurrentRoom(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          messages: [...prev.messages, message]
-        };
-      });
-    });
+newSocket.on('newMessage', (message: Message) => {
+  console.log('Nouveau message:', message);
+  setCurrentRoom(prev => {
+    if (!prev) return prev;
+    return {
+      ...prev,
+      messages: [...(prev.messages ?? []), message]
+    };
+  });
+});
 
     newSocket.on('teamJoinSuccess', (data: { team: string; role: string; gameState: GameState }) => {
       console.log('Team join success:', data);
