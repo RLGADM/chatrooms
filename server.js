@@ -108,7 +108,7 @@ const rooms = new Map();
 const users = new Map();
 
 // Structure pour stocker l'état du jeu par salon
-const gameStates = new Map();
+const gameState = new Map();
 
 // Génère un code de salon aléatoire
 function generateRoomCode() {
@@ -564,21 +564,34 @@ io.on('connection', (socket) => {
   // });
 
   // Rejoindre un salon
-socket.on('joinRoom', ({ username, roomCode }, ack) => {
+  socket.on('joinRoom', (data, ack) => {
+  // data doit contenir username et roomCode
+  const { username, roomCode } = data || {};
+
   console.log(`[JOIN ROOM] ${username} tente de rejoindre ${roomCode}`);
 
+  if (!username || !roomCode) {
+    console.log('joinRoom: username ou roomCode manquant');
+    if (typeof ack === 'function') ack({ success: false, error: 'Paramètres manquants' });
+    return;
+  }
+
   const user = {
-    id: socket.id, // le vrai socket ID du client connecté
+    id: socket.id,
     username,
-    room: roomCode
+    room: roomCode,
+    team: 'spectator',
+    role: 'spectator'
   };
 
   addUserToRoom(user, roomCode);
   socket.join(roomCode);
   users.set(socket.id, user);
 
-  if (ack) ack(); // confirme au client que c’est bon
+  console.log(`User ${username} added to room ${roomCode}`);
+  if (typeof ack === 'function') ack({ success: true });
 });
+
 
 
   // Rejoindre une équipe

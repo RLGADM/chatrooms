@@ -8,7 +8,42 @@ import SocketDebugger from './components/SocketDebugger';
 import GameConfigModal from './components/GameConfigModal';
 import { Room as RoomType, User, Message, ServerToClientEvents, ClientToServerEvents, GameParameters, Room } from './types';
 import { getDefaultParameters } from './utils/defaultParameters';
+import { GameState } from './types/index'; 
 
+// Type pour la réponse d'ack joinRoom
+interface JoinRoomResponse {
+  success: boolean;
+  error?: string;
+}
+
+// Type pour la réponse d'ack joinTeam
+interface JoinTeamResponse {
+  success: boolean;
+  error?: string;
+  team?: string;
+  role?: string;
+  gameState?: GameState;  // Remplace 'any' par un type plus précis si possible
+}
+
+// Types des événements envoyés par le serveur au client
+interface ServerToClientEvents {
+  teamJoinSuccess: (data: {
+    team: string;
+    role: string;
+    gameState: GameState;  // Remplace 'any' par ton type GameState réel
+  }) => void;
+  teamJoinError: (error: string) => void;
+  // autres events côté client
+}
+
+// Types des événements envoyés par le client au serveur
+interface ClientToServerEvents {
+  joinRoom: (data: { username: string; roomCode: string }, ack: (response: JoinRoomResponse) => void) => void;
+  joinTeam: (team: string, role: string, ack: (response: JoinTeamResponse) => void) => void;
+  // autres events côté serveur
+}
+
+const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('https://kensho-hab0.onrender.com');
 
 type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -97,23 +132,39 @@ const App: React.FC = () => {
   }, []);
   // useEffect(() => {2
   
-  useEffect(() => {
-    if (socket && currentUser && currentRoom && isConnected && hydrated) {
-      console.log('🔁 Reconnexion à la room...');
+    useEffect(() => {
+      if (socket && currentUser && currentRoom && isConnected && hydrated) {
+        console.log('🔁 Reconnexion à la room...');
 
-      socket.emit(
-        'joinRoom',
-        currentUser.username,
-        currentRoom.code,
-        () => {
-          console.log('✅ Confirmation serveur : utilisateur ajouté à la room');
+        // On émet joinRoom avec un objet et un callback ack
+        socket.emit(
+          'joinRoom',
+          { username: currentUser.username, roomCode: currentRoom.code },
+          (response) => {
+            if (response.success) {
+              console.log('✅ Rejoint la room avec succès');
 
-          // Maintenant qu’on est sûr que le serveur a traité joinRoom :
-          socket.emit('joinTeam', { team: 'spectator' });
-        }
-      );
-    }
-  }, [socket, currentUser, currentRoom, isConnected, hydrated]);
+              // Maintenant, on émet joinTeam avec team et role + callback ack
+              socket.emit(
+                'joinTeam',
+                'spectator', // team
+                'spectator', // role
+                (teamResponse) => {
+                  if (teamResponse.success) {
+                    console.log('✅ Changement d’équipe réussi');
+                  } else {
+                    console.error('❌ Erreur joinTeam:', teamResponse.error);
+                  }
+                }
+              );
+            } else {
+              console.error('❌ Erreur joinRoom:', response.error);
+            }
+          }
+        );
+      }
+    }, [socket, currentUser, currentRoom, isConnected, hydrated]);
+
 
 
 
