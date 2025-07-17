@@ -28,10 +28,10 @@ const App: React.FC = () => {
 
   // Amélioration code via chat
   const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5173';
-  const socket = io(SERVER_URL, {
-    transports: ['polling', 'websocket'],
-    withCredentials: true
-  });
+  // const socket = io(SERVER_URL, {
+  //   transports: ['polling', 'websocket'],
+  //   withCredentials: true
+  // });
 
 
   // reprise bolt
