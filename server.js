@@ -1,15 +1,33 @@
-import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 //Bonjour
+
+const express = require('express');
+const cors = require('cors');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
+
 const app = express();
+
+// CORS pour Express
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://localhost:5173",
+    "https://kenshou.netlify.app",
+    "https://kensho-hab0.onrender.com"
+  ],
+  credentials: true
+}));
+
 const server = createServer(app);
+
+// CORS pour Socket.IO
 const io = new Server(server, {
   cors: {
     origin: [
@@ -26,6 +44,7 @@ const io = new Server(server, {
   pingTimeout: 60000,
   pingInterval: 25000
 });
+
 
 // log ou plus du tout
 io.on('connection', (socket) => {

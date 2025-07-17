@@ -1,3 +1,10 @@
+// Bijour les enfants
+import { Socket } from 'socket.io-client';
+
+
+export type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
+
+
 export type RoomRole = 'Admin' | 'Héraut' | 'Débutant';
 
 export interface GameParameters {

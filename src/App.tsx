@@ -43,8 +43,6 @@ interface ClientToServerEvents {
   // autres events côté serveur
 }
 
-const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('https://kensho-hab0.onrender.com');
-
 type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 const App: React.FC = () => {
@@ -58,7 +56,36 @@ const App: React.FC = () => {
   const [showGameConfig, setShowGameConfig] = useState(false);
   const [pendingUsername, setPendingUsername] = useState<string | null>(null);
   const [inRoom, setInRoom] = useState(false)
+//use Effect pour le socket
+useEffect(() => {
+    const newSocket = io('https://kensho-hab0.onrender.com', {
+      transports: ['websocket', 'polling'],
+      timeout: 80000,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      autoConnect: true,
+    });
+    setSocket(newSocket);
 
+  newSocket.on('connect', () => {
+        setIsConnected(true);
+        console.log('Connecté au serveur, socket id:', newSocket.id);
+      });
+
+      // Gérer la déconnexion
+      newSocket.on('disconnect', (reason) => {
+        setIsConnected(false);
+        console.log('Déconnecté du serveur, raison:', reason);
+      });
+
+      // Cleanup à la destruction du composant
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
   //hydrated
   const [hydrated, setHydrated] = useState(false);
   // chat test pour join room localstorage
