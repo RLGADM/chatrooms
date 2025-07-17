@@ -56,8 +56,43 @@ const App: React.FC = () => {
   const [showGameConfig, setShowGameConfig] = useState(false);
   const [pendingUsername, setPendingUsername] = useState<string | null>(null);
   const [inRoom, setInRoom] = useState(false)
-//use Effect pour le socket
+
+//ajout awake
+const [serverAwake, setServerAwake] = useState(false);
+//useEffect pour vérifier si le serveur est en ligne
+  useEffect(() => {
+    async function checkServer() {
+      try {
+        const res = await fetch("https://kensho-hab0.onrender.com/health");
+        if (res.ok) {
+          setServerAwake(true);
+        }
+      } catch (err) {
+        console.log("Serveur pas encore prêt, je réessaie dans 3s");
+        setTimeout(checkServer, 3000);
+      }
+    }
+    checkServer();
+  }, []);
+    useEffect(() => {
+    if (serverAwake && !socket) {
+      const newSocket = io("https://kensho-hab0.onrender.com", {
+        transports: ["websocket", "polling"],
+        withCredentials: true,
+      });
+      setSocket(newSocket);
+
+      return () => {
+        newSocket.close();
+      };
+    }
+  }, [serverAwake, socket]);
+
+
+  //use Effect pour le socket
 useEffect(() => {
+  if (!serverAwake) return; // n'initialise pas tant que le serveur n'est pas prêt
+  
     const newSocket = io('https://kensho-hab0.onrender.com', {
       transports: ['websocket', 'polling'],
       timeout: 80000,
