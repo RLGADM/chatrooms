@@ -9,6 +9,7 @@ interface HomeProps {
   isConnected: boolean;
 }
 
+
 const Home: React.FC<HomeProps> = ({ onCreateRoom, onJoinRoom, onDemoMode, error, isConnected }) => {
   const [username, setUsername] = useState('');
   const [roomCode, setRoomCode] = useState('');

@@ -39,7 +39,7 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
   const [teamJoinError, setTeamJoinError] = useState<string | null>(null);
   const historyEndRef = useRef<HTMLDivElement>(null);
   const [isJoiningTeam, setIsJoiningTeam] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  //const [debugInfo, setDebugInfo] = useState<any>(null);
   const [showDebugModal, setShowDebugModal] = useState(false);
 
   // Initialize game state
@@ -96,31 +96,31 @@ const Room: React.FC<RoomProps> = ({ room, currentUser, onSendMessage, onLeaveRo
         setTimeout(() => setTeamJoinError(null), 3000);
       });
       
-      socket.on('pong', (data) => {
-        console.log('Pong received:', data);
-        setDebugInfo(prev => ({ ...prev, lastPong: data }));
-      });
+      // socket.on('pong', (data) => {
+      //   console.log('Pong received:', data);
+      //   setDebugInfo(prev => ({ ...prev, lastPong: data }));
+      // });
       
-      socket.on('debugUsersResponse', (data) => {
-        console.log('Debug users response:', data);
-        setDebugInfo(data);
-      });
+      // socket.on('debugUsersResponse', (data) => {
+      //   console.log('Debug users response:', data);
+      //   setDebugInfo(data);
+      // });
 
-      socket.on('roomRoleChanged', (data: { userId: string; newRole: RoomRole }) => {
-        console.log('Room role changed:', data);
-        // Mettre à jour la room avec le nouveau rôle
-        setCurrentRoom(prev => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            users: prev.users.map(user => 
-              user.id === data.userId 
-                ? { ...user, roomRole: data.newRole }
-                : user
-            )
-          };
-        });
-      });
+      // socket.on('roomRoleChanged', (data: { userId: string; newRole: RoomRole }) => {
+      //   console.log('Room role changed:', data);
+      //   // Mettre à jour la room avec le nouveau rôle
+      //   setCurrentRoom(prev => {
+      //     if (!prev) return prev;
+      //     return {
+      //       ...prev,
+      //       users: prev.users.map(user => 
+      //         user.id === data.userId 
+      //           ? { ...user, roomRole: data.newRole }
+      //           : user
+      //       )
+      //     };
+      //   });
+      // });
 
       socket.on('roleChangeError', (error: string) => {
         console.log('Role change error:', error);

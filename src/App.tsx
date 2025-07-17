@@ -26,7 +26,7 @@ const App: React.FC = () => {
   //   ? 'https://kensho-hab0.onrender.com'
   //   : 'https://kensho-hab0.onrender.com';
 
-  // Amélioration code via chat
+  // Amélioration code via chat cool non ?
   const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5173';
   // const socket = io(SERVER_URL, {
   //   transports: ['polling', 'websocket'],

@@ -273,15 +273,15 @@ io.on('connection', (socket) => {
   console.log('Utilisateur connecté:', socket.id);
 
   // Ping/Pong pour tester la connexion
-  socket.on('ping', () => {
-    console.log(`Ping reçu de ${socket.id}`);
-    socket.emit('pong', {
-      timestamp: new Date().toISOString(),
-      socketId: socket.id,
-      userExists: users.has(socket.id),
-      userInfo: users.get(socket.id) || null
-    });
-  });
+  // socket.on('ping', () => {
+  //   console.log(`Ping reçu de ${socket.id}`);
+  //   socket.emit('pong', {
+  //     timestamp: new Date().toISOString(),
+  //     socketId: socket.id,
+  //     userExists: users.has(socket.id),
+  //     userInfo: users.get(socket.id) || null
+  //   });
+  // });
 
   // Debug: Obtenir la liste des utilisateurs
   socket.on('debugGetUsers', () => {
