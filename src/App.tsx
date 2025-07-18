@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Home from './components/Home';
 import DemoMode from './components/DemoMode';
@@ -9,6 +9,8 @@ import GameConfigModal from './components/GameConfigModal';
 import { Room as RoomType, User, Message, ServerToClientEvents, ClientToServerEvents, GameParameters, Room } from './types';
 import { getDefaultParameters } from './utils/defaultParameters';
 import { GameState } from './types/index'; 
+
+const SERVER_URL = import.meta.env.PROD ? 'https://kensho-hab0.onrender.com' : 'http://localhost:3000';
 
 // Type pour la réponse d'ack joinRoom
 interface JoinRoomResponse {
@@ -41,7 +43,9 @@ interface ClientToServerEvents {
   joinRoom: (data: { username: string; roomCode: string }, ack: (response: JoinRoomResponse) => void) => void;
   joinTeam: (team: string, role: string, ack: (response: JoinTeamResponse) => void) => void;
   // autres events côté serveur
+  
 }
+// azjout event
 
 type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -62,21 +66,23 @@ const [serverAwake, setServerAwake] = useState(false);
 //useEffect pour vérifier si le serveur est en ligne
   useEffect(() => {
     async function checkServer() {
-      try {
-        const res = await fetch("https://kensho-hab0.onrender.com/health");
+      if (import.meta.env.PROD) {
+        try {
+        const res = await fetch(SERVER_URL+"/health");
         if (res.ok) {
           setServerAwake(true);
         }
       } catch (err) {
-        console.log("Serveur pas encore prêt, je réessaie dans 3s");
-        setTimeout(checkServer, 3000);
+        console.log("Serveur pas encore prêt, je réessaie dans 3s", err);
+        // setTimeout(checkServer, 3000);
       }
     }
-    checkServer();
+  }
+    // checkServer();
   }, []);
     useEffect(() => {
     if (serverAwake && !socket) {
-      const newSocket = io("https://kensho-hab0.onrender.com", {
+      const newSocket = io(SERVER_URL, {
         transports: ["websocket", "polling"],
         withCredentials: true,
       });
@@ -92,8 +98,8 @@ const [serverAwake, setServerAwake] = useState(false);
   //use Effect pour le socket
 useEffect(() => {
   if (!serverAwake) return; // n'initialise pas tant que le serveur n'est pas prêt
-  
-    const newSocket = io('https://kensho-hab0.onrender.com', {
+
+    const newSocket = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
       timeout: 80000,
       reconnection: true,
@@ -124,7 +130,7 @@ useEffect(() => {
 
   // verif fetch
   useEffect(() => {
-    fetch('https://kensho-hab0.onrender.com/health', {
+    fetch(SERVER_URL+'/health', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -183,14 +189,8 @@ useEffect(() => {
 // const [parameters, setParameters] = useState<any>({});
 // chat deuxièle test pour join room
 
- 
-  // Configuration du serveur Socket.IO
-  // const SERVER_URL = import.meta.env.PROD 
-  //   ? 'https://kensho-hab0.onrender.com'
-  //   : 'https://kensho-hab0.onrender.com';
 
   // Amélioration code via chat cool non ?
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5173';
   // const socket = io(SERVER_URL, {
   //   transports: ['polling', 'websocket'],
   //   withCredentials: true
@@ -216,40 +216,52 @@ useEffect(() => {
     setHydrated(true);
   }, []);
   // useEffect(() => {2
-  
-    useEffect(() => {
-      if (socket && currentUser && currentRoom && isConnected && hydrated) {
-        console.log('🔁 Reconnexion à la room...');
+    const hasJoinedRoomRef = useRef(false);
 
-        // On émet joinRoom avec un objet et un callback ack
-        socket.emit(
-          'joinRoom',
-          { username: currentUser.username, roomCode: currentRoom.code },
-          (response) => {
-            if (response.success) {
-              console.log('✅ Rejoint la room avec succès');
-
-              // Maintenant, on émet joinTeam avec team et role + callback ack
-              socket.emit(
-                'joinTeam',
-                'spectator', // team
-                'spectator', // role
-                (teamResponse) => {
-                  if (teamResponse.success) {
-                    console.log('✅ Changement d’équipe réussi');
-                  } else {
-                    console.error('❌ Erreur joinTeam:', teamResponse.error);
-                  }
-                }
-              );
-            } else {
-              console.error('❌ Erreur joinRoom:', response.error);
+useEffect(() => {
+  if (
+    socket &&
+    currentUser &&
+    currentRoom &&
+    isConnected &&
+    hydrated &&
+    !hasJoinedRoomRef.current
+  ) {
+    console.log('🔁 Reconnexion à la room...');
+    socket.emit(
+      'joinRoom',
+      { username: currentUser.username, roomCode: currentRoom.code },
+      (response) => {
+        if (response.success) {
+          console.log('✅ Rejoint la room avec succès');
+          hasJoinedRoomRef.current = true;
+          setInRoom(true);
+          socket.emit(
+            'joinTeam',
+            'spectator',
+            'spectator',
+            (teamResponse) => {
+              if (teamResponse.success) {
+                console.log('✅ Changement d’équipe réussi');
+              } else {
+                console.error('❌ Erreur joinTeam:', teamResponse.error);
+              }
             }
-          }
-        );
+          );
+        } else {
+          console.error('❌ Erreur joinRoom:', response.error);
+        }
       }
-    }, [socket, currentUser, currentRoom, isConnected, hydrated]);
+    );
+  }
+  // Ne pas reset ici !
+  // Le flag doit être reset UNIQUEMENT si le socket change (déconnexion/reconnexion)
+}, [socket, currentUser, currentRoom, isConnected, hydrated]);
 
+// Ajoute ce useEffect pour reset le flag si le socket change
+useEffect(() => {
+  hasJoinedRoomRef.current = false;
+}, [socket]);
 
 
 
@@ -297,7 +309,9 @@ useEffect(() => {
       setIsConnecting(true);
       
       // Essayer de réveiller le serveur d'abord
-      await wakeUpServer();
+      if(import.meta.env.PROD) {
+        await wakeUpServer();
+      }
       
       // Attendre un peu pour que le serveur soit complètement prêt
       setTimeout(() => {
@@ -522,53 +536,63 @@ const handleCreateRoom = (
   console.log('Création de salon :', { username, gameMode, parameters });
 };
     useEffect(() => {
-      if (!socket) return;
+  if (!socket) return;
 
-      const handleRoomJoined = (room: RoomType) => {
-        console.log('Salon rejoint:', room);
+  const handleRoomJoined = (room: RoomType) => {
+    console.log('Salon rejoint:', room);
 
-        // Initialiser gameState si non défini
-        if (!room.gameState) {
-          room.gameState = {
-            currentPhase: 0,
-            phases: [
-              "Attente début de la manche",
-              "Phase 1 - Choix du mot", 
-              "Phase 2 - Choix des mots interdits",
-              "Phase 3 - Discours du Sage"
-            ],
-            teams: {
-              red: { sage: null, disciples: [] },
-              blue: { sage: null, disciples: [] }
-            },
-            spectators: room.users.map(user => ({ ...user, team: 'spectator', role: 'spectator' })),
-            timer: null,
-            timeRemaining: 0,
-            totalTime: 0,
-            isPlaying: false,
-            score: { red: 0, blue: 0 }
-          };
-        }
-
-        const me = room.users.find(user => user.id === socket?.id);
-          if (me) {
-            joinRoom(me, room);
-          } else {
-            console.warn("Utilisateur non trouvé dans la room après jonction.");
-          }
-
-        setInRoom(true);
-        setError(null);
-        console.log({ isConnected, inRoom, currentRoom, currentUser });
-
+    // Initialiser gameState si non défini
+    if (!room.gameState) {
+      room.gameState = {
+        currentPhase: 0,
+        phases: [
+          "Attente début de la manche",
+          "Phase 1 - Choix du mot", 
+          "Phase 2 - Choix des mots interdits",
+          "Phase 3 - Discours du Sage"
+        ],
+        teams: {
+          red: { sage: null, disciples: [] },
+          blue: { sage: null, disciples: [] }
+        },
+        spectators: Array.isArray(room.users)
+          ? room.users.filter(u => u && typeof u.id !== 'undefined').map(user => ({
+              ...user,
+              team: 'spectator',
+              role: 'spectator'
+            }))
+          : [],
+        timer: null,
+        timeRemaining: 0,
+        totalTime: 0,
+        isPlaying: false,
+        score: { red: 0, blue: 0 }
       };
+    }
 
-      socket.on('roomJoined', handleRoomJoined);
+    // Sécurise l'accès à room.users
+    const users = Array.isArray(room.users)
+      ? room.users.filter(u => u && typeof u.id !== 'undefined')
+      : [];
 
-      return () => {
-        socket.off('roomJoined', handleRoomJoined);
-      };
-    }, [socket]);
+    const me = users.find(user => user.id === socket.id);
+    if (me) {
+      joinRoom(me, room);
+    } else {
+      console.warn("Utilisateur non trouvé dans la room après jonction.");
+    }
+
+    setInRoom(true);
+    setError(null);
+    console.log({ isConnected, inRoom, currentRoom, currentUser });
+  };
+
+  socket.on('roomJoined', handleRoomJoined);
+
+  return () => {
+    socket.off('roomJoined', handleRoomJoined);
+  };
+}, [socket]);
 
   // bolt
   // const handleCreateRoom = (username: string) => {
@@ -617,7 +641,15 @@ const handleCreateRoom = (
         username,
         room: roomCode,
       });
-      socket.emit('joinRoom', username, roomCode);
+      socket.emit('joinRoom', {username, roomCode}, (response: JoinRoomResponse) => {
+        if (response.success) {
+          console.log('✅ Rejoint la room avec succès');
+          setInRoom(true);
+        } else {
+          setError(response.error || 'Erreur lors de la jonction de la room');
+        }
+      });
+      // socket.emit('joinRoom', username, roomCode);
       setError(null);
     } else {
       setError('Connexion au serveur en cours. Veuillez patienter.');

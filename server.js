@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const indexURL = path.join(__dirname, 'index.html');
+// const indexURL = path.join(__dirname, 'index.html');
 //Bonjour
 const app = express();
 
@@ -24,21 +24,12 @@ app.use(cors({
 
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, 'dist')));
-
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    rooms: rooms.size,
-    users: users.size
-  });
-});
+// app.use(express.static(path.join(__dirname, 'dist')));
 
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+// });
 
 const server = createServer(app);
 
@@ -59,12 +50,6 @@ const io = new Server(server, {
   pingTimeout: 60000,
   pingInterval: 25000
 });
-
-// Petite route santé pour Render
-app.get('/health', (req, res) => {
-  res.send('OK');
-});
-
 
 // log ou plus du tout
 io.on('connection', (socket) => {
@@ -93,39 +78,42 @@ io.on('connection', (socket) => {
     console.log(`Room créée : ${roomCode} par ${username}`);
   });
 
-  socket.on('joinRoom', (username, roomCode) => {
-    const room = rooms.get(roomCode);
-    if (!room) {
-      socket.emit('error', `La salle ${roomCode} n'existe pas.`);
-      return;
-    }
+  socket.on('joinRoom', (data, ack) => {
+  const { username, roomCode } = data || {};
+  const room = rooms.get(roomCode);
+  if (!room) {
+    if (typeof ack === 'function') ack({ success: false, error: `La salle ${roomCode} n'existe pas.` });
+    return;
+  }
 
-    const user = {
-      id: socket.id,
-      username,
-      roomRole: 'Player',
-      isAdmin: false,
-      team: null,
-      role: null
-    };
+  const user = {
+    id: socket.id,
+    username,
+    roomRole: 'Player',
+    isAdmin: false,
+    team: 'spectator',
+    role: 'spectator',
+    room: roomCode
+  };
 
-    if (addUserToRoom(user, roomCode)) {
-      socket.join(roomCode);
-      socket.emit('roomJoined', { roomCode });
-      console.log(`${username} a rejoint la salle ${roomCode}`);
-      // Diffuse à tout le monde dans la room la liste des users, etc.
-    } else {
-      socket.emit('error', 'Utilisateur déjà dans la salle');
-    }
-  });
+  if (addUserToRoom(user, roomCode)) {
+    socket.join(roomCode);
+    socket.emit('roomJoined', room); // <-- Envoie l'objet room complet
+    if (typeof ack === 'function') ack({ success: true, room });
+    console.log(`${username} a rejoint la salle ${roomCode}`);
+    // Diffuse à tout le monde dans la room la liste des users, etc.
+  } else {
+    if (typeof ack === 'function') ack({ success: false, error: 'Utilisateur déjà dans la salle' });
+    socket.emit('error', 'Utilisateur déjà dans la salle');
+  }
 });
 
 
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 
 // Servir les fichiers statiques du build
-app.use(express.static(path.join(__dirname, 'dist')));
+// app.use(express.static(path.join(__dirname, 'dist')));
 
 // Route de santé pour vérifier que le serveur fonctionne
 app.get('/health', (req, res) => {
@@ -138,9 +126,9 @@ app.get('/health', (req, res) => {
 });
 
 // Route catch-all pour servir l'application React
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+// });
 
 // Stockage en mémoire
 const rooms = new Map();
@@ -327,7 +315,13 @@ function removeUserFromRoom(userId) {
     console.log(`[removeUserFromRoom] Suppression de l'utilisateur ${user.username} (${userId}) de la salle ${user.room}.`);
 
     // Retirer de la liste des utilisateurs
-    room.users = room.users.filter(u => u.id !== userId);
+    console.log(`[removeUserFromRoom] Utilisateur ${user.username} (${userId}) supprimé de la liste des utilisateurs de la salle.`);
+    
+    if (!Array.isArray(room.users)) {
+      room.users = [];
+    } else {
+      room.users = room.users.filter(u => u && typeof u.id !== 'undefined' && u.id !== userId);
+    }
 
     if (room.gameState) {
       const gs = room.gameState;
@@ -484,8 +478,8 @@ function initializeGameState() {
   };
 }
 
-io.on('connection', (socket) => {
-  console.log('Utilisateur connecté:', socket.id);
+// io.on('connection', (socket) => {
+//   console.log('Utilisateur connecté:', socket.id);
 
   // Ping/Pong pour tester la connexion
   // socket.on('ping', () => {
@@ -621,20 +615,15 @@ io.on('connection', (socket) => {
   //   console.log('User after addUserToRoom:', users.get(socket.id));
   //   console.log('Current users in Map after create:', Array.from(users.entries()).map(([id, u]) => ({ id, username: u.username, room: u.room, team: u.team, role: u.role })));
     
-  //   socket.emit('roomJoined', room);
-  //   // Envoyer le gameState après un court délai pour s'assurer que le client est prêt
-  //   setTimeout(() => {
-  //     socket.emit('gameStateUpdate', room.gameState);
-  //     io.to(roomCode).emit('gameStateUpdate', room.gameState);
-  //   }, 100);
-  //   socket.to(roomCode).emit('userJoined', user);
-  //   io.to(roomCode).emit('usersUpdate', room.users);
-  // });
+
 
   // Rejoindre un salon
   socket.on('joinRoom', (data, ack) => {
+    console.log('joinRoom event received:', data);
   // data doit contenir username et roomCode
   const { username, roomCode } = data || {};
+  console.log('username:', username);
+  console.log('roomCode:', roomCode);
 
   console.log(`[JOIN ROOM] ${username} tente de rejoindre ${roomCode}`);
 
@@ -656,8 +645,12 @@ io.on('connection', (socket) => {
   socket.join(roomCode);
   users.set(socket.id, user);
 
+   const room = rooms.get(roomCode);
+
   console.log(`User ${username} added to room ${roomCode}`);
   if (typeof ack === 'function') ack({ success: true });
+
+  socket.emit('roomJoined', room);
 });
 
 

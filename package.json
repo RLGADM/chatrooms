@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "node server.js",
-    "start": "node server.js"
+    "server:dev": "nodemon server.js"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
