@@ -1,767 +1,197 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+// REFACTO COMPLET
+// Déclaration import
+import React, { useEffect, useRef, useState, useTransition } from 'react';
 import Home from './components/Home';
-import DemoMode from './components/DemoMode';
-import KeepAlive from './components/KeepAlive';
 import RoomCreated from './components/RoomCreated';
+import DemoMode from './components/DemoMode';
 import SocketDebugger from './components/SocketDebugger';
-import GameConfigModal from './components/GameConfigModal';
-import { Room as RoomType, User, Message, ServerToClientEvents, ClientToServerEvents, GameParameters, Room } from './types';
-import { getDefaultParameters } from './utils/defaultParameters';
-import { GameState } from './types/index'; 
-
+import KeepAlive from './components/KeepAlive';
+import { useSocket } from './hooks/useSocket';
+import { useHydration } from './hooks/useHydration';
+import { useRoomEvents } from './hooks/useRoomEvents';
+import { User, Room as RoomType, Message, GameParameters, ServerResetPayload, emptyUser } from './types';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Toaster, toast } from 'react-hot-toast';
+//const globale
 const SERVER_URL = import.meta.env.PROD ? 'https://kensho-hab0.onrender.com' : 'http://localhost:3000';
 
-// Type pour la réponse d'ack joinRoom
-interface JoinRoomResponse {
-  success: boolean;
-  error?: string;
-}
-
-// Type pour la réponse d'ack joinTeam
-interface JoinTeamResponse {
-  success: boolean;
-  error?: string;
-  team?: string;
-  role?: string;
-  gameState?: GameState;  // Remplace 'any' par un type plus précis si possible
-}
-
-// Types des événements envoyés par le serveur au client
-interface ServerToClientEvents {
-  teamJoinSuccess: (data: {
-    team: string;
-    role: string;
-    gameState: GameState;  // Remplace 'any' par ton type GameState réel
-  }) => void;
-  teamJoinError: (error: string) => void;
-  // autres events côté client
-}
-
-// Types des événements envoyés par le client au serveur
-interface ClientToServerEvents {
-  joinRoom: (data: { username: string; roomCode: string }, ack: (response: JoinRoomResponse) => void) => void;
-  joinTeam: (team: string, role: string, ack: (response: JoinTeamResponse) => void) => void;
-  // autres events côté serveur
-  
-}
-// azjout event
-
-type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
-
+//const main React
 const App: React.FC = () => {
-  const [socket, setSocket] = useState<SocketType | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [currentRoom, setCurrentRoom] = useState<RoomType | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(true);
+  // const locales
+  const { socket } = useSocket();
   const [isDemoMode, setIsDemoMode] = useState(false);
-  const [showGameConfig, setShowGameConfig] = useState(false);
-  const [pendingUsername, setPendingUsername] = useState<string | null>(null);
-  const [inRoom, setInRoom] = useState(false)
+  const hasJoinedRoomRef = useRef(false);
+  const navigate = useNavigate();
+  const serverHasResetRef = useRef(false);
+  const hasRejoinAttempted = useRef(false);
 
-//ajout awake
-const [serverAwake, setServerAwake] = useState(false);
-//useEffect pour vérifier si le serveur est en ligne
+  //Nouveau const via hooks :
+  const { user, hydrated } = useHydration();
+  const {
+    inRoom,
+    setInRoom,
+    currentRoom,
+    setCurrentRoom,
+    currentUser,
+    setCurrentUser,
+    roomUsers,
+    isConnected,
+    handleCreateRoom,
+    handleJoinRoom,
+    handleLeaveRoom,
+    messages,
+    setMessages,
+    sendMessage,
+    error,
+    setError,
+  } = useRoomEvents();
+
+  //hydrated des données
   useEffect(() => {
-    async function checkServer() {
-      if (import.meta.env.PROD) {
-        try {
-        const res = await fetch(SERVER_URL+"/health");
-        if (res.ok) {
-          setServerAwake(true);
+    if (hydrated && user) {
+      setCurrentUser(user);
+
+      // on ne restaure pas automatiquement la room !
+      setCurrentRoom(null);
+      setInRoom(false);
+    }
+  }, [hydrated, user]);
+
+  //log sur socket
+  useEffect(() => {
+    if (!socket) {
+      console.log('Socket not initialized yet');
+      return;
+    }
+
+    if (!socket.connected) {
+      console.log('Socket initialized but not connected yet, attempting to connect...');
+      socket.connect();
+    } else {
+      console.log('Socket is already connected with id:', socket.id);
+    }
+  }, [socket, navigate]);
+
+  // création token pour reconnect F5
+  useEffect(() => {
+    if (!localStorage.getItem('userToken')) {
+      const token = crypto.randomUUID(); // Génère un token unique (ex: 'f1d1bca8-...')
+      localStorage.setItem('userToken', token);
+    }
+  }, []);
+  //reconnect si F5
+
+  useEffect(() => {
+    const storedRoom = localStorage.getItem('lastRoomCode');
+    const storedUsername = localStorage.getItem('lastUsername');
+    const userToken = localStorage.getItem('userToken');
+    if (
+      storedRoom &&
+      storedUsername &&
+      userToken &&
+      !inRoom &&
+      socket?.connected &&
+      isConnected &&
+      !hasRejoinAttempted.current
+    ) {
+      console.log('[AUTO REJOIN] Tentative de reconnexion à', storedRoom);
+      socket.emit(
+        'joinRoom',
+        {
+          username: storedUsername,
+          roomCode: storedRoom,
+          userToken, // 👉 on le passe au serveur
+        },
+        (response: { success: boolean; error?: string }) => {
+          console.log('[CLIENT] joinRoom response:', response);
+          if (response.success) {
+            setInRoom(true);
+            setCurrentUser({
+              id: socket.id as string,
+              username: storedUsername,
+              room: storedRoom,
+            });
+          } else {
+            toast.error(response.error || 'Erreur de reconnexion à la room');
+            localStorage.removeItem('lastRoomCode');
+            localStorage.removeItem('lastUsername');
+            navigate('/'); // Redirection vers l’accueil
+          }
         }
-      } catch (err) {
-        console.log("Serveur pas encore prêt, je réessaie dans 3s", err);
-        // setTimeout(checkServer, 3000);
-      }
+      );
     }
-  }
-    // checkServer();
-  }, []);
-    useEffect(() => {
-    if (serverAwake && !socket) {
-      const newSocket = io(SERVER_URL, {
-        transports: ["websocket", "polling"],
-        withCredentials: true,
-      });
-      setSocket(newSocket);
+  }, [socket, isConnected, inRoom, navigate]);
 
-      return () => {
-        newSocket.close();
-      };
+  useEffect(() => {
+    if (socket?.connected && currentUser && currentRoom && isConnected && hydrated && !hasJoinedRoomRef.current) {
+      hasJoinedRoomRef.current = true;
+      socket.emit('joinTeam', 'spectator', 'spectator');
     }
-  }, [serverAwake, socket]);
+  }, [socket, currentUser, currentRoom, isConnected, hydrated]);
 
-
-  //use Effect pour le socket
-useEffect(() => {
-  if (!serverAwake) return; // n'initialise pas tant que le serveur n'est pas prêt
-
-    const newSocket = io(SERVER_URL, {
-      transports: ['websocket', 'polling'],
-      timeout: 80000,
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      autoConnect: true,
-    });
-    setSocket(newSocket);
-
-  newSocket.on('connect', () => {
-        setIsConnected(true);
-        console.log('Connecté au serveur, socket id:', newSocket.id);
-      });
-
-      // Gérer la déconnexion
-      newSocket.on('disconnect', (reason) => {
-        setIsConnected(false);
-        console.log('Déconnecté du serveur, raison:', reason);
-      });
-
-      // Cleanup à la destruction du composant
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, []);
-
-  // verif fetch
   useEffect(() => {
-    fetch(SERVER_URL+'/health', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // ✅ Important si tu utilises cookies ou sessions
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Erreur lors du check de /health');
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('✅ Serveur en ligne:', data);
-      })
-      .catch(error => {
-        console.error('❌ Erreur de santé serveur:', error);
-      });
-  }, []);
-  //hydrated
-  const [hydrated, setHydrated] = useState(false);
-  // chat test pour join room localstorage
-  useEffect(() => {
-  const storedUser = localStorage.getItem('currentUser');
-  const storedRoom = localStorage.getItem('currentRoom');
-  //hydratation
-
-  if (storedUser && storedRoom) {
-    try {
-      setCurrentUser(JSON.parse(storedUser));
-      setCurrentRoom(JSON.parse(storedRoom));
-      setInRoom(true);
-      console.log("🎯 Hydratation depuis localStorage réussie");
-    } catch (err) {
-      console.error("Erreur parsing localStorage:", err);
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('currentRoom');
-    }
-  }
-}, []);
-
-  // chat test pour join room
-  const joinRoom = (user: User, room: RoomType) => {
-  setCurrentUser(user);
-  setCurrentRoom(room);
-  setInRoom(true);
-
-  // Sauvegarde dans le localStorage
-  localStorage.setItem('currentUser', JSON.stringify(user));
-  localStorage.setItem('currentRoom', JSON.stringify(room));
-};
-// const [inRoom, setInRoom] = useState(false);
-// const [roomCode, setRoomCode] = useState('');
-// const [users, setUsers] = useState([]);
-// const [gameMode, setGameMode] = useState<'standard' | 'custom'>('standard');
-// const [parameters, setParameters] = useState<any>({});
-// chat deuxièle test pour join room
-
-
-  // Amélioration code via chat cool non ?
-  // const socket = io(SERVER_URL, {
-  //   transports: ['polling', 'websocket'],
-  //   withCredentials: true
-  // });
-
-  // useEffect(() => {room
-  useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    const storedRoom = localStorage.getItem('currentRoom');
-  
-    if (storedUser && storedRoom) {
-      try {
-        setCurrentUser(JSON.parse(storedUser));
-        setCurrentRoom(JSON.parse(storedRoom));
-        setInRoom(true);
-        console.log("🎯 Hydratation depuis localStorage réussie");
-      } catch (err) {
-        console.error("Erreur parsing localStorage:", err);
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('currentRoom');
-      }
-    }
-    setHydrated(true);
-  }, []);
-  // useEffect(() => {2
-    const hasJoinedRoomRef = useRef(false);
-
-useEffect(() => {
-  if (
-    socket &&
-    currentUser &&
-    currentRoom &&
-    isConnected &&
-    hydrated &&
-    !hasJoinedRoomRef.current
-  ) {
-    console.log('🔁 Reconnexion à la room...');
-    socket.emit(
-      'joinRoom',
-      { username: currentUser.username, roomCode: currentRoom.code },
-      (response) => {
-        if (response.success) {
-          console.log('✅ Rejoint la room avec succès');
-          hasJoinedRoomRef.current = true;
-          setInRoom(true);
-          socket.emit(
-            'joinTeam',
-            'spectator',
-            'spectator',
-            (teamResponse) => {
-              if (teamResponse.success) {
-                console.log('✅ Changement d’équipe réussi');
-              } else {
-                console.error('❌ Erreur joinTeam:', teamResponse.error);
-              }
-            }
-          );
-        } else {
-          console.error('❌ Erreur joinRoom:', response.error);
-        }
-      }
-    );
-  }
-  // Ne pas reset ici !
-  // Le flag doit être reset UNIQUEMENT si le socket change (déconnexion/reconnexion)
-}, [socket, currentUser, currentRoom, isConnected, hydrated]);
-
-// Ajoute ce useEffect pour reset le flag si le socket change
-useEffect(() => {
-  hasJoinedRoomRef.current = false;
-}, [socket]);
-
-
-
-  // ✅ Ici tu mets ton socket.on('connect', ...) en dehors du useEffect, ou dans un autre useEffect
-  useEffect(() => {
-    if (!socket) return;
-    socket.on('connect', () => {
-      console.log('✅ Connecté au serveur');
-      setIsConnected(true);
-    });
-    return () => {
-      socket.off('connect');
-    };
+    hasJoinedRoomRef.current = false;
   }, [socket]);
 
-  // reprise bolt
-  useEffect(() => {
-    // Fonction pour réveiller le serveur
-    const wakeUpServer = async () => {
-      try {
-        console.log('Attempting to wake up server...');
-        setError('Réveil du serveur en cours... (30-60 secondes)');
-        
-        const response = await fetch(`${SERVER_URL}/health`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-        });
-        
-        if (response.ok) {
-          console.log('Server is awake');
-          setError(null);
-          return true;
-        }
-      } catch (error) {
-        console.log('Server wake up failed:', error);
-        return false;
-      }
-      return false;
-    };
+  setError(null);
 
-    // Essayer de réveiller le serveur avant de se connecter
-    const initializeConnection = async () => {
-      setIsConnecting(true);
-      
-      // Essayer de réveiller le serveur d'abord
-      if(import.meta.env.PROD) {
-        await wakeUpServer();
-      }
-      
-      // Attendre un peu pour que le serveur soit complètement prêt
-      setTimeout(() => {
-        createSocketConnection();
-      }, 2000);
-    };
+  // Génération token si absent
+  let userToken = localStorage.getItem('userToken');
+  if (!userToken) {
+    userToken = crypto.randomUUID();
+    localStorage.setItem('userToken', userToken);
+  }
 
-    const createSocketConnection = () => {
-    const newSocket: SocketType = io(SERVER_URL, {
-      timeout: 20000,
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 10,
-      transports: ['websocket', 'polling'], // WebSocket en premier
-      forceNew: true,
-      upgrade: true,
-      rememberUpgrade: true,
-      autoConnect: true,
-      // Configuration spécifique pour la production
-      ...(import.meta.env.PROD && {
-        transports: ['polling', 'websocket'], // Polling en premier en production
-        upgrade: true,
-        rememberUpgrade: true
-      })
-    });
-
-    // Debug: Écouter tous les événements
-    //newSocket.onAny((eventName, ...args) => {
-      //console.log(`[CLIENT EVENT IN] ${eventName}:`, args);
-    //});
-
-    // Intercepter les émissions pour debug
-    // const originalEmit = newSocket.emit.bind(newSocket);
-    // newSocket.emit = function(eventName: string, ...args: any[]) {
-    //   console.log(`[CLIENT EVENT OUT] ${eventName}:`, args);
-    //   return originalEmit(eventName, ...args);
-    // };
-
-    newSocket.on('connect', () => {
-      console.log('Connecté au serveur');
-      console.log('Transport:', newSocket.io.engine.transport.name);
-      console.log('Socket ID:', newSocket.id);
-      setIsConnected(true);
-      setIsConnecting(false);
-      setError(null);
-      console.log('currentUser au reconnect:', currentUser);
-      console.log('currentRoom au reconnect:', currentRoom);
-      
-      // Si on était dans une room, essayer de la rejoindre
-    });
-
-
-    newSocket.on('disconnect', () => {
-      console.log('Déconnecté du serveur');
-      setIsConnected(false);
-      setError('Connexion perdue - Reconnexion en cours...');
-    });
-    
-    newSocket.on('reconnect', (attemptNumber) => {
-      console.log('Reconnecté après', attemptNumber, 'tentatives');
-      setIsConnected(true);
-      setError(null);
-    });
-    
-    newSocket.on('reconnect_attempt', (attemptNumber) => {
-      console.log('Tentative de reconnexion', attemptNumber);
-      setError(`Reconnexion en cours... (tentative ${attemptNumber})`);
-    });
-    
-    newSocket.on('reconnect_failed', () => {
-      console.log('Échec de la reconnexion');
-      setError('Impossible de se reconnecter au serveur. Le serveur est peut-être en veille.');
-    });
-
-    newSocket.on('connect_error', (error) => {
-      console.error('Erreur de connexion:', error);
-      setIsConnecting(false);
-      setError('Serveur en veille - Réveil en cours... Cela peut prendre 30-60 secondes.');
-      
-      // Essayer de réveiller le serveur en cas d'erreur de connexion
-      setTimeout(async () => {
-        const serverAwake = await wakeUpServer();
-        if (serverAwake) {
-          // Réessayer la connexion après réveil
-          setTimeout(() => {
-            newSocket.connect();
-          }, 3000);
-        }
-      }, 5000);
-    });
-    // Nouvelle version de roomJoined
-        
-    
-    // ancienne version de roomJoined
-    // newSocket.on('roomJoined', (room: Room) => {
-    //   console.log('Salon rejoint:', room);
-    //   setCurrentRoom(room);
-    //   // S'assurer que le gameState est initialisé
-    //   if (!room.gameState) {
-    //     room.gameState = {
-    //       currentPhase: 0,
-    //       phases: [
-    //         "Attente début de la manche",
-    //         "Phase 1 - Choix du mot", 
-    //         "Phase 2 - Choix des mots interdits",
-    //         "Phase 3 - Discours du Sage"
-    //       ],
-    //       teams: {
-    //         red: { sage: null, disciples: [] },
-    //         blue: { sage: null, disciples: [] }
-    //       },
-    //       spectators: room.users.map(user => ({ ...user, team: 'spectator', role: 'spectator' })),
-    //       timer: null,
-    //       timeRemaining: 0,
-    //       totalTime: 0,
-    //       isPlaying: false,
-    //       score: { red: 0, blue: 0 }
-    //     };
-    //   }
-    //   setError(null);
-    // });
-
-    newSocket.on('userJoined', (user: User) => {
-      console.log('Utilisateur rejoint:', user);
-      setCurrentRoom(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          users: [...(prev.users ?? []), user]
-        };
-      });
-    });
-
-newSocket.on('userLeft', (userId: string) => {
-  console.log('Utilisateur parti:', userId);
-  setCurrentRoom(prev => {
-    if (!prev) return prev;
-    return {
-      ...prev,
-      users: (prev.users ?? []).filter(user => user.id !== userId)
-    };
-  });
-});
-
-newSocket.on('usersUpdate', (users: User[]) => {
-  console.log('Mise à jour des utilisateurs:', users);
-  setCurrentRoom(prev => {
-    if (!prev) return prev;
-    return {
-      ...prev,
-      users
-    };
-  });
-});
-
-newSocket.on('newMessage', (message: Message) => {
-  console.log('Nouveau message:', message);
-  setCurrentRoom(prev => {
-    if (!prev) return prev;
-    return {
-      ...prev,
-      messages: [...(prev.messages ?? []), message]
-    };
-  });
-});
-
-    newSocket.on('teamJoinSuccess', (data: { team: string; role: string; gameState: GameState }) => {
-      console.log('Team join success:', data);
-      setCurrentRoom(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          gameState: data.gameState
-        };
-      });
-    });
-
-    newSocket.on('teamJoinError', (error: string) => {
-      console.log('Team join error:', error);
-      setError(error);
-      setTimeout(() => setError(null), 3000);
-    });
-
-    newSocket.on('roomNotFound', () => {
-      setError('Salon non trouvé. Vérifiez le code et réessayez.');
-    });
-
-    newSocket.on('usernameTaken', () => {
-      setError('Ce pseudo est déjà utilisé dans ce salon. Choisissez-en un autre.');
-    });
-
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.close();
-    };
-    };
-
-    // Démarrer le processus d'initialisation
-    initializeConnection();
-  }, []);
-
-//chat pour handleCreateRoom
-const handleCreateRoom = (
-  username: string,
-  gameMode: 'standard' | 'custom',
-  parameters: GameParameters
-) => {
-  if (!socket || !isConnected) {
-    setError('Connexion au serveur en cours. Veuillez patienter.');
+  if (!socket?.id) {
+    console.error('Socket not connected or ID missing.');
     return;
   }
 
-  // 👇 Exemple : envoyer tout ça via le socket
-  socket.emit('createRoom', {
-    username,
-    gameMode,
-    parameters,
-  });
-
-  console.log('Création de salon :', { username, gameMode, parameters });
-};
-    useEffect(() => {
-  if (!socket) return;
-
-  const handleRoomJoined = (room: RoomType) => {
-    console.log('Salon rejoint:', room);
-
-    // Initialiser gameState si non défini
-    if (!room.gameState) {
-      room.gameState = {
-        currentPhase: 0,
-        phases: [
-          "Attente début de la manche",
-          "Phase 1 - Choix du mot", 
-          "Phase 2 - Choix des mots interdits",
-          "Phase 3 - Discours du Sage"
-        ],
-        teams: {
-          red: { sage: null, disciples: [] },
-          blue: { sage: null, disciples: [] }
-        },
-        spectators: Array.isArray(room.users)
-          ? room.users.filter(u => u && typeof u.id !== 'undefined').map(user => ({
-              ...user,
-              team: 'spectator',
-              role: 'spectator'
-            }))
-          : [],
-        timer: null,
-        timeRemaining: 0,
-        totalTime: 0,
-        isPlaying: false,
-        score: { red: 0, blue: 0 }
-      };
-    }
-
-    // Sécurise l'accès à room.users
-    const users = Array.isArray(room.users)
-      ? room.users.filter(u => u && typeof u.id !== 'undefined')
-      : [];
-
-    const me = users.find(user => user.id === socket.id);
-    if (me) {
-      joinRoom(me, room);
-    } else {
-      console.warn("Utilisateur non trouvé dans la room après jonction.");
-    }
-
-    setInRoom(true);
-    setError(null);
-    console.log({ isConnected, inRoom, currentRoom, currentUser });
-  };
-
-  socket.on('roomJoined', handleRoomJoined);
-
-  return () => {
-    socket.off('roomJoined', handleRoomJoined);
-  };
-}, [socket]);
-
-  // bolt
-  // const handleCreateRoom = (username: string) => {
-  //   if (!socket || !isConnected) {
-  //     setError('Connexion au serveur en cours. Veuillez patienter.');
-  //     return;
-  //   }
-    
-  //   // Stocker le nom d'utilisateur et ouvrir la modal de configuration
-  //   setPendingUsername(username);
-  //   setShowGameConfig(true);
-  // };
-
-  const handleGameConfigConfirm = (parameters: GameParameters) => {
-    if (socket && isConnected && pendingUsername) {
-      setCurrentUser({
-        id: socket.id || '',
-        username: pendingUsername,
-        room: '',
-        roomRole: 'Admin' // Le créateur est automatiquement Admin
-      });
-      
-      // Émettre la création de salon avec les paramètres
-      socket.emit('createRoom', {
-        username: pendingUsername,
-        gameMode: 'standard', // ou 'custom' si nécessaire
-        parameters: getDefaultParameters() // si tu as une fonction ou un objet par défaut
-      });
-      socket.emit('setGameParameters', parameters);
-      
-      setError(null);
-      setPendingUsername(null);
-      setShowGameConfig(false);
-    }
-  };
-
-  const handleGameConfigCancel = () => {
-    setPendingUsername(null);
-    setShowGameConfig(false);
-  };
-
-  const handleJoinRoom = (username: string, roomCode: string) => {
-    if (socket && isConnected) {
-      setCurrentUser({
-        id: socket.id || '',
-        username,
-        room: roomCode,
-      });
-      socket.emit('joinRoom', {username, roomCode}, (response: JoinRoomResponse) => {
-        if (response.success) {
-          console.log('✅ Rejoint la room avec succès');
-          setInRoom(true);
-        } else {
-          setError(response.error || 'Erreur lors de la jonction de la room');
-        }
-      });
-      // socket.emit('joinRoom', username, roomCode);
-      setError(null);
-    } else {
-      setError('Connexion au serveur en cours. Veuillez patienter.');
-    }
-  };
-
-  const handleSendMessage = (message: string) => {
-    if (socket && isConnected) {
-      socket.emit('sendMessage', message);
-    }
-  };
-
-  const handleLeaveRoom = () => {
-    if (socket) {
-      socket.disconnect();
-      socket.connect();
-    }
-    setCurrentUser(null);
-    setCurrentRoom(null);
-    setError(null);
-  };
-
-  const handleDemoMode = () => {
-    setIsDemoMode(true);
-  };
-
-  // Mode démo
-  if (isDemoMode) {
-    return <DemoMode />;
+  if (!socket.connected) {
+    console.error('Socket non connecté');
+    return;
   }
 
-  if (isConnecting) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl">
-          <div className="relative mb-6">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">
-            Connexion au serveur Kensho
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Établissement de la connexion...
-          </p>
-          <div className="flex justify-center space-x-1">
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl">
-          <div className="mb-6">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-              <div className="w-8 h-8 bg-red-500 rounded-full"></div>
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">
-            Connexion échouée
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Impossible de se connecter au serveur. Veuillez vérifier votre connexion internet et réessayer.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-          >
-            Réessayer
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (inRoom && currentRoom && currentUser) {
-    return (
-      <>
-        <RoomCreated
-          room={currentRoom}
-          currentUser={currentUser}
-          onSendMessage={handleSendMessage}
-          onLeaveRoom={handleLeaveRoom}
-          socket={socket}
-        />
-        <SocketDebugger socket={socket} isConnected={isConnected} />
-      </>
-    );
-  } else {
+  if (isDemoMode) return <DemoMode />;
+  if (!isConnected) return <div>Connexion échouée.</div>;
 
   return (
     <>
+      <Toaster position="top-center" />
       <KeepAlive serverUrl={SERVER_URL} />
       <SocketDebugger socket={socket} isConnected={isConnected} />
-      <Home
-        onCreateRoom={handleCreateRoom}
-        onJoinRoom={handleJoinRoom}
-        onDemoMode={handleDemoMode}
-        error={error}
-        isConnected={isConnected}
-      />
+      <Routes>
+        <Route
+          path="/"
+          element={<Home onDemoMode={() => setIsDemoMode(true)} error={error} isConnected={isConnected} />}
+        />
+
+        <Route
+          path="/room/:roomCode"
+          element={
+            inRoom && currentRoom && currentUser ? (
+              <RoomCreated
+                room={currentRoom}
+                currentUser={currentUser}
+                onSendMessage={handleSendMessage}
+                setCurrentUser={setCurrentUser}
+                setCurrentRoom={setCurrentRoom}
+                setError={setError}
+                hasJoinedRoomRef={hasJoinedRoomRef}
+                hasRejoinAttempted={hasRejoinAttempted}
+                socket={socket}
+              />
+            ) : (
+              <p className="text-center mt-10 text-red-600">
+                Vous n’êtes pas dans une salle . Veuillez retourner à l ’accueil.
+              </p>
+            )
+          }
+        />
+        <Route path="/demo" element={<DemoMode />} />
+      </Routes>
     </>
-   );
-  };
-}
+  );
+};
 
 export default App;

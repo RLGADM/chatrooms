@@ -1,11 +1,9 @@
 // Bijour les enfants
-import { Socket } from 'socket.io-client';
-
+import { Socket } from "socket.io-client";
 
 export type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
 
-
-export type RoomRole = 'Admin' | 'Héraut' | 'Débutant';
+export type RoomRole = "Admin" | "Héraut" | "Débutant";
 
 export interface GameParameters {
   ParametersTimeFirst: number;
@@ -15,7 +13,7 @@ export interface GameParameters {
   ParametersTeamMaxForbiddenWords: number;
   ParametersTeamMaxPropositions: number;
   ParametersPointsMaxScore: number;
-  ParametersPointsRules: 'no-tie' | 'tie';
+  ParametersPointsRules: "no-tie" | "tie";
   ParametersWordsListSelection: {
     veryCommon: boolean;
     lessCommon: boolean;
@@ -27,21 +25,23 @@ export interface User {
   id: string;
   username: string;
   room: string;
-  team?: 'red' | 'blue' | 'spectator';
-  role?: 'sage' | 'disciple' | 'spectator';
+  team?: "red" | "blue" | "spectator";
+  role?: "sage" | "disciple" | "spectator";
   roomRole?: RoomRole;
-  isAdmin?: boolean; // Indique si l'utilisateur est un administrateur de la salle
+  isAdmin?: boolean;
+  userToken?: string; // Indique si l'utilisateur est un administrateur de la salle
 }
 
-export interface RoomData {
-  code: string;
-  users: User[];
-  messages: Message[];
-  gameMode: 'standard' | 'custom';
-  parameters: GameParameters;
-  gameState?: unknown; // à préciser si tu veux typer le jeu en cours
-  creator: string; // ID du créateur
-}
+export const emptyUser: User = {
+  id: "",
+  username: "",
+  room: "",
+  team: "spectator",
+  role: "spectator",
+  roomRole: undefined,
+  isAdmin: false,
+  userToken: "",
+};
 
 export interface Message {
   id: string;
@@ -69,7 +69,7 @@ export interface Room {
   code: string;
   users: User[];
   messages: Message[];
-  gameMode: 'standard' | 'custom';
+  gameMode: "standard" | "custom";
   parameters: GameParameters;
   gameState?: unknown; // à préciser si tu veux typer le jeu en cours
   creator: string; // ID du créateur
@@ -92,9 +92,18 @@ export interface ServerToClientEvents {
   usernameTaken: () => void;
   usersUpdate: (users: User[]) => void;
   gameStateUpdate: (gameState: GameState) => void;
-  teamJoinSuccess: (data: { team: string; role: string; gameState: GameState }) => void;
+  teamJoinSuccess: (data: {
+    team: string;
+    role: string;
+    gameState: GameState;
+  }) => void;
   teamJoinError: (error: string) => void;
-  pong: (data: { timestamp: string; socketId: string; userExists: boolean; userInfo: User | null }) => void;
+  pong: (data: {
+    timestamp: string;
+    socketId: string;
+    userExists: boolean;
+    userInfo: User | null;
+  }) => void;
   //debugUsersResponse: (data: any) => void;
   gameParametersSet: (parameters: GameParameters) => void;
   roomRoleChanged: (data: { userId: string; newRole: RoomRole }) => void;
@@ -105,10 +114,11 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   //chat pour params
   createRoom: (payload: {
-  username: string;
-  gameMode: 'standard' | 'custom';
-  parameters: GameParameters;
-}) => void;
+    username: string;
+    gameMode: "standard" | "custom";
+    parameters: GameParameters;
+    userToken?: string;
+  }) => void;
   //bolt
   //createRoom: (username: string) => void;
   joinRoom: (username: string, roomCode: string) => void;
@@ -125,4 +135,8 @@ export interface ClientToServerEvents {
   changeUserRoomRole: (userId: string, newRole: RoomRole) => void;
   kickUser: (userId: string, reason: string) => void;
   banUser: (userId: string, reason: string) => void;
+}
+
+export interface ServerResetPayload {
+  message: string;
 }

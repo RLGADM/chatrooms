@@ -13,7 +13,7 @@ const KeepAlive: React.FC<KeepAliveProps> = ({ serverUrl }) => {
         const response = await fetch(`${serverUrl}/health`, {
           method: 'GET',
           headers: {
-            'Accept': 'application/json',
+            Accept: 'application/json',
           },
         });
         if (response.ok) {
@@ -33,9 +33,12 @@ const KeepAlive: React.FC<KeepAliveProps> = ({ serverUrl }) => {
     }, 30000);
 
     // Ping périodique toutes les 10 minutes
-    const intervalId = setInterval(() => {
-      pingServer();
-    }, 10 * 60 * 1000); // 10 minutes
+    const intervalId = setInterval(
+      () => {
+        pingServer();
+      },
+      10 * 60 * 1000
+    ); // 10 minutes
 
     return () => {
       clearTimeout(initialPingTimeout);
@@ -47,7 +50,6 @@ const KeepAlive: React.FC<KeepAliveProps> = ({ serverUrl }) => {
 };
 
 export default KeepAlive;
-
 
 // KeepAlive.tsx précédent
 // import { useEffect } from 'react';
