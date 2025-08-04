@@ -4,7 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { rooms, users, gameStates } from './src/types/store.js';
+import { rooms, users, gameStates } from './src/utils/store.js';
 
 // --- INIT --
 const __filename = fileURLToPath(import.meta.url);
@@ -13,11 +13,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = createServer(app);
 
-//log
+//log initialement, mais on va le laisser ici
 const PORT = process.env.PORT || 3000;
-
 console.log(`Démarrage du serveur sur le port ${PORT}...`);
-
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
@@ -51,13 +49,12 @@ const io = new Server(server, {
   },
 });
 
+// emit du serverReset pour clear les données frontend.
+io.emit('serverReset', 'Serveur redémarré');
+
 io.on('connection', (socket) => {
   console.log(`[SERVER] ✅ Nouveau client connecté : ${socket.id}`);
 
-  // Notifie le client que le serveur a redémarré (utile si tu veux forcer un reload)
-  //socket.emit('serverReset', { message: 'Les données ont été réinitialisées, merci de recharger la page.' });
-  emitIfNotSilent(socket, 'serverReset', 'La connexion au serveur est fonctionnelle', { silent: true });
-  //
   if (!socket.connected) {
     console.warn(`[JOIN BLOCKED] Socket ${socket.id} n'est pas encore connecté.`);
     if (ack) ack({ success: false, error: 'Connexion non encore établie.' });

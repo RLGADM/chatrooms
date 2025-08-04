@@ -23,30 +23,8 @@ import {
 import { Room as RoomType, User, Message, GameState } from '../types';
 import PlayersManagementModal from './PlayersManagementModal';
 
-interface RoomProps {
-  room: RoomType;
-  currentUser: User;
-  onSendMessage: (message: string) => void;
-  onLeaveRoom: () => void;
-  socket: any;
-  setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>;
-  setCurrentRoom: React.Dispatch<React.SetStateAction<RoomType | null>>;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
-  hasJoinedRoomRef: MutableRefObject<boolean>;
-  hasRejoinAttempted: MutableRefObject<boolean>;
-}
-
-const RoomCreated: React.FC<RoomProps> = ({
-  room,
-  currentUser,
-  onSendMessage,
-  socket,
-  setCurrentUser,
-  setCurrentRoom,
-  setError,
-  hasJoinedRoomRef,
-  hasRejoinAttempted,
-}) => {
+const RoomCreated: React.FC = () => {
+  // consts locales
   const [proposal, setProposal] = useState('');
   const [copied, setCopied] = useState(false);
   const [showPlayersModal, setShowPlayersModal] = useState(false);
@@ -56,8 +34,10 @@ const RoomCreated: React.FC<RoomProps> = ({
   const [isJoiningTeam, setIsJoiningTeam] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [showDebugModal, setShowDebugModal] = useState(false);
-  // const pour updateRoomUsers
   const [player, setPlayer] = useState<User | null>(null);
+  // consts depuis hooks
+  const { socket, currentUser, currentRoom, handleSendMessage, leaveRoom, hasJoinedRoomRef, hasRejoinAttempted } =
+    useRoomEvents();
   //update <RoomCreated
   const handleLeaveRoom = () => {
     if (socket && room) {

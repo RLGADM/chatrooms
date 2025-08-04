@@ -1,34 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { User, Room } from '../types';
+import { useSocketContext } from '../components/SocketContext';
+import { useRoomEvents } from './useRoomEvents';
 
-export function useHydration(socket?: any) {
-  const [hydrated, setHydrated] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [room, setRoom] = useState<Room | null>(null);
-  const [inRoom, setInRoom] = useState(false);
+export function useHydration() {
+  const { socket } = useSocketContext();
+  const { setCurrentUser, setCurrentRoom, setInRoom } = useRoomEvents();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    const storedRoom = localStorage.getItem('currentRoom');
+    const storedUsername = localStorage.getItem('username');
+    const storedRoom = localStorage.getItem('roomCode');
+    const userToken = localStorage.getItem('userToken');
 
-    if (storedUser && storedRoom) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        const parsedRoom = JSON.parse(storedRoom);
+    if (storedUsername && storedRoom && socket?.connected) {
+      socket.emit('hydrateUser', { username: storedUsername, roomCode: storedRoom, userToken });
 
-        setUser(parsedUser);
-        setRoom(parsedRoom);
+      socket.once('roomJoined', ({ user, room }: { user: User; room: Room }) => {
+        setCurrentUser(user);
+        setCurrentRoom(room);
         setInRoom(true);
-      } catch (error) {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('currentRoom');
-        setUser(null);
-        setRoom(null);
-      }
+      });
     }
-
-    setHydrated(true);
-  }, [socket]);
-
-  return { user, room, inRoom, hydrated, setUser, setRoom, setInRoom };
+  }, [socket, setCurrentUser, setCurrentRoom, setInRoom]);
 }

@@ -1,43 +1,32 @@
+// --------------- IMPORT
+
+// Déclaration import framework
 import React, { useEffect, useState } from 'react';
 import { Users, Plus, LogIn, Sparkles, Wifi } from 'lucide-react';
+// Déclaration fichiers projets
 import { GameParameters } from '../types';
 import GameConfigModal from './GameConfigModal';
 import { getDefaultParameters } from '../utils/defaultParameters';
-import { useHydration } from '../hooks/useHydration';
+// Déclaration via hooks
 import { useRoomEvents } from '../hooks/useRoomEvents';
+import { useLocalStorageItem } from '../hooks/useLocalStorageItem';
 
-interface HomeProps {
-  onDemoMode: () => void;
-  error: string | null;
-  isConnected: boolean;
-}
+// Déclaration const
 
-const Home: React.FC<HomeProps> = ({ onDemoMode, isConnected }) => {
-  //TODO ancien const avant le hook
-  // const { inRoom, currentRoom, roomUsers, handleCreateRoom, handleJoinRoom, handleLeaveRoom } = useRoomEvents();
-  // const [isCreating, setIsCreating] = useState(false);
-  // const [isJoining, setIsJoining] = useState(false);
-  // const [isConfigModalOpen, setConfigModalOpen] = useState(false);
-  // const [parameters, setParameters] = useState<GameParameters>(getDefaultParameters());
-  // const [gameMode, setGameMode] = useState<'standard' | 'custom'>('standard');
-  // const { user, hydrated } = useHydration();
-  // const [roomCode, setRoomCode] = useState(() => {
-  //   return localStorage.getItem('lastRoomCode') || '';
-  // });
-  // const [username, setUsername] = useState(() => {
-  //   return localStorage.getItem('lastUsername') || '';
-  // });
-  //Nouveau const avec hooks séparé par rapport ay hooks
-  const [username, setUsername] = useState('');
-  const [roomCode, setRoomCode] = useState(() => localStorage.getItem('lastRoomCode') || '');
+const Home: React.FC = () => {
+  //Déclaration const locales
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isConfigModalOpen, setConfigModalOpen] = useState(false);
   const [parameters, setParameters] = useState<GameParameters>(getDefaultParameters());
   const [gameMode, setGameMode] = useState<'standard' | 'custom'>('standard');
 
-  const { user, hydrated } = useHydration();
+  // Const via Hooks
+  const [lastRoomCode] = useLocalStorageItem('lastRoomCode', '');
+  const [lastUserName, setLastUserName, resetLastUserName] = useLocalStorageItem('lastUserName', '');
+  // useRoomEvents
   const {
+    socketIsConnected,
     currentUser,
     currentRoom,
     roomUsers,
@@ -49,24 +38,10 @@ const Home: React.FC<HomeProps> = ({ onDemoMode, isConnected }) => {
     handleLeaveRoom,
   } = useRoomEvents();
 
-  //TODO réintégration d'un const useEffect en dehors des hooks pour les modif
-  // Hydratation et enregistrement du roomCode dans le localstorage
-  useEffect(() => {
-    if (hydrated && user?.username) {
-      setUsername(user.username);
-    }
-  }, [hydrated, user]);
-
-  useEffect(() => {
-    if (roomCode.trim() !== '') {
-      localStorage.setItem('lastRoomCode', roomCode);
-    }
-  }, [roomCode]);
-
   // const handle
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim() && isConnected) {
+    if (username.trim() && socketIsConnected) {
       setIsCreating(true);
       handleCreateRoom(username.trim(), gameMode, parameters);
       setTimeout(() => setIsCreating(false), 3000);
@@ -75,7 +50,7 @@ const Home: React.FC<HomeProps> = ({ onDemoMode, isConnected }) => {
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim() && roomCode.trim() && isConnected) {
+    if (username.trim() && roomCode.trim() && socketIsConnected) {
       setIsJoining(true);
       handleJoinRoom(username.trim(), roomCode.trim().toUpperCase());
       setTimeout(() => setIsJoining(false), 3000);
@@ -105,14 +80,16 @@ const Home: React.FC<HomeProps> = ({ onDemoMode, isConnected }) => {
       <div className="absolute top-4 right-4 z-20">
         <div
           className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm ${
-            isConnected
+            socketIsConnected
               ? 'bg-green-500/20 text-green-100 border border-green-400/30'
               : 'bg-red-500/20 text-red-100 border border-red-400/30'
           }`}
         >
-          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+          <div
+            className={`w-2 h-2 rounded-full ${socketIsConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}
+          ></div>
           <Wifi className="w-4 h-4" />
-          <span>{isConnected ? 'Serveur actif' : 'Serveur en veille'}</span>
+          <span>{socketIsConnected ? 'Serveur actif' : 'Serveur en veille'}</span>
         </div>
       </div>
 
@@ -154,13 +131,8 @@ const Home: React.FC<HomeProps> = ({ onDemoMode, isConnected }) => {
               <input
                 type="text"
                 id="username"
-                value={username}
-                //onchange={(e) => setUsername(e.target.value)}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setUsername(value);
-                  localStorage.setItem('lastUsername', value);
-                }}
+                value={lastUserName}
+                onChange={(e) => setLastUserName(e.target.value)}
                 placeholder="Entrez votre pseudo"
                 className={`w-full px-4 py-4 rounded-xl border transition-all duration-200 bg-gray-50/50 font-medium focus:outline-none focus:ring-2 ${
                   error?.toLowerCase().includes('pseudo')
@@ -169,14 +141,14 @@ const Home: React.FC<HomeProps> = ({ onDemoMode, isConnected }) => {
                 }`}
                 required
                 maxLength={20}
-                disabled={!isConnected}
+                disabled={!socketIsConnected}
               />
             </div>
 
             <button
               type="button"
               onClick={() => setConfigModalOpen(true)}
-              disabled={!username.trim() || isCreating || !isConnected}
+              disabled={!lastUserName.trim() || isCreating || !socketIsConnected}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <Plus className="w-5 h-5" />
@@ -184,7 +156,7 @@ const Home: React.FC<HomeProps> = ({ onDemoMode, isConnected }) => {
             </button>
           </form>
 
-          {!import.meta.env.PROD && (
+          {/* {!import.meta.env.PROD && (
             <button
               onClick={onDemoMode}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mb-6"
@@ -192,7 +164,7 @@ const Home: React.FC<HomeProps> = ({ onDemoMode, isConnected }) => {
               <Sparkles className="w-5 h-5" />
               <span>Mode Démo</span>
             </button>
-          )}
+          )} */}
 
           <form onSubmit={handleJoinRoom} className="space-y-4">
             <div>
@@ -207,12 +179,12 @@ const Home: React.FC<HomeProps> = ({ onDemoMode, isConnected }) => {
                 placeholder="Ex: ABC123"
                 className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 font-mono text-center text-lg font-bold bg-gray-50/50 tracking-wider"
                 maxLength={6}
-                disabled={!isConnected}
+                disabled={!socketIsConnected}
               />
             </div>
             <button
               type="submit"
-              disabled={!username.trim() || !roomCode.trim() || isJoining || !isConnected}
+              disabled={!lastUserName.trim() || !roomCode.trim() || isJoining || !isConnected}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <LogIn className="w-5 h-5" />

@@ -1,197 +1,158 @@
-// REFACTO COMPLET
-// Déclaration import
-import React, { useEffect, useRef, useState, useTransition } from 'react';
+// --------------- IMPORT
+
+// Déclaration import framework
+import React, { useRef } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+// Déclaration import des fichiers projets
 import Home from './components/Home';
 import RoomCreated from './components/RoomCreated';
-import DemoMode from './components/DemoMode';
+//import DemoMode from './components/DemoMode';
 import SocketDebugger from './components/SocketDebugger';
 import KeepAlive from './components/KeepAlive';
-import { useSocket } from './hooks/useSocket';
+// Déclaration des hooks
 import { useHydration } from './hooks/useHydration';
 import { useRoomEvents } from './hooks/useRoomEvents';
-import { User, Room as RoomType, Message, GameParameters, ServerResetPayload, emptyUser } from './types';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import { Toaster, toast } from 'react-hot-toast';
-//const globale
+import { useServerReset, useSocketInitializer } from './hooks/app/useAppLifecycle';
+import { useGenerateToken } from './hooks/useUserToken';
+import { useReconnection } from './hooks/useReconnection';
+import { SocketContext } from './components/SocketContext';
+
+// --------------- Déclaration des consts
+
+//const serveur
 const SERVER_URL = import.meta.env.PROD ? 'https://kensho-hab0.onrender.com' : 'http://localhost:3000';
 
-//const main React
+// Déclaration du main
 const App: React.FC = () => {
   // const locales
-  const { socket } = useSocket();
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const hasJoinedRoomRef = useRef(false);
-  const navigate = useNavigate();
-  const serverHasResetRef = useRef(false);
+  // const [isDemoMode, setIsDemoMode] = useState(false);
   const hasRejoinAttempted = useRef(false);
 
-  //Nouveau const via hooks :
-  const { user, hydrated } = useHydration();
+  // Nouveau co
+  //const { socket, isConnected: socketIsConnected, isConnecting: socketIsConnecting } = useSocket();
+
+  // useRoomEvents nettoyé
   const {
-    inRoom,
+    socket,
+    socketIsConnected,
+    inRoom: eventsInRoom,
     setInRoom,
     currentRoom,
     setCurrentRoom,
     currentUser,
     setCurrentUser,
-    roomUsers,
-    isConnected,
-    handleCreateRoom,
     handleJoinRoom,
-    handleLeaveRoom,
-    messages,
-    setMessages,
-    sendMessage,
-    error,
-    setError,
   } = useRoomEvents();
+  //Const local mais obligationde déclarer apres le hook
+  const isPlayerInRoom = eventsInRoom && currentUser !== null; //booléen inroom
+  const isRoomReady = currentUser && currentRoom; //booléen dans le return
+  // je la laisse ici pour la lisibilité
+  //
 
-  //hydrated des données
-  useEffect(() => {
-    if (hydrated && user) {
-      setCurrentUser(user);
+  // --------------- Début du Code
+  // serverReset pour le frontend
+  useServerReset(socket);
 
-      // on ne restaure pas automatiquement la room !
-      setCurrentRoom(null);
-      setInRoom(false);
-    }
-  }, [hydrated, user]);
+  //hydratation via hooks
+  useHydration();
 
   //log sur socket
-  useEffect(() => {
-    if (!socket) {
-      console.log('Socket not initialized yet');
-      return;
-    }
+  useSocketInitializer(socket);
 
-    if (!socket.connected) {
-      console.log('Socket initialized but not connected yet, attempting to connect...');
-      socket.connect();
-    } else {
-      console.log('Socket is already connected with id:', socket.id);
-    }
-  }, [socket, navigate]);
+  // création token utilisateur
+  useGenerateToken();
 
-  // création token pour reconnect F5
-  useEffect(() => {
-    if (!localStorage.getItem('userToken')) {
-      const token = crypto.randomUUID(); // Génère un token unique (ex: 'f1d1bca8-...')
-      localStorage.setItem('userToken', token);
-    }
-  }, []);
   //reconnect si F5
+  useReconnection({
+    socket,
+    isConnected: socketIsConnected,
+    currentUser,
+    currentRoom,
+    handleJoinRoom,
+    setCurrentRoom,
+    isPlayerInRoom,
+    hasRejoinAttempted,
+    setCurrentUser,
+    setInRoom,
+  });
 
-  useEffect(() => {
-    const storedRoom = localStorage.getItem('lastRoomCode');
-    const storedUsername = localStorage.getItem('lastUsername');
-    const userToken = localStorage.getItem('userToken');
-    if (
-      storedRoom &&
-      storedUsername &&
-      userToken &&
-      !inRoom &&
-      socket?.connected &&
-      isConnected &&
-      !hasRejoinAttempted.current
-    ) {
-      console.log('[AUTO REJOIN] Tentative de reconnexion à', storedRoom);
-      socket.emit(
-        'joinRoom',
-        {
-          username: storedUsername,
-          roomCode: storedRoom,
-          userToken, // 👉 on le passe au serveur
-        },
-        (response: { success: boolean; error?: string }) => {
-          console.log('[CLIENT] joinRoom response:', response);
-          if (response.success) {
-            setInRoom(true);
-            setCurrentUser({
-              id: socket.id as string,
-              username: storedUsername,
-              room: storedRoom,
-            });
-          } else {
-            toast.error(response.error || 'Erreur de reconnexion à la room');
-            localStorage.removeItem('lastRoomCode');
-            localStorage.removeItem('lastUsername');
-            navigate('/'); // Redirection vers l’accueil
-          }
-        }
-      );
-    }
-  }, [socket, isConnected, inRoom, navigate]);
+  // --------------- Début du JSX
 
-  useEffect(() => {
-    if (socket?.connected && currentUser && currentRoom && isConnected && hydrated && !hasJoinedRoomRef.current) {
-      hasJoinedRoomRef.current = true;
-      socket.emit('joinTeam', 'spectator', 'spectator');
-    }
-  }, [socket, currentUser, currentRoom, isConnected, hydrated]);
+  // Détection du mode Démo
+  // if (isDemoMode) return <DemoMode />;
 
-  useEffect(() => {
-    hasJoinedRoomRef.current = false;
-  }, [socket]);
-
-  setError(null);
-
-  // Génération token si absent
-  let userToken = localStorage.getItem('userToken');
-  if (!userToken) {
-    userToken = crypto.randomUUID();
-    localStorage.setItem('userToken', userToken);
+  // Message si connexion en cours
+  if (!socket?.connected) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#eaf4fa] text-[#37719a] px-4">
+        <div className="relative w-24 h-24 mb-6 flex items-center justify-center">
+          <span className="absolute inset-0 rounded-full border-4 border-[#37719a] opacity-30 animate-spin-slow"></span>
+          <span className="w-5 h-5 bg-[#37719a] rounded-full animate-ping-custom z-10"></span>
+          <span className="absolute w-3 h-3 bg-[#37719a] rounded-full animate-orbital"></span>
+        </div>
+        <h2 className="text-2xl font-semibold mb-2">Connexion au serveur...</h2>
+        <p className="text-center text-sm max-w-xs">
+          Veuillez patienter pendant que nous établissons la connexion. Cela peut prendre jusqu'à 60 secondes.
+        </p>
+      </div>
+    );
   }
 
-  if (!socket?.id) {
-    console.error('Socket not connected or ID missing.');
-    return;
-  }
+  // Message si connexion KO
+  if (!socketIsConnected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#d6eaf6] via-[#eaf4fa] to-white flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl">
+          {/* Cercle animé */}
+          <div className="mb-6 relative w-16 h-16 mx-auto flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border-4 border-[#37719a] opacity-30 animate-spin-slow"></div>
+            <div className="w-4 h-4 bg-[#37719a] rounded-full animate-ping-custom z-10"></div>
+            <div className="absolute w-2 h-2 bg-[#37719a] rounded-full animate-orbital"></div>
+          </div>
 
-  if (!socket.connected) {
-    console.error('Socket non connecté');
-    return;
+          <h2 className="text-2xl font-bold text-[#37719a] mb-3">Connexion échouée</h2>
+          <p className="text-[#37719a]/80 mb-6">
+            Impossible de se connecter au serveur. Le serveur est peut être en maintenance. :).
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-gradient-to-r from-[#37719a] to-[#2d5f83] text-white rounded-xl font-semibold hover:brightness-110 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
   }
-
-  if (isDemoMode) return <DemoMode />;
-  if (!isConnected) return <div>Connexion échouée.</div>;
 
   return (
     <>
-      <Toaster position="top-center" />
-      <KeepAlive serverUrl={SERVER_URL} />
-      <SocketDebugger socket={socket} isConnected={isConnected} />
-      <Routes>
-        <Route
-          path="/"
-          element={<Home onDemoMode={() => setIsDemoMode(true)} error={error} isConnected={isConnected} />}
-        />
+      <SocketContext.Provider value={{ socket }}>
+        <Toaster position="top-center" />
+        <KeepAlive serverUrl={SERVER_URL} />
+        <SocketDebugger socket={socket} isConnected={socketIsConnected} />
+        {/* rootage */}
+        <Routes>
+          <Route path="/" element={<Home />} />
 
-        <Route
-          path="/room/:roomCode"
-          element={
-            inRoom && currentRoom && currentUser ? (
-              <RoomCreated
-                room={currentRoom}
-                currentUser={currentUser}
-                onSendMessage={handleSendMessage}
-                setCurrentUser={setCurrentUser}
-                setCurrentRoom={setCurrentRoom}
-                setError={setError}
-                hasJoinedRoomRef={hasJoinedRoomRef}
-                hasRejoinAttempted={hasRejoinAttempted}
-                socket={socket}
-              />
-            ) : (
-              <p className="text-center mt-10 text-red-600">
-                Vous n’êtes pas dans une salle . Veuillez retourner à l ’accueil.
-              </p>
-            )
-          }
-        />
-        <Route path="/demo" element={<DemoMode />} />
-      </Routes>
+          <Route
+            path="/room/:roomCode"
+            element={
+              isRoomReady ? (
+                <RoomCreated />
+              ) : (
+                <p className="text-center mt-10 text-red-600">
+                  Vous n’êtes pas dans une salle . Veuillez retourner à l ’accueil.
+                </p>
+              )
+            }
+          />
+
+          {/* <Route path="/demo" element={<DemoMode />} /> */}
+        </Routes>
+      </SocketContext.Provider>
     </>
   );
 };
-
 export default App;

@@ -1,17 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useSocket } from './useSocket';
 import { GameParameters, Message, Room, User } from '../types';
+import { useLocalStorageItem } from './useLocalStorageItem';
+import { useUserToken } from './useUserToken';
 
 export function useRoomEvents() {
-  const { socket, isConnected } = useSocket();
+  //const via hooks
+  const [lastRoomCode, setLastRoomCode, resetLastRoomCode] = useLocalStorageItem('lastRoomCode', '');
+  const [lastUsername, setLastUsername, resetLastUsername] = useLocalStorageItem('lastUsername', '');
+
+  const userToken = useUserToken();
+
+  const { socket, isConnected: socketIsConnected } = useSocket();
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [roomUsers, setRoomUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [inRoom, setInRoom] = useState<boolean>(false);
 
-  const inRoom = !!currentRoom;
+  // const inRoom = !!currentRoom; La merde créé par CHATGPT
 
   useEffect(() => {
     if (!socket) return;
@@ -46,25 +55,41 @@ export function useRoomEvents() {
     };
   }, [socket]);
 
-  const handleJoinRoom = (username: string, roomCode: string) => {
-    if (!socket || !isConnected) return;
+  const handleJoinRoom = async (username: string, roomCode: string): Promise<boolean> => {
+    if (!socket || !socketIsConnected) return false;
 
-    const userToken = localStorage.getItem('userToken');
+    // const token déclaré avant la fonction
+    if (!userToken) return false;
 
-    socket.emit('joinRoom', { username, roomCode, userToken }, (response: any) => {
-      if (response.success) {
-        localStorage.setItem('lastRoomCode', roomCode);
-        localStorage.setItem('lastUsername', username);
-      } else {
-        setError(response.error);
-      }
+    return new Promise((resolve) => {
+      socket.emit('joinRoom', { username, roomCode, userToken }, (response: any) => {
+        if (response.success) {
+          setLastRoomCode(roomCode);
+          setLastUsername(username);
+
+          setInRoom(true);
+
+          setCurrentUser({
+            id: socket.id as string,
+            username,
+            room: roomCode,
+          });
+
+          resolve(true);
+        } else {
+          setError(response.error);
+          resetLastRoomCode();
+          resetLastUsername();
+          resolve(false);
+        }
+      });
     });
   };
 
   const handleCreateRoom = (username: string, gameMode: 'standard' | 'custom', parameters: GameParameters) => {
-    if (!socket || !isConnected) return;
+    if (!socket || !socketIsConnected) return;
 
-    const userToken = localStorage.getItem('userToken');
+    //const token déclaré avant function
 
     socket.emit(
       'createRoom',
@@ -88,21 +113,24 @@ export function useRoomEvents() {
     setRoomUsers([]);
     setMessages([]);
     setError(null);
-    localStorage.removeItem('lastRoomCode');
+    resetLastRoomCode();
   };
 
   return {
+    socket,
     currentUser,
     currentRoom,
     roomUsers,
     messages,
     error,
     inRoom,
+    socketIsConnected,
     handleCreateRoom,
     handleJoinRoom,
     handleLeaveRoom,
     setCurrentUser,
     setCurrentRoom,
+    setInRoom,
     setRoomUsers,
     setMessages,
     setError,
