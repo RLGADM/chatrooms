@@ -5,10 +5,15 @@ import { useRoomEvents } from '@/hooks';
 import { Socket } from 'socket.io-client';
 
 export function useHomeHandlers(initialUsername = '') {
+  //import inRoom et currentRoom.code depuis useRoomEvents
+  const { inRoom, currentRoom, handleCreateRoom, handleJoinRoom } = useRoomEvents();
+  const roomCode = currentRoom?.code || null;
+  // rajout d'un const pour l'inputroomCode
+  const [inputRoomCode, setInputRoomCode] = useState<string>('');
+  // const other
   const { socket } = useSocketContext();
-  const { handleCreateRoom, handleJoinRoom } = useRoomEvents();
   const [username, setUsername] = useState(initialUsername);
-  const [roomCode, setRoomCode] = useState('');
+
   const [error, setError] = useState<string | null>(null);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -32,16 +37,32 @@ export function useHomeHandlers(initialUsername = '') {
   );
 
   const handleJoin = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (username.trim() && roomCode.trim() && socketIsConnected) {
+    (eOrUsername: React.FormEvent | string, maybeRoomCode?: string) => {
+      if (typeof eOrUsername === 'string' && typeof maybeRoomCode === 'string') {
+        // Appel direct : handleJoin(username, roomCode)
+        const username = eOrUsername;
+        const roomCode = maybeRoomCode;
+
+        if (!username.trim() || !roomCode.trim() || !socketIsConnected) return;
+
         setIsJoining(true);
         handleJoinRoom(socket, username.trim(), roomCode.trim().toUpperCase());
         localStorage.setItem('lastUsername', JSON.stringify(username));
         setTimeout(() => setIsJoining(false), 3000);
+      } else {
+        // Appel via formulaire : handleJoin(event)
+        const e = eOrUsername as React.FormEvent;
+        e.preventDefault();
+
+        if (!username || !inputRoomCode || !socketIsConnected) return;
+
+        setIsJoining(true);
+        handleJoinRoom(socket, username.trim(), inputRoomCode.trim().toUpperCase());
+        localStorage.setItem('lastUsername', JSON.stringify(username));
+        setTimeout(() => setIsJoining(false), 3000);
       }
     },
-    [username, roomCode, socketIsConnected]
+    [username, inputRoomCode, socketIsConnected]
   );
 
   //TODO j'ai vérifié par log, chaque variable ok et on entre bien dans le if.
@@ -68,8 +89,10 @@ export function useHomeHandlers(initialUsername = '') {
     socketIsConnected,
     username,
     setUsername,
+    inRoom,
     roomCode,
-    setRoomCode,
+    inputRoomCode,
+    setInputRoomCode,
     isCreating,
     isJoining,
     isConfigModalOpen,
@@ -77,6 +100,7 @@ export function useHomeHandlers(initialUsername = '') {
     gameMode,
     parameters,
     handleCreate,
+    handleCreateRoom,
     handleJoin,
     handleConfigConfirm,
     error,

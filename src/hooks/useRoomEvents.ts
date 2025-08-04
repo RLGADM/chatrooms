@@ -1,11 +1,13 @@
+// import framework
 import { useEffect, useState } from 'react';
-import { useSocket } from './useSocket';
-import { GameParameters, Message, Room, User } from '../types';
-import { useUserToken } from './useUserToken';
 import { Socket } from 'socket.io-client';
+// import ts et hooks
+import { useSocket } from './useSocket';
+import { GameParameters, Message, Room, User } from '@/types';
+import { useUserToken } from './useUserToken';
 
 export function useRoomEvents() {
-  const [lastRoomCode, setLastRoomCode] = useState(() => {
+  const [, setLastRoomCode] = useState(() => {
     const stored = localStorage.getItem('lastRoomCode');
     try {
       return stored ? JSON.parse(stored) : '';
@@ -14,7 +16,7 @@ export function useRoomEvents() {
     }
   });
 
-  const [lastUsername, setLastUsername] = useState(() => {
+  const [, setLastUsername] = useState(() => {
     const stored = localStorage.getItem('lastUsername');
     try {
       return stored ? JSON.parse(stored) : '';
@@ -23,10 +25,10 @@ export function useRoomEvents() {
     }
   });
 
+  // Déclaration ts hooks
   const userToken = useUserToken();
-
   const { socket, isConnected: socketIsConnected } = useSocket();
-
+  // Déclaration local
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [roomUsers, setRoomUsers] = useState<User[]>([]);
@@ -34,8 +36,22 @@ export function useRoomEvents() {
   const [error, setError] = useState<string | null>(null);
   const [inRoom, setInRoom] = useState<boolean>(false);
 
-  // const inRoom = !!currentRoom; La merde créé par CHATGPT
+  // Envoi donné inRoom et currentRoom.code à home.tsx
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('roomCreated', (room: Room) => {
+      setCurrentRoom(room);
+      setInRoom(true);
+    });
 
+    return () => {
+      inRoom;
+      currentRoom;
+      socket.off('roomCreated');
+    };
+  }, []);
+
+  // autre socket.on
   useEffect(() => {
     if (!socket) return;
 

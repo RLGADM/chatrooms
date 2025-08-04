@@ -3,6 +3,7 @@
 // Déclaration import framework
 import React, { useEffect, useState } from 'react';
 import { Users, Plus, LogIn, Sparkles, Wifi } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 // Déclaration fichiers projets
 import GameConfigModal from '@/components/GameConfigModal';
 // Déclaration via hooks
@@ -14,14 +15,19 @@ const Home: React.FC = () => {
   // Déclaration const locales
   const storedUsername = localStorage.getItem('lastUsername');
   const initialUsername = storedUsername ? JSON.parse(storedUsername) : '';
+  const navigate = useNavigate();
 
   // const via hooks
   const {
     socketIsConnected,
     username,
     setUsername,
+    inRoom,
     roomCode,
-    setRoomCode,
+    //setRoomCode, //inutile car récupérer de currentRoom
+    //redéclaration du inputRoomCode en useState
+    inputRoomCode,
+    setInputRoomCode,
     isCreating,
     isJoining,
     isConfigModalOpen,
@@ -34,6 +40,17 @@ const Home: React.FC = () => {
     error,
     //setError,
   } = useHomeHandlers(initialUsername);
+  // inputRoomCode pour handleJoin
+  const onJoin = () => {
+    if (!inputRoomCode.trim()) return;
+    handleJoin(username, inputRoomCode);
+  };
+  //navigate
+  useEffect(() => {
+    if (inRoom && roomCode) {
+      navigate(`/room/${roomCode}`);
+    }
+  }, [inRoom, roomCode]);
 
   return (
     <div
@@ -143,8 +160,8 @@ const Home: React.FC = () => {
               <input
                 type="text"
                 id="roomCode"
-                value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                value={inputRoomCode}
+                onChange={(e) => setInputRoomCode(e.target.value.toUpperCase())}
                 placeholder="Ex: ABC123"
                 className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 font-mono text-center text-lg font-bold bg-gray-50/50 tracking-wider"
                 maxLength={6}
@@ -153,7 +170,7 @@ const Home: React.FC = () => {
             </div>
             <button
               type="submit"
-              disabled={!username.trim() || !roomCode.trim() || isJoining || !socketIsConnected}
+              disabled={!username.trim() || !inputRoomCode.trim() || isJoining || !socketIsConnected}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <LogIn className="w-5 h-5" />
