@@ -61,6 +61,28 @@ io.on('connection', (socket) => {
     return;
   }
 
+  // === 🔗 CREATE ROOM ===
+  socket.on('createRoom', (data, ack) => {
+    const { gameMode, parameters, userToken } = data;
+    console.log('data :', data);
+
+    if (!userToken || !parameters) {
+      return ack?.({
+        success: false,
+        error: 'Paramètres ou token manquants pour créer la salle.',
+      });
+    }
+
+    const roomCode = generateRoomCode(); // exemple : "XK3D9A"
+
+    // Crée la room sans y ajouter d'utilisateur
+    const room = createRoom(roomCode, parameters);
+
+    console.log(`[SERVER] Room ${roomCode} créée avec le mode ${gameMode}`);
+
+    return ack?.({ success: true, roomCode });
+  });
+
   // === 🔗 JOIN ROOM ===
   socket.on('joinRoom', (data, ack) => {
     const { username, roomCode, userToken } = data;
@@ -84,7 +106,6 @@ io.on('connection', (socket) => {
     const existingUser = room.users.find((u) => u.id === userToken);
 
     if (existingUser) {
-      // Réassocie le socket ID (ex : reconnexion après F5)
       existingUser.socketId = socket.id;
       users.set(socket.id, existingUser);
       socket.join(roomCode);
@@ -98,8 +119,10 @@ io.on('connection', (socket) => {
       io.to(roomCode).emit('updateRoomUsers', getRoomUsers(roomCode));
       return;
     }
-    // Si nouveau joueur → définir rôle (admin si 1er joueur)
+
+    // Nouveau joueur
     const isFirst = room.users.length === 0;
+
     const newUser = {
       id: userToken,
       socketId: socket.id,
@@ -111,22 +134,17 @@ io.on('connection', (socket) => {
       room: roomCode,
     };
 
-    // Ajout aux Maps
     room.users.push(newUser);
     users.set(socket.id, newUser);
-
-    // Associe le socket à la room Socket.IO
     socket.join(roomCode);
 
     console.log(`[JOIN ROOM] ${username} rejoint ${roomCode} en tant que ${newUser.roomRole}`);
 
-    // Ack au client
     if (typeof ack === 'function') {
       console.log('[JOIN ACK] envoyé');
       ack({ success: true });
     }
 
-    // Notify room
     io.to(roomCode).emit('updateRoomUsers', getRoomUsers(roomCode));
   });
 
@@ -135,7 +153,6 @@ io.on('connection', (socket) => {
     const user = users.get(socket.id);
     if (!user) {
       if (ack) ack({ success: false, error: 'Utilisateur non trouvé' });
-      socket.emit('teamJoinError', 'Utilisateur non trouvé');
       return;
     }
 
@@ -148,13 +165,6 @@ io.on('connection', (socket) => {
 
     const room = rooms.get(user.room);
     if (!room) return;
-
-    const isUsernameTaken = room.users?.some((u) => u.username === user.username);
-    if (isUsernameTaken) {
-      socket.emit('usernameTaken');
-      if (typeof ack === 'function') ack({ success: false, error: 'Ce pseudo est déjà utilisé.' });
-      return;
-    }
 
     const message = {
       id: Date.now().toString(),

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { GameParameters } from '@/types';
 import { useSocketContext } from '@/components/SocketContext';
 import { useRoomEvents } from '@/hooks';
+import { Socket } from 'socket.io-client';
 
 export function useHomeHandlers(initialUsername = '') {
   const { socket } = useSocketContext();
@@ -22,7 +23,8 @@ export function useHomeHandlers(initialUsername = '') {
       e.preventDefault();
       if (username.trim() && socketIsConnected && parameters) {
         setIsCreating(true);
-        handleCreateRoom(username.trim(), gameMode, parameters);
+        console.log('handlecreate call hdr');
+        handleCreateRoom(socket, username.trim(), gameMode, parameters);
         setTimeout(() => setIsCreating(false), 3000);
       }
     },
@@ -34,7 +36,7 @@ export function useHomeHandlers(initialUsername = '') {
       e.preventDefault();
       if (username.trim() && roomCode.trim() && socketIsConnected) {
         setIsJoining(true);
-        handleJoinRoom(username.trim(), roomCode.trim().toUpperCase());
+        handleJoinRoom(socket, username.trim(), roomCode.trim().toUpperCase());
         localStorage.setItem('lastUsername', JSON.stringify(username));
         setTimeout(() => setIsJoining(false), 3000);
       }
@@ -42,16 +44,21 @@ export function useHomeHandlers(initialUsername = '') {
     [username, roomCode, socketIsConnected]
   );
 
+  //TODO j'ai vérifié par log, chaque variable ok et on entre bien dans le if.
   const handleConfigConfirm = useCallback(
     (providedUsername: string, selectedMode: 'standard' | 'custom', selectedParameters: GameParameters) => {
-      console.log('providedUsername : ', providedUsername);
       setConfigModalOpen(false);
       setGameMode(selectedMode);
       setParameters(selectedParameters);
-      if (providedUsername.trim()) {
-        handleCreateRoom(providedUsername.trim(), selectedMode, selectedParameters);
+      if (providedUsername.trim() && socket) {
+        handleCreateRoom(socket, providedUsername.trim(), selectedMode, selectedParameters);
       } else {
-        console.warn('Pas de username fourni dans le handleConfigConfirm');
+        if (!providedUsername.trim()) {
+          console.warn('Pas de username fourni dans le handleConfigConfirm');
+        }
+        if (!socket) {
+          console.warn('Socket non initialisé dans le handleConfigConfirm');
+        }
       }
     },
     [handleCreateRoom]

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSocket } from './useSocket';
 import { GameParameters, Message, Room, User } from '../types';
 import { useUserToken } from './useUserToken';
+import { Socket } from 'socket.io-client';
 
 export function useRoomEvents() {
   const [lastRoomCode, setLastRoomCode] = useState(() => {
@@ -68,25 +69,34 @@ export function useRoomEvents() {
     };
   }, [socket]);
 
-  const handleJoinRoom = async (username: string, roomCode: string): Promise<boolean> => {
-    if (!socket || !socketIsConnected) return false;
-
+  const handleJoinRoom = async (socket: Socket, username: string, roomCode: string): Promise<boolean> => {
+    //console.log('entré dans handleJoinRoom');
+    if (!socket?.connected) return false;
+    //console.log('entré dans handlejoinroo après socket');
     // const token déclaré avant la fonction
     if (!userToken) return false;
-
+    //console.log('vérification token');
     return new Promise((resolve) => {
       socket.emit('joinRoom', { username, roomCode, userToken }, (response: any) => {
+        //console.log('dans le socket emit');
         if (response.success) {
+          console.log('socket emit success');
           setLastRoomCode(roomCode);
           setLastUsername(username);
-
           setInRoom(true);
-
-          setCurrentUser({
-            id: socket.id as string,
-            username,
-            room: roomCode,
+          //JoinTeamDefault
+          socket.emit('joinTeam', {
+            roomCode,
+            userToken,
+            team: 'spectator',
           });
+          console.log('1 :', roomCode, '2 :', username, '3 : ', inRoom);
+
+          // setCurrentUser({
+          //   id: socket.id as string,
+          //   username,
+          //   room: roomCode,
+          // });
 
           resolve(true);
         } else {
@@ -98,17 +108,24 @@ export function useRoomEvents() {
     });
   };
 
-  const handleCreateRoom = (username: string, gameMode: 'standard' | 'custom', parameters: GameParameters) => {
-    if (!socket || !socketIsConnected) return;
+  // fait avec console.log, on remplis les conditions.
+  const handleCreateRoom = (
+    socket: Socket,
+    username: string,
+    gameMode: 'standard' | 'custom',
+    parameters: GameParameters
+  ) => {
+    console.log('entré dans handlecreateroom');
 
-    //const token déclaré avant function
+    if (!socket) return;
 
     socket.emit(
       'createRoom',
       { username, gameMode, parameters, userToken },
       (response: { success: boolean; roomCode?: string; error?: string }) => {
         if (response.success && response.roomCode) {
-          handleJoinRoom(username, response.roomCode);
+          handleJoinRoom(socket, username, response.roomCode);
+          //console.log('entré dans le success emit createRoom');
         } else {
           setError(response.error || 'Erreur lors de la création de la salle.');
         }

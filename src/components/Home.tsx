@@ -35,9 +35,6 @@ const Home: React.FC = () => {
     //setError,
   } = useHomeHandlers(initialUsername);
 
-  console.log('username', username);
-  console.log('roomCode', roomCode);
-
   return (
     <div
       className="min-h-screen relative overflow-hidden"
