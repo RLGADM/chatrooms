@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Socket } from 'socket.io-client';
 // import ts et hooks
 import { useSocket } from './useSocket';
-import { GameParameters, Message, Room, User } from '@/types';
+import { GameParameters, Message, Room, User, emptyRoom } from '@/types';
 import { useUserToken } from './useUserToken';
 
 export function useRoomEvents() {
@@ -30,7 +30,7 @@ export function useRoomEvents() {
   const { socket, isConnected: socketIsConnected } = useSocket();
   // Déclaration local
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
+  const [currentRoom, setCurrentRoom] = useState<Room>(emptyRoom);
   const [roomUsers, setRoomUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +141,11 @@ export function useRoomEvents() {
       (response: { success: boolean; roomCode?: string; error?: string }) => {
         if (response.success && response.roomCode) {
           handleJoinRoom(socket, username, response.roomCode);
+
+          currentRoom.code = response.roomCode;
+          console.log(currentRoom.code);
+          console.log('getcode');
+
           //console.log('entré dans le success emit createRoom');
         } else {
           setError(response.error || 'Erreur lors de la création de la salle.');
@@ -153,7 +158,6 @@ export function useRoomEvents() {
     if (!socket || !currentRoom) return;
 
     socket.emit('leaveRoom', currentRoom.code);
-    setCurrentRoom(null);
     setCurrentUser(null);
     setRoomUsers([]);
     setMessages([]);

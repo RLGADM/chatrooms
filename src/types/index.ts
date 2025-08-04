@@ -1,5 +1,7 @@
 // Bijour les enfants
+import { getDefaultParameters } from '@/utils/defaultParameters';
 import { Socket } from 'socket.io-client';
+// import pour emptyRoom
 
 export type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -15,7 +17,17 @@ export interface Room {
   createdAt: number;
   isReady: boolean;
 }
-
+export const emptyRoom = {
+  code: '',
+  users: [],
+  messages: [],
+  gameMode: 'standard' as const, //ou custom
+  parameters: getDefaultParameters(),
+  gameState: null,
+  creatorToken: '',
+  createdAt: Date.now(),
+  isReady: false,
+};
 // Création du joueur
 export interface User {
   socketId: string;
