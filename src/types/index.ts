@@ -3,8 +3,50 @@ import { Socket } from 'socket.io-client';
 
 export type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
 
-export type RoomRole = 'Admin' | 'Héraut' | 'Débutant';
+// Création de la Room pour commencer
+export interface Room {
+  code: string;
+  users: User[];
+  messages: Message[];
+  gameMode: 'standard' | 'custom';
+  parameters: GameParameters;
+  gameState?: GameState | null;
+  creatorToken: string;
+  createdAt: number;
+  isReady: boolean;
+}
 
+// Création du joueur
+export interface User {
+  socketId: string;
+  userToken: string;
+  username: string;
+  room: string;
+  team?: 'red' | 'blue' | 'spectator';
+  role?: 'sage' | 'disciple' | 'spectator';
+  isAdmin?: boolean;
+}
+
+// le template vide pour les consts
+export const emptyUser: User = {
+  socketId: '',
+  userToken: '',
+  username: '',
+  room: '',
+  team: 'spectator',
+  role: 'spectator',
+  isAdmin: false,
+};
+
+// gestion messagerie des joueurs
+export interface Message {
+  id: string;
+  username: string;
+  message: string;
+  timestamp: Date;
+}
+
+// Toutes les variables paramétrables
 export interface GameParameters {
   ParametersTimeFirst: number;
   ParametersTimeSecond: number;
@@ -21,58 +63,44 @@ export interface GameParameters {
   };
 }
 
-export interface User {
-  id: string;
-  username: string;
-  room: string;
-  team?: 'red' | 'blue' | 'spectator';
-  role?: 'sage' | 'disciple' | 'spectator';
-  roomRole?: RoomRole;
-  isAdmin?: boolean;
-  userToken?: string; // Indique si l'utilisateur est un administrateur de la salle
-}
-
-export const emptyUser: User = {
-  id: '',
-  username: '',
-  room: '',
-  team: 'spectator',
-  role: 'spectator',
-  roomRole: undefined,
-  isAdmin: false,
-  userToken: '',
-};
-
-export interface Message {
-  id: string;
-  username: string;
-  message: string;
-  timestamp: Date;
-}
-
-export interface GameState {
-  currentPhase: number;
-  phases: string[];
-  teams: {
-    red: { sage: User | null; disciples: User[] };
-    blue: { sage: User | null; disciples: User[] };
-  };
-  spectators: User[];
+// Déclaration des phases petit-enfant en lien
+export interface PhaseState {
+  phaseIndex: number;
+  name: string;
+  status: 'waiting' | 'in-progress' | 'finished';
   timer: number | null;
   timeRemaining: number;
-  totalTime: number;
-  isPlaying: boolean;
-  score: { red: number; blue: number };
 }
 
-export interface Room {
-  code: string;
-  users: User[];
-  messages: Message[];
-  gameMode: 'standard' | 'custom';
-  parameters: GameParameters;
-  gameState?: unknown;
-  creator: string;
+// Déclaration des rounds enfant en lien
+export interface RoundState {
+  roundIndex: number;
+  phases: PhaseState[];
+  currentPhase: number;
+  status: 'waiting' | 'in-progress' | 'finished';
+}
+
+// Déclaration des limites de rôle par équipe
+export interface TeamState {
+  sage: User | null;
+  disciples: User[];
+  score: number;
+}
+
+// Le GameState parent
+export interface GameState {
+  status: 'waiting' | 'started' | 'ended';
+  currentRound: number;
+  rounds: RoundState[];
+  teams: {
+    red: TeamState;
+    blue: TeamState;
+  };
+  spectators: User[];
+  scoreToWin: number;
+  isPlaying: boolean;
+  winner: 'red' | 'blue' | 'draw' | null;
+  createdAt: number;
 }
 export interface ServerToClientEvents {
   roomJoined: (room: Room) => void;
@@ -88,7 +116,6 @@ export interface ServerToClientEvents {
   pong: (data: { timestamp: string; socketId: string; userExists: boolean; userInfo: User | null }) => void;
   //debugUsersResponse: (data: any) => void;
   gameParametersSet: (parameters: GameParameters) => void;
-  roomRoleChanged: (data: { userId: string; newRole: RoomRole }) => void;
   userKicked: (data: { userId: string; reason: string }) => void;
   userBanned: (data: { userId: string; reason: string }) => void;
 }
@@ -114,7 +141,7 @@ export interface ClientToServerEvents {
   ping: () => void;
   debugGetUsers: () => void;
   setGameParameters: (parameters: GameParameters) => void;
-  changeUserRoomRole: (userId: string, newRole: RoomRole) => void;
+  //  changeUserRoomRole: (userId: string, newRole: RoomRole) => void;
   kickUser: (userId: string, reason: string) => void;
   banUser: (userId: string, reason: string) => void;
 }

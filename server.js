@@ -149,37 +149,36 @@ io.on('connection', (socket) => {
   });
 
   // === 🧩 JOIN TEAM ===
-  socket.on('joinTeam', (team, role, ack) => {
-    const user = users.get(socket.id);
-    if (!user) {
-      if (ack) ack({ success: false, error: 'Utilisateur non trouvé' });
-      return;
+  socket.on('joinTeam', async ({ roomCode, userToken, username, team }, ack) => {
+    if (!socket?.connected) {
+      return ack?.({ success: false, message: 'Socket non connecté' });
     }
 
-    const result = handleTeamJoin(socket.id, user.room, team, role);
-    if (result?.error) {
-      if (ack) ack({ success: false, error: result.error });
-      socket.emit('teamJoinError', result.error);
-      return;
+    const room = rooms.get(roomCode);
+    if (!room) return ack?.({ success: false, message: 'Room introuvable' });
+
+    // Rechercher l'utilisateur dans la room par userToken (≠ username !)
+    const user = room.users.find((u) => u.userToken === userToken);
+    if (!user) return ack?.({ success: false, message: 'Utilisateur non trouvé' });
+
+    // Empêcher de "changer d'équipe" si c'est la même
+    if (user.team === team) {
+      return ack?.({ success: false, message: 'Déjà dans cette équipe' });
     }
 
-    const room = rooms.get(user.room);
-    if (!room) return;
+    // Limiter les rôles par équipe
+    const role = getAvailableRoleForTeam(room, team);
+    if (!role) return ack?.({ success: false, message: 'Plus de place dans cette équipe' });
 
-    const message = {
-      id: Date.now().toString(),
-      username: 'Système',
-      message: `${user.username} est devenu ${role} ${team !== 'spectator' ? `de l'équipe ${team}` : ''}`,
-      timestamp: new Date(),
-    };
+    user.team = team;
+    user.role = role;
+    user.socketId = socket.id;
+    user.username = username;
 
-    addMessageToRoom(user.room, message);
-    io.to(user.room).emit('newMessage', message);
-    io.to(user.room).emit('gameStateUpdate', result.gameState);
-    io.to(user.room).emit('usersUpdate', room.users);
+    // Broadcast MAJ
+    io.to(roomCode).emit('updateUsers', room.users);
 
-    if (ack) ack({ success: true, team, role, gameState: result.gameState });
-    socket.emit('teamJoinSuccess', { team, role, gameState: result.gameState });
+    return ack?.({ success: true, message: 'Équipe rejointe avec succès' });
   });
 
   // === ▶️ START GAME ===
