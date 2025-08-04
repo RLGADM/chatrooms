@@ -90,17 +90,16 @@ export interface TeamState {
 // Le GameState parent
 export interface GameState {
   status: 'waiting' | 'started' | 'ended';
-  currentRound: number;
+  gameParameters: GameParameters;
   rounds: RoundState[];
+  currentRound: number;
   teams: {
     red: TeamState;
     blue: TeamState;
   };
   spectators: User[];
-  scoreToWin: number;
   isPlaying: boolean;
   winner: 'red' | 'blue' | 'draw' | null;
-  createdAt: number;
 }
 export interface ServerToClientEvents {
   roomJoined: (room: Room) => void;
@@ -148,4 +147,65 @@ export interface ClientToServerEvents {
 
 export interface ServerResetPayload {
   message: string;
+}
+export function createNewRound(index: number, gameParameters: GameParameters): RoundState {
+  return {
+    roundIndex: index,
+    currentPhase: 0,
+    status: 'waiting',
+    phases: [
+      {
+        phaseIndex: 0,
+        name: 'phase-1',
+        status: 'waiting',
+        timer: gameParameters.ParametersTimeFirst,
+        timeRemaining: gameParameters.ParametersTimeFirst,
+      },
+      {
+        phaseIndex: 1,
+        name: 'phase-2',
+        status: 'waiting',
+        timer: gameParameters.ParametersTimeSecond,
+        timeRemaining: gameParameters.ParametersTimeSecond,
+      },
+      {
+        phaseIndex: 2,
+        name: 'phase-3',
+        status: 'waiting',
+        timer: gameParameters.ParametersTimeThird,
+        timeRemaining: gameParameters.ParametersTimeThird,
+      },
+    ],
+  };
+}
+
+export function createInitialGameState(gameParameters: GameParameters): GameState {
+  return {
+    status: 'waiting',
+    gameParameters,
+    rounds: [createNewRound(0, gameParameters)],
+    currentRound: 0,
+    isPlaying: false,
+    winner: null,
+    teams: {
+      red: { sage: null, disciples: [], score: 0 },
+      blue: { sage: null, disciples: [], score: 0 },
+    },
+    spectators: [],
+  };
+}
+
+export function resetGameState(previousState: GameState): GameState {
+  return {
+    ...previousState,
+    status: 'waiting',
+    isPlaying: false,
+    winner: null,
+    rounds: [createNewRound(0, previousState.gameParameters)],
+    currentRound: 0,
+    teams: {
+      red: { ...previousState.teams.red, score: 0 },
+      blue: { ...previousState.teams.blue, score: 0 },
+    },
+  };
 }

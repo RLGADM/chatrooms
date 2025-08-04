@@ -13,7 +13,7 @@ export function getDefaultParameters(): GameParameters {
     ParametersWordsListSelection: {
       veryCommon: true,
       lessCommon: true,
-      rarelyCommon: false
-    }
+      rarelyCommon: false,
+    },
   };
 }

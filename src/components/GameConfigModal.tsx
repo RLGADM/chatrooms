@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Settings, Clock, Users, Trophy, BookOpen, Sparkles } from 'lucide-react';
-import { GameParameters } from '../types';
-import { getDefaultParameters } from '../utils/defaultParameters';
+import { GameParameters } from '@/types';
+import { getDefaultParameters } from '@/utils/defaultParameters';
 
 // --- PROPS ---
 interface GameConfigModalProps {
@@ -228,13 +228,8 @@ const CustomParameters: React.FC<{
       </legend>
       <div className="space-y-4 mt-4">
         <label className="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            checked={parameters.ParametersWordsListSelection.veryCommon}
-            onChange={(e) => onWordsListChange('veryCommon', e.target.checked)}
-            className="w-5 h-5 accent-green-600 rounded"
-          />
-          <span className="text-gray-700 font-medium">Mots très courants</span>
+          <input type="checkbox" checked={true} disabled className="w-5 h-5 accent-green-600 rounded" />
+          <span className="text-gray-700 font-medium">Mots très courants (Obligatoire)</span>
         </label>
         <label className="flex items-center space-x-3">
           <input
