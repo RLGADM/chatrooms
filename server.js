@@ -98,7 +98,6 @@ io.on('connection', (socket) => {
       io.to(roomCode).emit('updateRoomUsers', getRoomUsers(roomCode));
       return;
     }
-    bbn;
     // Si nouveau joueur → définir rôle (admin si 1er joueur)
     const isFirst = room.users.length === 0;
     const newUser = {

@@ -43,15 +43,18 @@ export function useHomeHandlers(initialUsername = '') {
   );
 
   const handleConfigConfirm = useCallback(
-    (selectedMode: 'standard' | 'custom', selectedParameters: GameParameters) => {
+    (providedUsername: string, selectedMode: 'standard' | 'custom', selectedParameters: GameParameters) => {
+      console.log('providedUsername : ', providedUsername);
       setConfigModalOpen(false);
       setGameMode(selectedMode);
       setParameters(selectedParameters);
-      if (username.trim()) {
-        handleCreateRoom(username.trim(), selectedMode, selectedParameters);
+      if (providedUsername.trim()) {
+        handleCreateRoom(providedUsername.trim(), selectedMode, selectedParameters);
+      } else {
+        console.warn('Pas de username fourni dans le handleConfigConfirm');
       }
     },
-    [username, handleCreateRoom]
+    [handleCreateRoom]
   );
 
   return {

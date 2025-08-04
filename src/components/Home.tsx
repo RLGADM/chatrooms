@@ -46,7 +46,7 @@ const Home: React.FC = () => {
       <GameConfigModal
         isOpen={isConfigModalOpen}
         onClose={() => setConfigModalOpen(false)}
-        onConfirm={handleConfigConfirm}
+        onConfirm={(mode, params) => handleConfigConfirm(username, mode, params)}
       />
 
       <div className="absolute top-4 right-4 z-20">
