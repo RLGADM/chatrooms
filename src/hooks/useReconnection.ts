@@ -1,6 +1,6 @@
 import { useEffect, MutableRefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { User, Room } from '../types';
+import type { User, Room } from '@/types';
 
 type Params = {
   socket: any;

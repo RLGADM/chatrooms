@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { User, Room } from '../types';
-import { useSocketContext } from '../components/SocketContext';
-import { useRoomEvents } from './useRoomEvents';
+import { User, Room } from '@/types';
+import { useSocketContext } from '@/components/SocketContext';
+import { useRoomEvents } from '@/hooks';
 
 export function useHydration() {
   const { socket } = useSocketContext();

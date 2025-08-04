@@ -1,13 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useSocket } from './useSocket';
 import { GameParameters, Message, Room, User } from '../types';
-import { useLocalStorageItem } from './useLocalStorageItem';
 import { useUserToken } from './useUserToken';
 
 export function useRoomEvents() {
-  //const via hooks
-  const [lastRoomCode, setLastRoomCode, resetLastRoomCode] = useLocalStorageItem('lastRoomCode', '');
-  const [lastUsername, setLastUsername, resetLastUsername] = useLocalStorageItem('lastUsername', '');
+  const [lastRoomCode, setLastRoomCode] = useState(() => {
+    const stored = localStorage.getItem('lastRoomCode');
+    try {
+      return stored ? JSON.parse(stored) : '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [lastUsername, setLastUsername] = useState(() => {
+    const stored = localStorage.getItem('lastUsername');
+    try {
+      return stored ? JSON.parse(stored) : '';
+    } catch {
+      return '';
+    }
+  });
 
   const userToken = useUserToken();
 
@@ -78,8 +91,7 @@ export function useRoomEvents() {
           resolve(true);
         } else {
           setError(response.error);
-          resetLastRoomCode();
-          resetLastUsername();
+          localStorage.removeItem('lastRoomCode');
           resolve(false);
         }
       });
@@ -113,7 +125,6 @@ export function useRoomEvents() {
     setRoomUsers([]);
     setMessages([]);
     setError(null);
-    resetLastRoomCode();
   };
 
   return {

@@ -4,67 +4,39 @@
 import React, { useEffect, useState } from 'react';
 import { Users, Plus, LogIn, Sparkles, Wifi } from 'lucide-react';
 // Déclaration fichiers projets
-import { GameParameters } from '../types';
-import GameConfigModal from './GameConfigModal';
-import { getDefaultParameters } from '../utils/defaultParameters';
+import GameConfigModal from '@/components/GameConfigModal';
 // Déclaration via hooks
-import { useRoomEvents } from '../hooks/useRoomEvents';
-import { useLocalStorageItem } from '../hooks/useLocalStorageItem';
+import { useHomeHandlers } from '@/hooks';
 
 // Déclaration const
 
 const Home: React.FC = () => {
-  //Déclaration const locales
-  const [isCreating, setIsCreating] = useState(false);
-  const [isJoining, setIsJoining] = useState(false);
-  const [isConfigModalOpen, setConfigModalOpen] = useState(false);
-  const [parameters, setParameters] = useState<GameParameters>(getDefaultParameters());
-  const [gameMode, setGameMode] = useState<'standard' | 'custom'>('standard');
+  // Déclaration const locales
+  const storedUsername = localStorage.getItem('lastUsername');
+  const initialUsername = storedUsername ? JSON.parse(storedUsername) : '';
 
-  // Const via Hooks
-  const [lastRoomCode] = useLocalStorageItem('lastRoomCode', '');
-  const [lastUserName, setLastUserName, resetLastUserName] = useLocalStorageItem('lastUserName', '');
-  // useRoomEvents
+  // const via hooks
   const {
     socketIsConnected,
-    currentUser,
-    currentRoom,
-    roomUsers,
-    messages,
+    username,
+    setUsername,
+    roomCode,
+    setRoomCode,
+    isCreating,
+    isJoining,
+    isConfigModalOpen,
+    setConfigModalOpen,
+    //handleCreate,
+    handleJoin,
+    handleConfigConfirm,
+    //gameMode,
+    //parameters,
     error,
-    inRoom,
-    handleCreateRoom,
-    handleJoinRoom,
-    handleLeaveRoom,
-  } = useRoomEvents();
+    //setError,
+  } = useHomeHandlers(initialUsername);
 
-  // const handle
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username.trim() && socketIsConnected) {
-      setIsCreating(true);
-      handleCreateRoom(username.trim(), gameMode, parameters);
-      setTimeout(() => setIsCreating(false), 3000);
-    }
-  };
-
-  const handleJoin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username.trim() && roomCode.trim() && socketIsConnected) {
-      setIsJoining(true);
-      handleJoinRoom(username.trim(), roomCode.trim().toUpperCase());
-      setTimeout(() => setIsJoining(false), 3000);
-    }
-  };
-
-  const handleConfigConfirm = (selectedMode: 'standard' | 'custom', selectedParameters: GameParameters) => {
-    setConfigModalOpen(false);
-    setGameMode(selectedMode);
-    setParameters(selectedParameters);
-    if (username.trim()) {
-      handleCreateRoom(username.trim(), selectedMode, selectedParameters);
-    }
-  };
+  console.log('username', username);
+  console.log('roomCode', roomCode);
 
   return (
     <div
@@ -131,8 +103,8 @@ const Home: React.FC = () => {
               <input
                 type="text"
                 id="username"
-                value={lastUserName}
-                onChange={(e) => setLastUserName(e.target.value)}
+                value={username ?? ''}
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="Entrez votre pseudo"
                 className={`w-full px-4 py-4 rounded-xl border transition-all duration-200 bg-gray-50/50 font-medium focus:outline-none focus:ring-2 ${
                   error?.toLowerCase().includes('pseudo')
@@ -148,7 +120,7 @@ const Home: React.FC = () => {
             <button
               type="button"
               onClick={() => setConfigModalOpen(true)}
-              disabled={!lastUserName.trim() || isCreating || !socketIsConnected}
+              disabled={!username.trim() || isCreating || !socketIsConnected}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <Plus className="w-5 h-5" />
@@ -166,7 +138,7 @@ const Home: React.FC = () => {
             </button>
           )} */}
 
-          <form onSubmit={handleJoinRoom} className="space-y-4">
+          <form onSubmit={handleJoin} className="space-y-4">
             <div>
               <label htmlFor="roomCode" className="block text-sm font-semibold text-gray-700 mb-2">
                 Code du salon
@@ -184,7 +156,7 @@ const Home: React.FC = () => {
             </div>
             <button
               type="submit"
-              disabled={!lastUserName.trim() || !roomCode.trim() || isJoining || !isConnected}
+              disabled={!username.trim() || !roomCode.trim() || isJoining || !socketIsConnected}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <LogIn className="w-5 h-5" />

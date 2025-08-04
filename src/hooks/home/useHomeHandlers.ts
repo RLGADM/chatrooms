@@ -1,21 +1,20 @@
-import { useState } from 'react';
-import { GameParameters } from '@types';
-import { useSocketContext } from '';
-import { useRoomEvents } from '../useRoomEvents';
-import { useLocalStorageItem } from '../useLocalStorageItem';
-import { Type } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { GameParameters } from '@/types';
+import { useSocketContext } from '@/components/SocketContext';
+import { useRoomEvents } from '@/hooks';
 
-export function useHomeHandlers() {
+export function useHomeHandlers(initialUsername = '') {
   const { socket } = useSocketContext();
   const { handleCreateRoom, handleJoinRoom } = useRoomEvents();
+  const [username, setUsername] = useState(initialUsername);
+  const [roomCode, setRoomCode] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isConfigModalOpen, setConfigModalOpen] = useState(false);
   const [gameMode, setGameMode] = useState<'standard' | 'custom'>('standard');
   const [parameters, setParameters] = useState<GameParameters>();
-  const [username, setUsername] = useLocalStorageItem('lastUsername', '');
-  const [roomCode, setRoomCode] = useLocalStorageItem('lastRoomCode', '');
   const socketIsConnected = socket?.connected;
 
   const handleCreate = useCallback(
@@ -36,6 +35,7 @@ export function useHomeHandlers() {
       if (username.trim() && roomCode.trim() && socketIsConnected) {
         setIsJoining(true);
         handleJoinRoom(username.trim(), roomCode.trim().toUpperCase());
+        localStorage.setItem('lastUsername', JSON.stringify(username));
         setTimeout(() => setIsJoining(false), 3000);
       }
     },
@@ -55,6 +55,7 @@ export function useHomeHandlers() {
   );
 
   return {
+    socketIsConnected,
     username,
     setUsername,
     roomCode,
@@ -68,5 +69,7 @@ export function useHomeHandlers() {
     handleCreate,
     handleJoin,
     handleConfigConfirm,
+    error,
+    setError,
   };
 }
