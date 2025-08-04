@@ -1,8 +1,8 @@
 // --------------- IMPORT
 
 // Déclaration import framework
-import React, { useEffect, useState } from 'react';
-import { Users, Plus, LogIn, Sparkles, Wifi } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Plus, LogIn, Sparkles, Wifi } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 // Déclaration fichiers projets
 import GameConfigModal from '@/components/GameConfigModal';
@@ -40,11 +40,7 @@ const Home: React.FC = () => {
     error,
     //setError,
   } = useHomeHandlers(initialUsername);
-  // inputRoomCode pour handleJoin
-  const onJoin = () => {
-    if (!inputRoomCode.trim()) return;
-    handleJoin(username, inputRoomCode);
-  };
+
   //navigate
   useEffect(() => {
     if (inRoom && roomCode) {
