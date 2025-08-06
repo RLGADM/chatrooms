@@ -10,7 +10,9 @@
     "vite": "npm run dev --workspace frontend",
     "server:dev": "npm run dev --workspace backend",
     "build": "npm run build --workspace frontend",
-    "format": "npm run format --workspace frontend"
+    "format": "npm run format --workspace frontend",
+    "clean": "rm -rf dist",
+    "buildTSC": "tsc"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"

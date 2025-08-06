@@ -6,7 +6,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 // Import local
-import { rooms, users, gameStates } from './store.js';
+import { rooms, users, gameStates } from './utils/store.js';
 
 // --- INIT --
 const __filename = fileURLToPath(import.meta.url);
