@@ -1,79 +1,114 @@
-import { useState, useCallback } from 'react';
-import { useSocket } from '@/hooks/global/useSocket';
-import { GameState, User } from '@/types/index';
-//import { getLocalStorage } from '@/utils/storage'; // utilitaire à créer si non existant
-
-interface UseRoomActionsProps {
+import { useState, useRef } from 'react';
+//import { toast } from 'react-hot-toast'; // optionnel, si tu utilises un toast
+import type { GameState } from '@/types';
+export interface UseRoomActionsProps {
+  roomCode: string;
+  username: string;
+  isJoiningTeam: boolean;
+  setUsername: React.Dispatch<React.SetStateAction<string>>;
+  setIsJoiningTeam: React.Dispatch<React.SetStateAction<boolean>>;
+  setTeamJoinError: React.Dispatch<React.SetStateAction<string | null>>;
   gameState: GameState;
-  currentUser: User | undefined;
-  setCurrentUser: (user: User) => void;
+  joinTeam: (team: 'red' | 'blue' | 'spectator', role: 'sage' | 'disciple' | 'spectator') => void;
+  leaveRoom: () => void;
+  sendProposal: (proposal: string) => void;
+  isAdmin: boolean;
+  startGame: () => void;
+  pauseGame: () => void;
 }
 
-export function useRoomActions({ gameState, currentUser, setCurrentUser }: UseRoomActionsProps) {
-  const { socket, isConnected } = useSocket();
-  const [actionLock, setActionLock] = useState(false);
+export function useRoomActions({
+  roomCode,
+  username,
+  isJoiningTeam,
+  setUsername,
+  setIsJoiningTeam,
+  setTeamJoinError,
+  gameState,
+  joinTeam,
+  leaveRoom,
+  sendProposal,
+  isAdmin,
+  startGame,
+  pauseGame,
+}: UseRoomActionsProps) {
+  // Local states
+  const [copied, setCopied] = useState(false);
+  const [proposal, setProposal] = useState('');
+  const [showPlayersModal, setShowPlayersModal] = useState(false);
 
-  const lockAction = useCallback(() => {
-    setActionLock(true);
-    setTimeout(() => setActionLock(false), 500); // évite le spam
-  }, []);
+  const historyEndRef = useRef<HTMLDivElement | null>(null);
 
-  const emitAction = useCallback(
-    (event: string, payload: any) => {
-      if (!socket || !isConnected || actionLock) return;
-      socket.emit(event, payload);
-      lockAction();
-    },
-    [socket, isConnected, actionLock, lockAction]
+  // Copier le lien du salon dans le presse-papier
+  const copyRoomLink = () => {
+    const url = `${window.location.origin}/room/${roomCode}`;
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {
+        // Optionnel : afficher une erreur
+        // toast.error('Erreur lors de la copie du lien');
+      });
+  };
+
+  // Joindre une équipe ou rôle (wrapper pour désactiver bouton)
+  const handleJoinTeam = (team: 'red' | 'blue' | 'spectator', role: 'sage' | 'disciple' | 'spectator') => {
+    if (isJoiningTeam) return;
+    setIsJoiningTeam(true);
+    try {
+      joinTeam(team, role);
+      setTeamJoinError(null);
+    } catch (err) {
+      setTeamJoinError('Impossible de rejoindre cette équipe');
+    } finally {
+      setIsJoiningTeam(false);
+    }
+  };
+
+  // Soumettre une proposition dans la zone de jeu
+  const handleSubmitProposal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!proposal.trim()) {
+      setTeamJoinError('La proposition ne peut pas être vide');
+      return;
+    }
+    sendProposal(proposal.trim());
+    setProposal('');
+  };
+
+  // Quitter la salle
+  const handleLeaveRoom = () => {
+    leaveRoom();
+  };
+
+  // Affichage d’une carte utilisateur simplifiée (à adapter selon ton code)
+  const renderUserCard = (
+    user: { id: string; username: string },
+    team: 'red' | 'blue' | 'spectator',
+    role: 'sage' | 'disciple' | 'spectator'
+  ) => (
+    <div className="bg-white/20 rounded-lg p-3 text-white font-semibold">
+      {user.username} ({role}),
+    </div>
   );
 
-  const userToken = currentUser?.userToken || localStorage.getItem('userToken');
-  const roomCode = currentUser?.room || localStorage.getItem('lastRoomCode');
-
-  // ✅ Rejoindre une équipe
-  const joinTeam = (team: 'red' | 'blue') => {
-    if (!userToken || !roomCode) return;
-
-    emitAction('joinTeam', { team, userToken, roomCode });
-    setCurrentUser({ ...currentUser!, team });
-  };
-
-  // ✅ Prendre un rôle (sage ou disciple)
-  const takeRole = (role: 'sage' | 'disciple') => {
-    if (!userToken || !roomCode || !currentUser?.team) return;
-
-    // Si sage déjà existant dans cette équipe, il redeviendra disciple
-    emitAction('changeRole', {
-      team: currentUser.team,
-      role,
-      userToken,
-      roomCode,
-    });
-
-    setCurrentUser({ ...currentUser!, role });
-  };
-
-  // ✅ Passer spectateur
-  const becomeSpectator = () => {
-    if (!userToken || !roomCode) return;
-
-    emitAction('becomeSpectator', { userToken, roomCode });
-    setCurrentUser({ ...currentUser!, team: 'spectator', role: 'spectator' });
-  };
-
-  // ✅ Quitter la salle
-  const leaveRoom = () => {
-    if (!userToken || !roomCode) return;
-
-    emitAction('leaveRoom', { userToken, roomCode });
-    localStorage.setItem('hasLeftRoom', 'true');
-  };
-
   return {
-    joinTeam,
-    takeRole,
-    becomeSpectator,
-    leaveRoom,
-    actionLock,
+    copied,
+    copyRoomLink,
+    proposal,
+    setProposal,
+    showPlayersModal,
+    setShowPlayersModal,
+    handleJoinTeam,
+    handleSubmitProposal,
+    handleLeaveRoom,
+    renderUserCard,
+    historyEndRef,
+    // Contrôle de la partie (boutons)
+    isAdmin,
+    startGame,
+    pauseGame,
   };
 }

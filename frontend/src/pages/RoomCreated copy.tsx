@@ -1,6 +1,415 @@
+// Import Framework
+import React, { useState, useRef, useEffect, MutableRefObject } from 'react';
+import {
+  Copy,
+  Users,
+  LogOut,
+  Check,
+  //Settings,
+  Play,
+  Pause,
+  Timer,
+  Trophy,
+  History,
+  Gamepad2,
+  Target,
+  ShieldX,
+  Crown,
+  Eye,
+  PlayCircle,
+  PauseCircle,
+  X,
+  RefreshCw,
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+// Import ts et hooks
+import { useHomeHandlers, useRoomEvents } from '@/hooks';
+import { Room as RoomType, User, Message, GameState } from '@/types';
+import PlayersManagementModal from '@/components/PlayersManagementModal';
+import { useSocket } from '@/hooks/global/useSocket';
+import { useRoomSocketListeners } from '@/hooks/roomcreated/useRoomSocketListeners';
+import { useRoomActions } from '@/hooks/roomcreated/useRoomActions';
 
-  
-// réinit en ne gardant que le jsx
+const RoomCreated = () => {
+  const { socket, isConnected } = useSocket();
+
+  // hooks RoomActions
+  useRoomActions({
+    username,
+    setUsername,
+    selectedTeam,
+    setSelectedTeam,
+    selectedRole,
+    setSelectedRole,
+    userToken,
+    handleUsernameSubmit,
+    handleTeamSelect,
+    handleRoleSelect,
+    handleValidation,
+  });
+
+  const [gameState, setGameState] = useState<GameState | null>(null);
+
+  const roomCode = localStorage.getItem('lastRoomCode');
+  const username = localStorage.getItem('username');
+  const userToken = localStorage.getItem('userToken');
+
+  // --- 1. Envoie joinRoom une fois que tout est prêt
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+    if (!roomCode || !username || !userToken) return;
+
+    socket.emit('joinRoom', {
+      userToken,
+      username,
+      roomCode,
+    });
+  }, [socket, isConnected, roomCode, username, userToken]);
+
+  // --- 2. Écoute les événements socket
+  useRoomSocketListeners({
+    socket,
+    isConnected,
+    setGameState,
+    onError: (err) => {
+      console.error('[RoomCreated] Erreur socket :', err);
+    },
+  });
+
+  // const RoomCreated: React.FC = () => {
+  //   // consts locales
+  //   const navigate = useNavigate();
+
+  //   const [proposal, setProposal] = useState('');
+  //   const [copied, setCopied] = useState(false);
+  //   const [showPlayersModal, setShowPlayersModal] = useState(false);
+  //   const [showResetModal, setShowResetModal] = useState(false);
+  //   const [teamJoinError, setTeamJoinError] = useState<string | null>(null);
+  //   const historyEndRef = useRef<HTMLDivElement>(null);
+  //   const [isJoiningTeam, setIsJoiningTeam] = useState(false);
+  //   const [showDebugModal, setShowDebugModal] = useState(false);
+
+  //   const { socket, currentUser, setCurrentRoom, handleLeaveRoom } = useRoomEvents();
+
+  //   const [gameState, setGameState] = useState<GameState>(() => {
+  //     return (
+  //       room.gameState || {
+  //         currentPhase: 0,
+  //         phases: [
+  //           'Attente début de la manche',
+  //           'Phase 1 - Choix du mot',
+  //           'Phase 2 - Choix des mots interdits',
+  //           'Phase 3 - Discours du Sage',
+  //         ],
+  //         teams: {
+  //           red: { sage: null, disciples: [] },
+  //           blue: { sage: null, disciples: [] },
+  //         },
+  //         spectators: room.users.map((user) => ({ ...user, team: 'spectator', role: 'spectator' })),
+  //         timer: null,
+  //         timeRemaining: 0,
+  //         totalTime: 0,
+  //         isPlaying: false,
+  //         score: { red: 0, blue: 0 },
+  //       }
+  //     );
+  //   });
+  //   // listener
+  //   useEffect(() => {
+  //     if (!socket) return;
+
+  //     const handleUserJoined = (user: User) => {
+  //       setCurrentRoom((prev) => (prev ? { ...prev, users: [...(prev.users ?? []), user] } : prev));
+  //     };
+
+  //     const handleUserLeft = (userId: string) => {
+  //       setCurrentRoom((prev) => (prev ? { ...prev, users: (prev.users ?? []).filter((u) => u.id !== userId) } : prev));
+  //     };
+
+  //     const handleUsersUpdate = (users: User[]) => {
+  //       setCurrentRoom((prev) => (prev ? { ...prev, users } : prev));
+  //     };
+
+  //     const handleNewMessage = (message: Message) => {
+  //       setCurrentRoom((prev) => (prev ? { ...prev, messages: [...(prev.messages ?? []), message] } : prev));
+  //     };
+
+  //     const handleGameStateUpdate = (newGameState: GameState) => {
+  //       setGameState(newGameState);
+  //     };
+
+  //     const handleErrorMessage = (error: string) => {
+  //       setTeamJoinError(error);
+  //       setTimeout(() => setTeamJoinError(null), 3000);
+  //     };
+
+  //     const handleExpulsion = (data: { reason: string }, type: 'banned' | 'kicked') => {
+  //       alert(`Vous avez été ${type === 'banned' ? 'banni' : 'expulsé'} du salon. Raison: ${data.reason}`);
+  //       socket.leave();
+  //     };
+
+  //     socket.on('userJoined', handleUserJoined);
+  //     socket.on('userLeft', handleUserLeft);
+  //     socket.on('usersUpdate', handleUsersUpdate);
+  //     socket.on('newMessage', handleNewMessage);
+  //     socket.on('gameStateUpdate', handleGameStateUpdate);
+
+  //     socket.on('teamJoinError', handleErrorMessage);
+  //     socket.on('gameError', handleErrorMessage);
+  //     socket.on('roleChangeError', handleErrorMessage);
+
+  //     socket.on('userKicked', (data) => handleExpulsion(data, 'kicked'));
+  //     socket.on('userBanned', (data) => handleExpulsion(data, 'banned'));
+
+  //     return () => {
+  //       socket.off('userJoined', handleUserJoined);
+  //       socket.off('userLeft', handleUserLeft);
+  //       socket.off('usersUpdate', handleUsersUpdate);
+  //       socket.off('newMessage', handleNewMessage);
+  //       socket.off('gameStateUpdate', handleGameStateUpdate);
+
+  //       socket.off('teamJoinError', handleErrorMessage);
+  //       socket.off('gameError', handleErrorMessage);
+  //       socket.off('roleChangeError', handleErrorMessage);
+
+  //       socket.off('userKicked', handleExpulsion);
+  //       socket.off('userBanned', handleExpulsion);
+  //     };
+  //   }, [socket, setCurrentRoom]);
+
+  //   useEffect(() => {
+  //     if (socket) {
+  //       console.log('Setting up socket //listeners for game state');
+
+  //       socket.on('gameStateUpdate', (newGameState: GameState) => {
+  //         console.log('Game state updated:', newGameState);
+  //         setGameState(newGameState);
+  //       });
+
+  //       socket.on('teamJoinSuccess', (data: { team: string; role: string; gameState: GameState }) => {
+  //         console.log('Team join successful:', data);
+  //         setIsJoiningTeam(false);
+  //         setTeamJoinError(null);
+  //       });
+
+  //       const handleErrorMessage = (error: string) => {
+  //         console.error(error);
+  //         setTeamJoinError(error);
+  //         setTimeout(() => setTeamJoinError(null), 3000);
+  //       };
+
+  //       socket.on('teamJoinError', handleErrorMessage);
+  //       socket.on('gameError', handleErrorMessage);
+  //       socket.on('roleChangeError', handleErrorMessage);
+
+  //       return () => {
+  //         socket.off('gameStateUpdate');
+  //         socket.off('teamJoinSuccess');
+  //         socket.off('teamJoinError');
+  //         socket.off('gameError');
+  //         socket.off('pong');
+  //         socket.off('debugUsersResponse');
+  //         socket.off('roomRoleChanged');
+  //         socket.off('roleChangeError');
+  //       };
+  //     }
+  //   }, [socket]);
+
+  //   const scrollToBottom = () => {
+  //     historyEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  //   };
+
+  //   useEffect(scrollToBottom, [room.messages]);
+
+  //   useEffect(() => {
+  //     scrollToBottom();
+  //   }, [room.messages]);
+
+  //   const handleSubmitProposal = (e: React.FormEvent) => {
+  //     e.preventDefault();
+  //     if (proposal.trim()) {
+  //       onSendMessage(`[Proposition] ${proposal.trim()}`);
+  //       setProposal('');
+  //     }
+  //   };
+
+  //   const copyRoomLink = () => {
+  //     const roomUrl = `${window.location.origin}/room/${room.code}`;
+  //     navigator.clipboard.writeText(roomUrl);
+  //     setCopied(true);
+  //     setTimeout(() => setCopied(false), 2000);
+  //   };
+
+  //   const formatTime = (timestamp: Date) => {
+  //     return new Date(timestamp).toLocaleTimeString('fr-FR', {
+  //       hour: '2-digit',
+  //       minute: '2-digit',
+  //     });
+  //   };
+
+  //   const formatTimer = (seconds: number) => {
+  //     const minutes = Math.floor(seconds / 60);
+  //     const secs = seconds % 60;
+  //     return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  //   };
+
+  //   const joinTeam = (team: 'red' | 'blue', role: 'sage' | 'disciple') => {
+  //     if (isJoiningTeam) return;
+
+  //     console.log('Client: Attempting to join team:', team, role);
+  //     setIsJoiningTeam(true);
+  //     setTeamJoinError(null);
+
+  //     if (socket) {
+  //       console.log('Client: Emitting joinTeam event');
+  //       socket.emit('joinTeam', team, role);
+
+  //       setTimeout(() => {
+  //         if (isJoiningTeam) {
+  //           console.log('Client: Timeout waiting for team join response');
+  //           setIsJoiningTeam(false);
+  //           setTeamJoinError('Timeout - Veuillez réessayer');
+  //         }
+  //       }, 5000);
+  //     } else {
+  //       console.log('Client: No socket connection');
+  //       setIsJoiningTeam(false);
+  //       setTeamJoinError('Connexion au serveur perdue');
+  //     }
+  //   };
+
+  //   const joinSpectator = () => {
+  //     if (isJoiningTeam) return;
+
+  //     console.log('Client: Attempting to join spectators');
+  //     setIsJoiningTeam(true);
+  //     setTeamJoinError(null);
+
+  //     if (socket) {
+  //       console.log('Client: Emitting joinTeam event for spectator');
+  //       socket.emit('joinTeam', 'spectator', 'spectator');
+
+  //       setTimeout(() => {
+  //         if (isJoiningTeam) {
+  //           console.log('Client: Timeout waiting for spectator join response');
+  //           setIsJoiningTeam(false);
+  //           setTeamJoinError('Timeout - Veuillez réessayer');
+  //         }
+  //       }, 5000);
+  //     } else {
+  //       console.log('Client: No socket connection for spectator join');
+  //       setIsJoiningTeam(false);
+  //       setTeamJoinError('Connexion au serveur perdue');
+  //     }
+  //   };
+
+  //   const startGame = () => {
+  //     if (gameState.currentPhase === 0) {
+  //       onSendMessage('Début de la Phase 1 - Choix du mot');
+
+  //       if (socket) {
+  //         socket.emit('startGame');
+  //       }
+  //     }
+  //   };
+
+  //   const pauseGame = () => {
+  //     onSendMessage('Jeu mis en pause');
+  //     if (socket) {
+  //       socket.emit('pauseGame');
+  //     }
+  //   };
+
+  //   const sendPing = () => {
+  //     if (socket) {
+  //       console.log('Sending ping to server...');
+  //       socket.emit('ping');
+  //     }
+  //   };
+
+  //   const requestDebugInfo = () => {
+  //     if (socket) {
+  //       console.log('Requesting debug info from server...');
+  //       socket.emit('debugGetUsers');
+  //     }
+  //   };
+
+  //   const handleResetGame = () => {
+  //     onSendMessage("La partie a été réinitialisée par l'Admin");
+  //     setShowResetModal(false);
+  //   };
+
+  //   const renderUserCard = (user: User, team: string, role: string) => {
+  //     const isCurrentUser = user.id === currentUser.id;
+  //     const teamColor = team === 'red' ? 'red' : team === 'blue' ? 'blue' : 'gray';
+  //     const highlight = isCurrentUser ? 'ring-2 ring-yellow-400/50' : '';
+  //     const bgColor =
+  //       team === 'red'
+  //         ? 'bg-red-500/20 border-red-300/30'
+  //         : team === 'blue'
+  //           ? 'bg-blue-500/20 border-blue-300/30'
+  //           : 'bg-gray-500/20 border-gray-300/30';
+
+  //     return (
+  //       <div
+  //         className={`${bgColor} backdrop-blur-sm rounded-xl p-4 border hover:bg-opacity-30 transition-all duration-300 ${highlight}`}
+  //       >
+  //         <div className="flex items-center justify-between">
+  //           <div className="flex items-center space-x-3">
+  //             <div className={`w-10 h-10 bg-${teamColor}-500 rounded-full flex items-center justify-center shadow-lg`}>
+  //               <span className="text-white font-bold">{user.username.charAt(0).toUpperCase()}</span>
+  //             </div>
+  //             <div>
+  //               <p className="text-white font-semibold">{user.username}</p>
+  //               <p className="text-white/60 text-xs">{isCurrentUser ? 'Vous' : role}</p>
+  //             </div>
+  //           </div>
+  //           {role === 'sage' && <Crown className="w-4 h-4 text-yellow-400" />}
+  //           {role === 'disciple' && <Users className="w-4 h-4 text-green-400" />}
+  //           {role === 'spectator' && <Eye className="w-4 h-4 text-gray-400" />}
+  //         </div>
+  //       </div>
+  //     );
+  //   };
+
+  //   // Find the creator (first user)
+  //   const creator = room.users[0];
+  //   const isAdmin = currentUser.roomRole === 'Admin';
+  //   const canControlGame = currentUser.roomRole === 'Admin' || currentUser.roomRole === 'Héraut';
+
+  //   const handleChangeUserRole = (userId: string, newRole: any) => {
+  //     console.log('Attempting to change user role:', userId, newRole);
+  //     console.log('Current user is admin:', currentUser.roomRole === 'Admin');
+  //     if (socket && currentUser.roomRole === 'Admin') {
+  //       console.log('Emitting changeUserRoomRole event');
+  //       socket.emit('changeUserRoomRole', userId, newRole);
+  //     } else {
+  //       console.log('Cannot change role - not admin or no socket');
+  //       setTeamJoinError('Vous devez être Admin pour changer les rôles');
+  //       setTimeout(() => setTeamJoinError(null), 3000);
+  //     }
+  //   };
+
+  //   const handleKickUser = (userId: string, reason: string) => {
+  //     console.log('Attempting to kick user:', userId, reason);
+  //     if (socket && currentUser.roomRole === 'Admin') {
+  //       socket.emit('kickUser', userId, reason);
+  //     } else {
+  //       setTeamJoinError('Vous devez être Admin pour expulser des utilisateurs');
+  //       setTimeout(() => setTeamJoinError(null), 3000);
+  //     }
+  //   };
+
+  //   const handleBanUser = (userId: string, reason: string) => {
+  //     console.log('Attempting to ban user:', userId, reason);
+  //     if (socket && currentUser.roomRole === 'Admin') {
+  //       socket.emit('banUser', userId, reason);
+  //     } else {
+  //       setTeamJoinError('Vous devez être Admin pour bannir des utilisateurs');
+  //       setTimeout(() => setTeamJoinError(null), 3000);
+  //     }
+  //   };
+
   return (
     <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 min-h-screen transition-all duration-1000">
       {/* Animated Background Pattern */}
