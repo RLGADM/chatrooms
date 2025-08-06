@@ -39,39 +39,10 @@ const RoomCreated: React.FC = () => {
   const [isJoiningTeam, setIsJoiningTeam] = useState(false);
   //TODO à suuprimier ?  const [debugInfo, setDebugInfo] = useState<any>(null);
   const [showDebugModal, setShowDebugModal] = useState(false);
-  //const [player, setPlayer] = useState<User | null>(null);
-  // consts depuis hooks
-  const {
-    socket,
-    currentUser,
-    //setCurrentUser,
-    //currentRoom,
-    setCurrentRoom,
-    //roomUsers,
-    //setRoomUsers,
-    // messages,
-    // setMessages,
-    // error,
-    //setError,
-    handleLeaveRoom,
-  } = useRoomEvents();
 
-  // const handleLeaveRoom = () => {
-  //   if (socket && RoomType) {
-  //     socket.emit('leaveRoom', room.code);
-  //     socket.leave(room.code);
-  //   }
-  //   setCurrentUser(null);
-  //   setCurrentRoom(null);
-  //   setError(null);
-  //   hasJoinedRoomRef.current = false;
-  //   hasRejoinAttempted.current = false;
-  //   localStorage.removeItem('lastRoomCode');
-  // };
+  const { socket, currentUser, setCurrentRoom, handleLeaveRoom } = useRoomEvents();
 
-  // Initialize game state
   const [gameState, setGameState] = useState<GameState>(() => {
-    // Initialize with default game state if room.gameState exists, otherwise use default
     return (
       room.gameState || {
         currentPhase: 0,
@@ -118,7 +89,6 @@ const RoomCreated: React.FC = () => {
       setGameState(newGameState);
     };
 
-    // Mutualiser les erreurs
     const handleErrorMessage = (error: string) => {
       setTeamJoinError(error);
       setTimeout(() => setTeamJoinError(null), 3000);
@@ -158,7 +128,6 @@ const RoomCreated: React.FC = () => {
     };
   }, [socket, setCurrentRoom]);
 
-  // Écouter les mises à jour du gameState depuis le serveur
   useEffect(() => {
     if (socket) {
       console.log('Setting up socket //listeners for game state');
@@ -203,7 +172,6 @@ const RoomCreated: React.FC = () => {
 
   useEffect(scrollToBottom, [room.messages]);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     scrollToBottom();
   }, [room.messages]);
@@ -237,16 +205,16 @@ const RoomCreated: React.FC = () => {
   };
 
   const joinTeam = (team: 'red' | 'blue', role: 'sage' | 'disciple') => {
-    if (isJoiningTeam) return; // Prevent double clicks
+    if (isJoiningTeam) return;
 
     console.log('Client: Attempting to join team:', team, role);
     setIsJoiningTeam(true);
-    setTeamJoinError(null); // Clear any previous errors
+    setTeamJoinError(null);
 
     if (socket) {
       console.log('Client: Emitting joinTeam event');
       socket.emit('joinTeam', team, role);
-      // Reset the flag after a timeout in case no response
+
       setTimeout(() => {
         if (isJoiningTeam) {
           console.log('Client: Timeout waiting for team join response');
@@ -266,12 +234,12 @@ const RoomCreated: React.FC = () => {
 
     console.log('Client: Attempting to join spectators');
     setIsJoiningTeam(true);
-    setTeamJoinError(null); // Clear any previous errors
+    setTeamJoinError(null);
 
     if (socket) {
       console.log('Client: Emitting joinTeam event for spectator');
       socket.emit('joinTeam', 'spectator', 'spectator');
-      // Reset the flag after a timeout in case no response
+
       setTimeout(() => {
         if (isJoiningTeam) {
           console.log('Client: Timeout waiting for spectator join response');
@@ -289,7 +257,7 @@ const RoomCreated: React.FC = () => {
   const startGame = () => {
     if (gameState.currentPhase === 0) {
       onSendMessage('Début de la Phase 1 - Choix du mot');
-      // Le serveur devrait gérer la logique du jeu
+
       if (socket) {
         socket.emit('startGame');
       }
@@ -318,8 +286,6 @@ const RoomCreated: React.FC = () => {
   };
 
   const handleResetGame = () => {
-    // Ici vous pourrez ajouter la logique pour réinitialiser la partie
-    // Par exemple: socket.emit('resetGame');
     onSendMessage("La partie a été réinitialisée par l'Admin");
     setShowResetModal(false);
   };
