@@ -45,11 +45,10 @@ const App: React.FC = () => {
     handleJoinRoom,
   } = useRoomEvents();
   //Const local mais obligationde déclarer apres le hook
-  const isPlayerInRoom = eventsInRoom && currentUser !== null; //booléen inroom
-  const isRoomReady = currentUser && currentRoom; //booléen dans le return
+  const inRoom = eventsInRoom && currentUser !== null; //booléen inroom
   // je la laisse ici pour la lisibilité
   //
-
+  console.log('inRoom', inRoom);
   // --------------- Début du Code
   // serverReset pour le frontend
   useServerReset(socket);
@@ -136,18 +135,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Home />} />
 
-          <Route
-            path="/room/:roomCode"
-            element={
-              isRoomReady ? (
-                <RoomCreated />
-              ) : (
-                <p className="text-center mt-10 text-red-600">
-                  Vous n’êtes pas dans une salle . Veuillez retourner à l ’accueil.
-                </p>
-              )
-            }
-          />
+          <Route path="/room/:roomCode" element={<RoomCreated />} />
 
           {/* <Route path="/demo" element={<DemoMode />} /> */}
         </Routes>

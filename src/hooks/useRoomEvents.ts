@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Socket } from 'socket.io-client';
 // import ts et hooks
 import { useSocket } from './useSocket';
-import { GameParameters, Message, Room, User, emptyRoom } from '@/types';
+import { GameParameters, Message, Room, User, emptyRoom, emptyUser } from '@/types';
 import { useUserToken } from './useUserToken';
 
 export function useRoomEvents() {
@@ -29,7 +29,7 @@ export function useRoomEvents() {
   const userToken = useUserToken();
   const { socket, isConnected: socketIsConnected } = useSocket();
   // Déclaration local
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User>(emptyUser);
   const [currentRoom, setCurrentRoom] = useState<Room>(emptyRoom);
   const [roomUsers, setRoomUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);

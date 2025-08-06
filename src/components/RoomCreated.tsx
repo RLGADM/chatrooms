@@ -1,3 +1,4 @@
+// Import Framework
 import React, { useState, useRef, useEffect, MutableRefObject } from 'react';
 import {
   Copy,
@@ -20,11 +21,15 @@ import {
   X,
   RefreshCw,
 } from 'lucide-react';
-import { Room as RoomType, User, Message, GameState } from '../types';
-import PlayersManagementModal from './PlayersManagementModal';
+import { useNavigate } from 'react-router-dom';
+// Import ts et hooks
+import { useRoomEvents } from '@/hooks';
+import { Room as RoomType, User, Message, GameState } from '@/types';
+import PlayersManagementModal from '@/components/PlayersManagementModal';
 
 const RoomCreated: React.FC = () => {
   // consts locales
+  const navigate = useNavigate();
   const [proposal, setProposal] = useState('');
   const [copied, setCopied] = useState(false);
   const [showPlayersModal, setShowPlayersModal] = useState(false);
@@ -32,15 +37,27 @@ const RoomCreated: React.FC = () => {
   const [teamJoinError, setTeamJoinError] = useState<string | null>(null);
   const historyEndRef = useRef<HTMLDivElement>(null);
   const [isJoiningTeam, setIsJoiningTeam] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  //TODO à suuprimier ?  const [debugInfo, setDebugInfo] = useState<any>(null);
   const [showDebugModal, setShowDebugModal] = useState(false);
   const [player, setPlayer] = useState<User | null>(null);
   // consts depuis hooks
-  const { socket, currentUser, currentRoom, handleSendMessage, leaveRoom, hasJoinedRoomRef, hasRejoinAttempted } =
-    useRoomEvents();
-  //update <RoomCreated
+  const {
+    socket,
+    currentUser,
+    setCurrentUser,
+    currentRoom,
+    setCurrentRoom,
+    roomUsers,
+    setRoomUsers,
+    messages,
+    setMessages,
+    error,
+    setError,
+    handleLeaveRoom,
+  } = useRoomEvents();
+
   const handleLeaveRoom = () => {
-    if (socket && room) {
+    if (socket && RoomType) {
       socket.emit('leaveRoom', room.code);
       socket.leave(room.code);
     }

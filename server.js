@@ -1,10 +1,11 @@
-// Import
+// Import Framework
 import path from 'path';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+// Import local
 import { rooms, users, gameStates } from './src/utils/store.js';
 
 // --- INIT --
@@ -166,10 +167,6 @@ io.on('connection', (socket) => {
     if (user.team === team) {
       return ack?.({ success: false, message: 'Déjà dans cette équipe' });
     }
-
-    // Limiter les rôles par équipe
-    const role = getAvailableRoleForTeam(room, team);
-    if (!role) return ack?.({ success: false, message: 'Plus de place dans cette équipe' });
 
     user.team = team;
     user.role = role;
@@ -428,14 +425,14 @@ function handleTeamJoin(userId, roomCode, team, role) {
 
   return { success: true, gameState: room.gameState };
 }
-
-function emitIfNotSilent(socket, event, data, options = { silent: false }) {
-  if (!options.silent) {
-    socket.emit(event, data);
-  } else {
-    console.log(`[SilentEmit] Suppressed "${event}" to ${socket.id}:`, data);
-  }
-}
+//TODO peut être utile plus tard
+// function emitIfNotSilent(socket, event, data, options = { silent: false }) {
+//   if (!options.silent) {
+//     socket.emit(event, data);
+//   } else {
+//     console.log(`[SilentEmit] Suppressed "${event}" to ${socket.id}:`, data);
+//   }
+// }
 
 // --- ROUTES ---
 app.get('/health', (req, res) => {

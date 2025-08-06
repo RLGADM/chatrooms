@@ -86,6 +86,7 @@ export function useHomeHandlers(initialUsername = '') {
   );
 
   return {
+    socket,
     socketIsConnected,
     username,
     setUsername,
