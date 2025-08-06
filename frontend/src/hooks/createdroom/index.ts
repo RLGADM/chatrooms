@@ -1,2 +1,2 @@
-export * from 'useCreatedRoom.ts';
-export * from 'useGameRules.ts';
+export * from './useCreatedRoom';
+export * from './useGameRules';

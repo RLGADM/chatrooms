@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Copy, 
-  Users, 
-  LogOut, 
-  Check, 
-  Settings, 
-  Play, 
-  Pause, 
-  Timer, 
-  Trophy, 
-  History, 
-  Gamepad2, 
-  Target, 
-  ShieldX, 
-  Crown, 
-  Eye, 
-  PlayCircle, 
-  PauseCircle, 
+import {
+  Copy,
+  Users,
+  LogOut,
+  Check,
+  Settings,
+  Play,
+  Pause,
+  Timer,
+  Trophy,
+  History,
+  Gamepad2,
+  Target,
+  ShieldX,
+  Crown,
+  Eye,
+  PlayCircle,
+  PauseCircle,
   X,
   RefreshCw,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 
 interface DemoUser {
@@ -57,39 +57,37 @@ const DemoMode: React.FC = () => {
     id: 'demo-user-1',
     username: 'Vous',
     team: 'spectator',
-    role: 'spectator'
+    role: 'spectator',
   });
 
   const [gameState, setGameState] = useState<DemoGameState>({
     currentPhase: 0,
     phases: [
-      "Attente début de la manche",
-      "Phase 1 - Choix du mot", 
-      "Phase 2 - Choix des mots interdits",
-      "Phase 3 - Discours du Sage"
+      'Attente début de la manche',
+      'Phase 1 - Choix du mot',
+      'Phase 2 - Choix des mots interdits',
+      'Phase 3 - Discours du Sage',
     ],
     teams: {
-      red: { 
+      red: {
         sage: { id: 'demo-sage-red', username: 'Alice', team: 'red', role: 'sage' },
         disciples: [
           { id: 'demo-disciple-red-1', username: 'Bob', team: 'red', role: 'disciple' },
-          { id: 'demo-disciple-red-2', username: 'Charlie', team: 'red', role: 'disciple' }
-        ]
+          { id: 'demo-disciple-red-2', username: 'Charlie', team: 'red', role: 'disciple' },
+        ],
       },
-      blue: { 
+      blue: {
         sage: { id: 'demo-sage-blue', username: 'Diana', team: 'blue', role: 'sage' },
-        disciples: [
-          { id: 'demo-disciple-blue-1', username: 'Eve', team: 'blue', role: 'disciple' }
-        ]
-      }
+        disciples: [{ id: 'demo-disciple-blue-1', username: 'Eve', team: 'blue', role: 'disciple' }],
+      },
     },
     spectators: [currentUser],
     timeRemaining: 0,
     totalTime: 0,
     isPlaying: false,
     score: { red: 2, blue: 1 },
-    currentWord: "LIBERTÉ",
-    forbiddenWords: ["PRISON", "CAGE", "CHAÎNE", "ESCLAVE"]
+    currentWord: 'LIBERTÉ',
+    forbiddenWords: ['PRISON', 'CAGE', 'CHAÎNE', 'ESCLAVE'],
   });
 
   const [messages, setMessages] = useState<DemoMessage[]>([
@@ -97,32 +95,32 @@ const DemoMode: React.FC = () => {
       id: '1',
       username: 'Système',
       message: 'Salon créé par Alice',
-      timestamp: new Date(Date.now() - 300000)
+      timestamp: new Date(Date.now() - 300000),
     },
     {
       id: '2',
       username: 'Système',
       message: 'Diana a rejoint le salon',
-      timestamp: new Date(Date.now() - 240000)
+      timestamp: new Date(Date.now() - 240000),
     },
     {
       id: '3',
       username: 'Alice',
       message: 'Salut tout le monde ! Prêts pour une partie ?',
-      timestamp: new Date(Date.now() - 180000)
+      timestamp: new Date(Date.now() - 180000),
     },
     {
       id: '4',
       username: 'Diana',
       message: 'Oui, allons-y !',
-      timestamp: new Date(Date.now() - 120000)
+      timestamp: new Date(Date.now() - 120000),
     },
     {
       id: '5',
       username: 'Système',
-      message: 'Bob est devenu Disciple de l\'équipe Rouge',
-      timestamp: new Date(Date.now() - 60000)
-    }
+      message: "Bob est devenu Disciple de l'équipe Rouge",
+      timestamp: new Date(Date.now() - 60000),
+    },
   ]);
 
   const [proposal, setProposal] = useState('');
@@ -134,12 +132,12 @@ const DemoMode: React.FC = () => {
   // Timer simulation
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (gameState.isPlaying && gameState.timeRemaining > 0) {
       interval = setInterval(() => {
-        setGameState(prev => ({
+        setGameState((prev) => ({
           ...prev,
-          timeRemaining: Math.max(0, prev.timeRemaining - 1)
+          timeRemaining: Math.max(0, prev.timeRemaining - 1),
         }));
       }, 1000);
     }
@@ -152,7 +150,7 @@ const DemoMode: React.FC = () => {
   const formatTime = (timestamp: Date) => {
     return new Date(timestamp).toLocaleTimeString('fr-FR', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -169,9 +167,9 @@ const DemoMode: React.FC = () => {
         id: Date.now().toString(),
         username: currentUser.username,
         message: `[Proposition] ${proposal.trim()}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      setMessages(prev => [...prev, newMessage]);
+      setMessages((prev) => [...prev, newMessage]);
       setProposal('');
     }
   };
@@ -184,24 +182,24 @@ const DemoMode: React.FC = () => {
 
   const joinTeam = (team: 'red' | 'blue', role: 'sage' | 'disciple') => {
     setIsJoiningTeam(true);
-    
+
     setTimeout(() => {
       // Simuler le changement d'équipe
-      setGameState(prev => {
+      setGameState((prev) => {
         const newState = { ...prev };
-        
+
         // Retirer l'utilisateur de sa position actuelle
-        newState.spectators = newState.spectators.filter(u => u.id !== currentUser.id);
-        newState.teams.red.disciples = newState.teams.red.disciples.filter(u => u.id !== currentUser.id);
-        newState.teams.blue.disciples = newState.teams.blue.disciples.filter(u => u.id !== currentUser.id);
-        
+        newState.spectators = newState.spectators.filter((u) => u.id !== currentUser.id);
+        newState.teams.red.disciples = newState.teams.red.disciples.filter((u) => u.id !== currentUser.id);
+        newState.teams.blue.disciples = newState.teams.blue.disciples.filter((u) => u.id !== currentUser.id);
+
         if (newState.teams.red.sage?.id === currentUser.id) {
           newState.teams.red.sage = null;
         }
         if (newState.teams.blue.sage?.id === currentUser.id) {
           newState.teams.blue.sage = null;
         }
-        
+
         // Ajouter à la nouvelle position
         const updatedUser = { ...currentUser, team, role };
         if (role === 'sage') {
@@ -209,10 +207,10 @@ const DemoMode: React.FC = () => {
         } else {
           newState.teams[team].disciples.push(updatedUser);
         }
-        
+
         return newState;
       });
-      
+
       // Ajouter un message système
       const teamName = team === 'red' ? 'Rouge' : 'Bleue';
       const roleName = role === 'sage' ? 'Sage' : 'Disciple';
@@ -220,96 +218,101 @@ const DemoMode: React.FC = () => {
         id: Date.now().toString(),
         username: 'Système',
         message: `${currentUser.username} est devenu ${roleName} de l'équipe ${teamName}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      setMessages(prev => [...prev, newMessage]);
-      
+      setMessages((prev) => [...prev, newMessage]);
+
       setIsJoiningTeam(false);
     }, 1000);
   };
 
   const joinSpectator = () => {
     setIsJoiningTeam(true);
-    
+
     setTimeout(() => {
-      setGameState(prev => {
+      setGameState((prev) => {
         const newState = { ...prev };
-        
+
         // Retirer l'utilisateur de sa position actuelle
-        newState.teams.red.disciples = newState.teams.red.disciples.filter(u => u.id !== currentUser.id);
-        newState.teams.blue.disciples = newState.teams.blue.disciples.filter(u => u.id !== currentUser.id);
-        
+        newState.teams.red.disciples = newState.teams.red.disciples.filter((u) => u.id !== currentUser.id);
+        newState.teams.blue.disciples = newState.teams.blue.disciples.filter((u) => u.id !== currentUser.id);
+
         if (newState.teams.red.sage?.id === currentUser.id) {
           newState.teams.red.sage = null;
         }
         if (newState.teams.blue.sage?.id === currentUser.id) {
           newState.teams.blue.sage = null;
         }
-        
+
         // Ajouter aux spectateurs
         const updatedUser = { ...currentUser, team: 'spectator' as const, role: 'spectator' as const };
         newState.spectators.push(updatedUser);
-        
+
         return newState;
       });
-      
+
       const newMessage: DemoMessage = {
         id: Date.now().toString(),
         username: 'Système',
         message: `${currentUser.username} est devenu spectateur`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      setMessages(prev => [...prev, newMessage]);
-      
+      setMessages((prev) => [...prev, newMessage]);
+
       setIsJoiningTeam(false);
     }, 1000);
   };
 
   const startGame = () => {
     if (gameState.currentPhase === 0) {
-      setGameState(prev => ({
+      setGameState((prev) => ({
         ...prev,
         currentPhase: 1,
         isPlaying: true,
         timeRemaining: 30,
-        totalTime: 30
+        totalTime: 30,
       }));
-      
+
       const newMessage: DemoMessage = {
         id: Date.now().toString(),
         username: 'Système',
         message: 'Début de la Phase 1 - Choix du mot',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      setMessages(prev => [...prev, newMessage]);
+      setMessages((prev) => [...prev, newMessage]);
     }
   };
 
   const pauseGame = () => {
-    setGameState(prev => ({
+    setGameState((prev) => ({
       ...prev,
-      isPlaying: false
+      isPlaying: false,
     }));
-    
+
     const newMessage: DemoMessage = {
       id: Date.now().toString(),
       username: 'Système',
       message: 'Jeu mis en pause',
-      timestamp: new Date()
+      timestamp: new Date(),
     };
-    setMessages(prev => [...prev, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
   };
 
   const renderUserCard = (user: DemoUser, team: string, role: string) => {
     const isCurrentUser = user.id === currentUser.id;
     const teamColor = team === 'red' ? 'red' : team === 'blue' ? 'blue' : 'gray';
     const highlight = isCurrentUser ? 'ring-2 ring-yellow-400/50' : '';
-    const bgColor = team === 'red' ? 'bg-red-500/20 border-red-300/30' : 
-                    team === 'blue' ? 'bg-blue-500/20 border-blue-300/30' : 
-                    'bg-gray-500/20 border-gray-300/30';
-    
+    const bgColor =
+      team === 'red'
+        ? 'bg-red-500/20 border-red-300/30'
+        : team === 'blue'
+          ? 'bg-blue-500/20 border-blue-300/30'
+          : 'bg-gray-500/20 border-gray-300/30';
+
     return (
-      <div className={`${bgColor} backdrop-blur-sm rounded-xl p-4 border hover:bg-opacity-30 transition-all duration-300 ${highlight}`}>
+      <div
+        className={`${bgColor} backdrop-blur-sm rounded-xl p-4 border hover:bg-opacity-30 transition-all duration-300 ${highlight}`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className={`w-10 h-10 bg-${teamColor}-500 rounded-full flex items-center justify-center shadow-lg`}>
@@ -341,15 +344,22 @@ const DemoMode: React.FC = () => {
 
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] animate-pulse opacity-5 pointer-events-none"></div>
-      
+
       {/* Header */}
       <header className="relative z-10 p-6">
         <div className="flex items-center justify-between">
           {/* Left Side */}
           <div className="flex items-center space-x-4">
-            <h1 className="text-white text-3xl font-black tracking-wider" style={{ fontFamily: 'Montserrat, sans-serif' }}>KENSHO</h1>
+            <h1
+              className="text-white text-3xl font-black tracking-wider"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              KENSHO
+            </h1>
             <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300">
-              <span className="text-white text-sm font-semibold">Salon : <span className="text-yellow-300 font-bold">DEMO01</span></span>
+              <span className="text-white text-sm font-semibold">
+                Salon : <span className="text-yellow-300 font-bold">DEMO01</span>
+              </span>
             </div>
             <button
               onClick={copyRoomCode}
@@ -359,10 +369,12 @@ const DemoMode: React.FC = () => {
               <span>{copied ? 'Copié !' : 'Copier URL'}</span>
             </button>
             <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
-              <span className="text-white text-sm font-semibold">Admin : <span className="text-green-300 font-bold">Alice</span></span>
+              <span className="text-white text-sm font-semibold">
+                Admin : <span className="text-green-300 font-bold">Alice</span>
+              </span>
             </div>
           </div>
-          
+
           {/* Right Side */}
           <div className="flex items-center space-x-4">
             <button
@@ -395,12 +407,11 @@ const DemoMode: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/20">
             <div className="grid grid-cols-4 gap-4 items-center">
-              
               {/* Phase de jeu */}
               <div className="col-span-1">
                 <div className="bg-blue-500/20 backdrop-blur-sm rounded-xl p-3 border border-blue-300/30 text-center hover:bg-blue-500/30 transition-all duration-300">
                   <div className="flex items-center justify-center mb-2">
-                    <button 
+                    <button
                       onClick={gameState.isPlaying ? pauseGame : startGame}
                       className="text-blue-300 hover:text-white transition-colors flex items-center justify-center mr-2"
                     >
@@ -411,7 +422,7 @@ const DemoMode: React.FC = () => {
                   <h3 className="text-white font-bold text-sm">{gameState.phases[gameState.currentPhase]}</h3>
                 </div>
               </div>
-              
+
               {/* Temps restant */}
               <div className="col-span-2">
                 <div className="bg-orange-500/20 backdrop-blur-sm rounded-xl p-3 border border-orange-300/30 hover:bg-orange-500/30 transition-all duration-300">
@@ -422,19 +433,24 @@ const DemoMode: React.FC = () => {
                     </div>
                     <h3 className="text-white font-bold text-xl">{formatTimer(gameState.timeRemaining)}</h3>
                   </div>
-                  
+
                   {/* Progress Bar */}
                   <div className="relative">
                     <div className="bg-white/20 rounded-full h-3 overflow-hidden">
-                      <div 
-                        className="h-3 rounded-full transition-all duration-1000 bg-gradient-to-r from-green-400 to-red-500" 
-                        style={{ width: gameState.totalTime > 0 ? `${((gameState.totalTime - gameState.timeRemaining) / gameState.totalTime) * 100}%` : '0%' }}
+                      <div
+                        className="h-3 rounded-full transition-all duration-1000 bg-gradient-to-r from-green-400 to-red-500"
+                        style={{
+                          width:
+                            gameState.totalTime > 0
+                              ? `${((gameState.totalTime - gameState.timeRemaining) / gameState.totalTime) * 100}%`
+                              : '0%',
+                        }}
                       ></div>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               {/* Score */}
               <div className="col-span-1">
                 <div className="bg-purple-500/20 backdrop-blur-sm rounded-xl p-3 border border-purple-300/30 text-center hover:bg-purple-500/30 transition-all duration-300">
@@ -442,7 +458,9 @@ const DemoMode: React.FC = () => {
                     <Trophy className="w-5 h-5 text-purple-300 mr-2" />
                     <span className="text-purple-200 text-sm font-semibold">Score</span>
                   </div>
-                  <h3 className="text-white font-bold text-lg">{gameState.score.red} - {gameState.score.blue}</h3>
+                  <h3 className="text-white font-bold text-lg">
+                    {gameState.score.red} - {gameState.score.blue}
+                  </h3>
                 </div>
               </div>
             </div>
@@ -454,7 +472,6 @@ const DemoMode: React.FC = () => {
       <main className="relative z-10 px-6 pb-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-5 gap-6">
-            
             {/* Left Column: Équipe Rouge */}
             <div className="lg:col-span-1">
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
@@ -463,7 +480,7 @@ const DemoMode: React.FC = () => {
                     <h3 className="text-red-200 font-bold text-lg tracking-wide">ÉQUIPE ROUGE</h3>
                   </div>
                 </div>
-                
+
                 {/* Sage */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
@@ -471,7 +488,7 @@ const DemoMode: React.FC = () => {
                       <Crown className="w-4 h-4 mr-2 text-yellow-400" />
                       Sage
                     </h4>
-                    <button 
+                    <button
                       onClick={() => joinTeam('red', 'sage')}
                       disabled={isJoiningTeam}
                       className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-yellow-300/30 hover:border-yellow-300/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -479,17 +496,17 @@ const DemoMode: React.FC = () => {
                       {isJoiningTeam ? 'En cours...' : 'Rejoindre'}
                     </button>
                   </div>
-                  <div className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 ${gameState.teams.red.sage ? 'opacity-100' : 'opacity-50'}`}>
+                  <div
+                    className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 ${gameState.teams.red.sage ? 'opacity-100' : 'opacity-50'}`}
+                  >
                     {gameState.teams.red.sage ? (
                       renderUserCard(gameState.teams.red.sage, 'red', 'sage')
                     ) : (
-                      <div className="text-center text-white/60 text-sm py-4">
-                        Aucun Sage assigné
-                      </div>
+                      <div className="text-center text-white/60 text-sm py-4">Aucun Sage assigné</div>
                     )}
                   </div>
                 </div>
-                
+
                 {/* Disciples */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -497,7 +514,7 @@ const DemoMode: React.FC = () => {
                       <Users className="w-4 h-4 mr-2 text-blue-400" />
                       Disciples
                     </h4>
-                    <button 
+                    <button
                       onClick={() => joinTeam('red', 'disciple')}
                       disabled={isJoiningTeam}
                       className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-blue-300/30 hover:border-blue-300/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -508,15 +525,11 @@ const DemoMode: React.FC = () => {
                   <div className="space-y-3">
                     {gameState.teams.red.disciples.length === 0 ? (
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 opacity-50">
-                        <div className="text-center text-white/60 text-sm py-2">
-                          Aucun disciple
-                        </div>
+                        <div className="text-center text-white/60 text-sm py-2">Aucun disciple</div>
                       </div>
                     ) : (
-                      gameState.teams.red.disciples.map(disciple => (
-                        <div key={disciple.id}>
-                          {renderUserCard(disciple, 'red', 'disciple')}
-                        </div>
+                      gameState.teams.red.disciples.map((disciple) => (
+                        <div key={disciple.id}>{renderUserCard(disciple, 'red', 'disciple')}</div>
                       ))
                     )}
                   </div>
@@ -529,14 +542,14 @@ const DemoMode: React.FC = () => {
               {/* Proposal Input */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/20 mb-6 hover:bg-white/15 transition-all duration-300">
                 <form onSubmit={handleSubmitProposal} className="flex space-x-3">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={proposal}
                     onChange={(e) => setProposal(e.target.value)}
                     placeholder="Tapez votre réponse..."
                     className="flex-1 px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-semibold focus:bg-white/30 transition-all duration-300"
                   />
-                  <button 
+                  <button
                     type="submit"
                     className="bg-green-500/80 backdrop-blur-sm hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105"
                   >
@@ -544,23 +557,28 @@ const DemoMode: React.FC = () => {
                   </button>
                 </form>
               </div>
-              
+
               {/* Game Area Split */}
               <div className="grid grid-cols-2 gap-6">
-                
                 {/* History */}
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/20 h-[600px] hover:bg-white/15 transition-all duration-300">
                   <h3 className="text-white font-bold text-xl mb-4 flex items-center">
                     <History className="w-6 h-6 mr-3 text-blue-400" />
                     Historique
                   </h3>
-                  
-                  <div className="space-y-3 h-[520px] overflow-y-auto" style={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)'
-                  }}>
+
+                  <div
+                    className="space-y-3 h-[520px] overflow-y-auto"
+                    style={{
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)',
+                    }}
+                  >
                     {messages.map((msg) => (
-                      <div key={msg.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                      <div
+                        key={msg.id}
+                        className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:bg-white/20 transition-all duration-300"
+                      >
                         <div className="flex items-start space-x-3">
                           <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                             <Users className="w-3 h-3 text-white" />
@@ -583,7 +601,7 @@ const DemoMode: React.FC = () => {
                     <Gamepad2 className="w-6 h-6 mr-3 text-purple-400" />
                     Zone de jeu
                   </h3>
-                  
+
                   {/* Word Display */}
                   <div className="mb-6">
                     <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-2xl p-6 border border-purple-300/30 text-center hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-300">
@@ -594,7 +612,7 @@ const DemoMode: React.FC = () => {
                       <h4 className="text-white font-bold text-3xl tracking-wider">{gameState.currentWord}</h4>
                     </div>
                   </div>
-                  
+
                   {/* Forbidden Words */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 mb-6 flex-1">
                     <div className="flex items-center mb-3">
@@ -609,10 +627,10 @@ const DemoMode: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  
+
                   {/* Game Controls */}
                   <div className="grid grid-cols-2 gap-3">
-                    <button 
+                    <button
                       onClick={startGame}
                       disabled={gameState.isPlaying}
                       className="bg-green-500/20 backdrop-blur-sm hover:bg-green-500/40 text-green-200 p-4 rounded-xl font-semibold transition-all duration-300 border border-green-300/30 flex items-center justify-center space-x-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -620,7 +638,7 @@ const DemoMode: React.FC = () => {
                       <Play className="w-5 h-5" />
                       <span>Commencer</span>
                     </button>
-                    <button 
+                    <button
                       onClick={pauseGame}
                       disabled={!gameState.isPlaying}
                       className="bg-red-500/20 backdrop-blur-sm hover:bg-red-500/40 text-red-200 p-4 rounded-xl font-semibold transition-all duration-300 border border-red-300/30 flex items-center justify-center space-x-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -642,7 +660,7 @@ const DemoMode: React.FC = () => {
                     <h3 className="text-blue-200 font-bold text-lg tracking-wide">ÉQUIPE BLEUE</h3>
                   </div>
                 </div>
-                
+
                 {/* Sage */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
@@ -650,7 +668,7 @@ const DemoMode: React.FC = () => {
                       <Crown className="w-4 h-4 mr-2 text-yellow-400" />
                       Sage
                     </h4>
-                    <button 
+                    <button
                       onClick={() => joinTeam('blue', 'sage')}
                       disabled={isJoiningTeam}
                       className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-yellow-300/30 hover:border-yellow-300/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -658,17 +676,17 @@ const DemoMode: React.FC = () => {
                       {isJoiningTeam ? 'En cours...' : 'Rejoindre'}
                     </button>
                   </div>
-                  <div className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 ${gameState.teams.blue.sage ? 'opacity-100' : 'opacity-50'}`}>
+                  <div
+                    className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 ${gameState.teams.blue.sage ? 'opacity-100' : 'opacity-50'}`}
+                  >
                     {gameState.teams.blue.sage ? (
                       renderUserCard(gameState.teams.blue.sage, 'blue', 'sage')
                     ) : (
-                      <div className="text-center text-white/60 text-sm py-4">
-                        Aucun Sage assigné
-                      </div>
+                      <div className="text-center text-white/60 text-sm py-4">Aucun Sage assigné</div>
                     )}
                   </div>
                 </div>
-                
+
                 {/* Disciples */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -676,7 +694,7 @@ const DemoMode: React.FC = () => {
                       <Users className="w-4 h-4 mr-2 text-blue-400" />
                       Disciples
                     </h4>
-                    <button 
+                    <button
                       onClick={() => joinTeam('blue', 'disciple')}
                       disabled={isJoiningTeam}
                       className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-blue-300/30 hover:border-blue-300/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -687,21 +705,17 @@ const DemoMode: React.FC = () => {
                   <div className="space-y-3">
                     {gameState.teams.blue.disciples.length === 0 ? (
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 opacity-50">
-                        <div className="text-center text-white/60 text-sm py-2">
-                          Aucun disciple
-                        </div>
+                        <div className="text-center text-white/60 text-sm py-2">Aucun disciple</div>
                       </div>
                     ) : (
-                      gameState.teams.blue.disciples.map(disciple => (
-                        <div key={disciple.id}>
-                          {renderUserCard(disciple, 'blue', 'disciple')}
-                        </div>
+                      gameState.teams.blue.disciples.map((disciple) => (
+                        <div key={disciple.id}>{renderUserCard(disciple, 'blue', 'disciple')}</div>
                       ))
                     )}
                   </div>
                 </div>
               </div>
-              
+
               {/* Spectateurs */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
                 <div className="text-center mb-6">
@@ -709,13 +723,13 @@ const DemoMode: React.FC = () => {
                     <h3 className="text-gray-200 font-bold text-lg tracking-wide">SPECTATEURS</h3>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-white/90 text-sm font-semibold flex items-center">
                     <Eye className="w-4 h-4 mr-2 text-gray-400" />
                     Observateurs
                   </h4>
-                  <button 
+                  <button
                     onClick={joinSpectator}
                     disabled={isJoiningTeam}
                     className="bg-gray-500/20 hover:bg-gray-500/40 text-gray-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-gray-300/30 hover:border-gray-300/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -723,19 +737,15 @@ const DemoMode: React.FC = () => {
                     {isJoiningTeam ? 'En cours...' : 'Rejoindre'}
                   </button>
                 </div>
-                
+
                 <div className="space-y-3">
                   {gameState.spectators.length === 0 ? (
                     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 opacity-50">
-                      <div className="text-center text-white/60 text-sm py-2">
-                        Aucun spectateur
-                      </div>
+                      <div className="text-center text-white/60 text-sm py-2">Aucun spectateur</div>
                     </div>
                   ) : (
-                    gameState.spectators.map(spectator => (
-                      <div key={spectator.id}>
-                        {renderUserCard(spectator, 'spectator', 'spectator')}
-                      </div>
+                    gameState.spectators.map((spectator) => (
+                      <div key={spectator.id}>{renderUserCard(spectator, 'spectator', 'spectator')}</div>
                     ))
                   )}
                 </div>
@@ -752,14 +762,14 @@ const DemoMode: React.FC = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-3xl font-bold text-gray-800">Gestion des joueurs</h2>
-                <button 
+                <button
                   onClick={() => setShowPlayersModal(false)}
                   className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full transition-all duration-300 hover:scale-105"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 {/* Afficher tous les joueurs */}
                 {[
@@ -768,11 +778,11 @@ const DemoMode: React.FC = () => {
                   { user: { id: 'bob', username: 'Bob' }, isCreator: false },
                   { user: { id: 'charlie', username: 'Charlie' }, isCreator: false },
                   { user: { id: 'eve', username: 'Eve' }, isCreator: false },
-                  { user: currentUser, isCreator: false }
+                  { user: currentUser, isCreator: false },
                 ].map(({ user, isCreator }, index) => {
                   const isCurrentUser = user.id === currentUser.id;
                   const bgClass = isCurrentUser ? 'bg-blue-50 border-2 border-blue-300' : 'bg-gray-50';
-                  
+
                   return (
                     <div key={user.id} className={`${bgClass} rounded-xl p-4 flex items-center justify-between`}>
                       <div className="flex items-center space-x-3">
@@ -780,10 +790,11 @@ const DemoMode: React.FC = () => {
                           <span className="text-white font-bold text-lg">{user.username.charAt(0).toUpperCase()}</span>
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-800">{user.username}{isCurrentUser ? ' (Vous)' : ''}</p>
-                          <p className="text-gray-600 text-sm">
-                            {isCreator ? 'Créateur du salon' : 'Participant'}
+                          <p className="font-semibold text-gray-800">
+                            {user.username}
+                            {isCurrentUser ? ' (Vous)' : ''}
                           </p>
+                          <p className="text-gray-600 text-sm">{isCreator ? 'Créateur du salon' : 'Participant'}</p>
                         </div>
                       </div>
                       {isCreator && <Crown className="w-5 h-5 text-yellow-500" />}
@@ -803,14 +814,14 @@ const DemoMode: React.FC = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-3xl font-bold text-gray-800">Paramètres de la partie</h2>
-                <button 
+                <button
                   onClick={() => setShowSettingsModal(false)}
                   className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full transition-all duration-300 hover:scale-105"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               {/* Reset Button */}
               <div className="mb-6">
                 <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105">
@@ -818,7 +829,7 @@ const DemoMode: React.FC = () => {
                   <span>Réinitialiser la partie</span>
                 </button>
               </div>
-              
+
               {/* Settings Grid */}
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Time Management */}
@@ -828,7 +839,9 @@ const DemoMode: React.FC = () => {
                     <div>
                       <label className="block text-gray-700 font-semibold mb-2">Temps phase 1 :</label>
                       <select className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="30" selected>30s</option>
+                        <option value="30" selected>
+                          30s
+                        </option>
                         <option value="45">45s</option>
                         <option value="60">60s</option>
                         <option value="90">90s</option>
@@ -839,7 +852,9 @@ const DemoMode: React.FC = () => {
                       <label className="block text-gray-700 font-semibold mb-2">Temps phase 2 :</label>
                       <select className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="60">60s</option>
-                        <option value="90" selected>90s</option>
+                        <option value="90" selected>
+                          90s
+                        </option>
                         <option value="120">120s</option>
                         <option value="150">150s</option>
                         <option value="180">180s</option>
@@ -851,12 +866,14 @@ const DemoMode: React.FC = () => {
                         <option value="30">30s</option>
                         <option value="60">60s</option>
                         <option value="90">90s</option>
-                        <option value="120" selected>120s</option>
+                        <option value="120" selected>
+                          120s
+                        </option>
                       </select>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Word Types */}
                 <div className="bg-gray-50 rounded-2xl p-6">
                   <h3 className="font-bold text-gray-800 mb-4 text-lg">Types de mots</h3>
@@ -876,7 +893,7 @@ const DemoMode: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Validate Button */}
               <div className="mt-6 text-center">
                 <button className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105">
@@ -891,9 +908,7 @@ const DemoMode: React.FC = () => {
       {/* Footer */}
       <footer className="relative z-10 px-6 py-4">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="text-white/60 text-sm">
-            © 2025 Kensho – Mode démo pour tests et design
-          </p>
+          <p className="text-white/60 text-sm">© 2025 Kensho – Mode démo pour tests et design</p>
         </div>
       </footer>
     </div>

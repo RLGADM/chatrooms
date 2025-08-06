@@ -1,1 +1,1 @@
-export * from 'useHomeHandlers.ts';
+export * from './useHomeHandlers';

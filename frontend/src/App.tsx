@@ -11,12 +11,22 @@ import RoomCreated from './components/RoomCreated';
 import SocketDebugger from './components/SocketDebugger';
 import KeepAlive from './components/KeepAlive';
 // Déclaration des hooks
-import { useHydration } from './hooks/useHydration';
-import { useRoomEvents } from './hooks/useRoomEvents';
-import { useServerReset, useSocketInitializer } from './hooks/app/useAppLifecycle';
-import { useGenerateToken } from './hooks/useUserToken';
-import { useReconnection } from './hooks/useReconnection';
-import { SocketContext } from './components/SocketContext';
+import {
+  useHydration,
+  useRoomEvents,
+  useServerReset,
+  useSocketInitializer,
+  useGenerateToken,
+  useReconnection,
+} from '@/hooks';
+import { SocketContext } from '@/components';
+
+// import { useHydration } from './hooks/useHydration';
+// import { useRoomEvents } from './hooks/useRoomEvents';
+// import { useServerReset, useSocketInitializer } from './hooks/app/useAppLifecycle';
+// import { useGenerateToken } from './hooks/useUserToken';
+// import { useReconnection } from './hooks/useReconnection';
+// import { SocketContext } from './components/SocketContext';
 
 // --------------- Déclaration des consts
 
