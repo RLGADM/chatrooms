@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import GameConfigModal from '@/components/GameConfigModal';
 // Déclaration via hooks
 import { useHomeHandlers } from '@/hooks';
+// Import logo
+import logo from '@/assets/logo.png';
 
 // Déclaration const
 
@@ -50,6 +52,15 @@ const Home: React.FC = () => {
     }
   }, [inRoom, roomCode]);
 
+  useEffect(() => {
+    const userToken = localStorage.getItem('userToken');
+    const lastRoomCode = localStorage.getItem('lastRoomCode');
+
+    if (userToken && !lastRoomCode) {
+      localStorage.setItem('hasLeftRoom', 'false');
+    }
+  }, []);
+
   return (
     <div
       className="min-h-screen relative overflow-hidden"
@@ -82,11 +93,7 @@ const Home: React.FC = () => {
           <div className="text-center mb-6">
             <div className="relative mb-4">
               <div className="w-20 h-20 mx-auto flex items-center justify-center">
-                <img
-                  src="/assets/logo.png"
-                  alt="Kensho Logo"
-                  className="w-full h-full object-contain rounded-2xl shadow-lg"
-                />
+                <img src={logo} alt="Kensho Logo" className="w-full h-full object-contain rounded-2xl shadow-lg" />
               </div>
               <div className="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full p-1">
                 <Sparkles className="w-4 h-4 text-white" />

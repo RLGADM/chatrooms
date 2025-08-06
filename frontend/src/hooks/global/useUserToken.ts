@@ -6,6 +6,7 @@ export function useGenerateToken() {
     if (!localStorage.getItem('userToken')) {
       const token = crypto.randomUUID(); // Génère un token unique (ex: 'f1d1bca8-...')
       localStorage.setItem('userToken', token);
+      localStorage.setItem('hasLeftRoom', 'false');
     }
   }, []);
 }

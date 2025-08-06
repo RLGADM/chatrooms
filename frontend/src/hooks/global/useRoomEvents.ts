@@ -7,24 +7,6 @@ import { GameParameters, Message, Room, User, emptyRoom, emptyUser } from '@/typ
 import { useUserToken } from './useUserToken';
 
 export function useRoomEvents() {
-  const [, setLastRoomCode] = useState(() => {
-    const stored = localStorage.getItem('lastRoomCode');
-    try {
-      return stored ? JSON.parse(stored) : '';
-    } catch {
-      return '';
-    }
-  });
-
-  const [, setLastUsername] = useState(() => {
-    const stored = localStorage.getItem('lastUsername');
-    try {
-      return stored ? JSON.parse(stored) : '';
-    } catch {
-      return '';
-    }
-  });
-
   // Déclaration ts hooks
   const userToken = useUserToken();
   const { socket, isConnected: socketIsConnected } = useSocket();
@@ -97,15 +79,17 @@ export function useRoomEvents() {
         //console.log('dans le socket emit');
         if (response.success) {
           console.log('socket emit success');
-          setLastRoomCode(roomCode);
-          setLastUsername(username);
+          localStorage.setItem('lastRoomCode', roomCode);
+          localStorage.setItem('lastUsername', JSON.stringify(username));
           setInRoom(true);
+
           //JoinTeamDefault
           socket.emit('joinTeam', {
             roomCode,
             userToken,
             team: 'spectator',
           });
+
           console.log('1 :', roomCode, '2 :', username, '3 : ', inRoom);
 
           // setCurrentUser({
@@ -143,8 +127,8 @@ export function useRoomEvents() {
           handleJoinRoom(socket, username, response.roomCode);
 
           currentRoom.code = response.roomCode;
-          console.log(currentRoom.code);
-          console.log('getcode');
+          //console.log(currentRoom.code);
+          //console.log('getcode');
 
           //console.log('entré dans le success emit createRoom');
         } else {
@@ -154,15 +138,15 @@ export function useRoomEvents() {
     );
   };
 
-  const handleLeaveRoom = () => {
-    if (!socket || !currentRoom) return;
+  //TODO le déplacer dans le hook du game
+  // const handleLeaveRoom = () => {
+  //   if (!socket || !currentRoom) return;
 
-    socket.emit('leaveRoom', currentRoom.code);
-    setCurrentUser(null);
-    setRoomUsers([]);
-    setMessages([]);
-    setError(null);
-  };
+  //   socket.emit('leaveRoom', currentRoom.code);
+  //   setRoomUsers([]);
+  //   setMessages([]);
+  //   setError(null);
+  // };
 
   return {
     socket,
@@ -175,7 +159,7 @@ export function useRoomEvents() {
     socketIsConnected,
     handleCreateRoom,
     handleJoinRoom,
-    handleLeaveRoom,
+    //handleLeaveRoom,
     setCurrentUser,
     setCurrentRoom,
     setInRoom,

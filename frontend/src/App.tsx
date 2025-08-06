@@ -1,16 +1,13 @@
 // --------------- IMPORT
 
-// Déclaration import framework
+// Import Framwork
 import React, { useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-// Déclaration import des fichiers projets
-import Home from './components/Home';
-import RoomCreated from './components/RoomCreated';
-//import DemoMode from './components/DemoMode';
-import SocketDebugger from './components/SocketDebugger';
-import KeepAlive from './components/KeepAlive';
-// Déclaration des hooks
+// Import tsx
+import Home from './pages/Home';
+import RoomCreated from './pages/RoomCreated';
+// Import ts et hooks
 import {
   useHydration,
   useRoomEvents,
@@ -20,14 +17,7 @@ import {
   useReconnection,
 } from '@/hooks';
 import { SocketContext } from '@/components';
-
-// import { useHydration } from './hooks/useHydration';
-// import { useRoomEvents } from './hooks/useRoomEvents';
-// import { useServerReset, useSocketInitializer } from './hooks/app/useAppLifecycle';
-// import { useGenerateToken } from './hooks/useUserToken';
-// import { useReconnection } from './hooks/useReconnection';
-// import { SocketContext } from './components/SocketContext';
-
+import KeepAlive from './components/KeepAlive';
 // --------------- Déclaration des consts
 
 //const serveur
@@ -36,31 +26,13 @@ const SERVER_URL = import.meta.env.PROD ? 'https://kensho-hab0.onrender.com' : '
 // Déclaration du main
 const App: React.FC = () => {
   // const locales
-  // const [isDemoMode, setIsDemoMode] = useState(false);
   const hasRejoinAttempted = useRef(false);
 
-  // Nouveau co
-  //const { socket, isConnected: socketIsConnected, isConnecting: socketIsConnecting } = useSocket();
+  // const hooks
+  const { socket, socketIsConnected, setInRoom, handleJoinRoom } = useRoomEvents();
 
-  // useRoomEvents nettoyé
-  const {
-    socket,
-    socketIsConnected,
-    inRoom: eventsInRoom,
-    setInRoom,
-    currentRoom,
-    setCurrentRoom,
-    currentUser,
-    setCurrentUser,
-    handleJoinRoom,
-  } = useRoomEvents();
-  //Const local mais obligationde déclarer apres le hook
-  const inRoom = eventsInRoom && currentUser !== null; //booléen inroom
-  // je la laisse ici pour la lisibilité
-  //
-  console.log('inRoom', inRoom);
   // --------------- Début du Code
-  // serverReset pour le frontend
+  // serverReset pour le frontend car toutes données backend supprimmé via reboot
   useServerReset(socket);
 
   //hydratation via hooks
@@ -76,13 +48,8 @@ const App: React.FC = () => {
   useReconnection({
     socket,
     isConnected: socketIsConnected,
-    currentUser,
-    currentRoom,
-    handleJoinRoom,
-    setCurrentRoom,
-    isPlayerInRoom,
     hasRejoinAttempted,
-    setCurrentUser,
+    handleJoinRoom,
     setInRoom,
   });
 
@@ -140,7 +107,6 @@ const App: React.FC = () => {
       <SocketContext.Provider value={{ socket }}>
         <Toaster position="top-center" />
         <KeepAlive serverUrl={SERVER_URL} />
-        <SocketDebugger socket={socket} isConnected={socketIsConnected} />
         {/* rootage */}
         <Routes>
           <Route path="/" element={<Home />} />

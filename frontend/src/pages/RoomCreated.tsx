@@ -39,35 +39,35 @@ const RoomCreated: React.FC = () => {
   const [isJoiningTeam, setIsJoiningTeam] = useState(false);
   //TODO à suuprimier ?  const [debugInfo, setDebugInfo] = useState<any>(null);
   const [showDebugModal, setShowDebugModal] = useState(false);
-  const [player, setPlayer] = useState<User | null>(null);
+  //const [player, setPlayer] = useState<User | null>(null);
   // consts depuis hooks
   const {
     socket,
     currentUser,
-    setCurrentUser,
-    currentRoom,
+    //setCurrentUser,
+    //currentRoom,
     setCurrentRoom,
-    roomUsers,
-    setRoomUsers,
-    messages,
-    setMessages,
-    error,
-    setError,
+    //roomUsers,
+    //setRoomUsers,
+    // messages,
+    // setMessages,
+    // error,
+    //setError,
     handleLeaveRoom,
   } = useRoomEvents();
 
-  const handleLeaveRoom = () => {
-    if (socket && RoomType) {
-      socket.emit('leaveRoom', room.code);
-      socket.leave(room.code);
-    }
-    setCurrentUser(null);
-    setCurrentRoom(null);
-    setError(null);
-    hasJoinedRoomRef.current = false;
-    hasRejoinAttempted.current = false;
-    localStorage.removeItem('lastRoomCode');
-  };
+  // const handleLeaveRoom = () => {
+  //   if (socket && RoomType) {
+  //     socket.emit('leaveRoom', room.code);
+  //     socket.leave(room.code);
+  //   }
+  //   setCurrentUser(null);
+  //   setCurrentRoom(null);
+  //   setError(null);
+  //   hasJoinedRoomRef.current = false;
+  //   hasRejoinAttempted.current = false;
+  //   localStorage.removeItem('lastRoomCode');
+  // };
 
   // Initialize game state
   const [gameState, setGameState] = useState<GameState>(() => {
