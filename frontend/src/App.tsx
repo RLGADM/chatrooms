@@ -6,7 +6,7 @@ import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 // Import tsx
 import Home from './pages/Home';
-import RoomCreated from './pages/RoomCreated';
+import RoomCreated from './pages/RoomCreated.tsx';
 // Import ts et hooks
 import {
   useHydration,

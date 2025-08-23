@@ -1,0 +1,76 @@
+// --------------- IMPORT
+import { User } from '../../types';
+
+// --------------- Hook utilitaire pour les fonctions de formatage et helpers
+export function useRoomUtils() {
+  // Formatage du temps pour les messages
+  const formatTime = (timestamp: Date) => {
+    return new Date(timestamp).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  // Formatage du timer de jeu
+  const formatTimer = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Copier le lien de la room
+  const copyRoomLink = async (roomCode: string, setCopied: (value: boolean) => void) => {
+    try {
+      const roomUrl = `${window.location.origin}/room/${roomCode}`;
+      await navigator.clipboard.writeText(roomUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Erreur lors de la copie:', error);
+    }
+  };
+
+  // Rendu d'une carte utilisateur
+  const renderUserCard = (user: User, currentUserToken: string) => {
+    const isCurrentUser = user.userToken === currentUserToken;
+    const team = user.team || 'spectator';
+    const role = user.role || 'spectator';
+
+    const teamColor = team === 'red' ? 'red' : team === 'blue' ? 'blue' : 'gray';
+    const highlight = isCurrentUser ? 'ring-2 ring-yellow-400/50' : '';
+    const bgColor =
+      team === 'red'
+        ? 'bg-red-500/20 border-red-300/30'
+        : team === 'blue'
+          ? 'bg-blue-500/20 border-blue-300/30'
+          : 'bg-gray-500/20 border-gray-300/30';
+
+    return {
+      bgColor,
+      teamColor,
+      highlight,
+      isCurrentUser,
+      team,
+      role,
+    };
+  };
+
+  // Vérifier les permissions
+  const checkPermissions = (currentUser: User) => {
+    const isAdmin = currentUser.isAdmin || false;
+    const canControlGame = isAdmin; // Peut être étendu selon vos règles métier
+
+    return {
+      isAdmin,
+      canControlGame,
+    };
+  };
+
+  return {
+    formatTime,
+    formatTimer,
+    copyRoomLink,
+    renderUserCard,
+    checkPermissions,
+  };
+}
