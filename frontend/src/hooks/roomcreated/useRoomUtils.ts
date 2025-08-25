@@ -30,8 +30,8 @@ export function useRoomUtils() {
     }
   };
 
-  // Rendu d'une carte utilisateur
-  const renderUserCard = (user: User, currentUserToken: string) => {
+  // Obtenir les données pour le rendu d'une carte utilisateur
+  const getUserCardData = (user: User, currentUserToken: string) => {
     const isCurrentUser = user.userToken === currentUserToken;
     const team = user.team || 'spectator';
     const role = user.role || 'spectator';
@@ -52,6 +52,7 @@ export function useRoomUtils() {
       isCurrentUser,
       team,
       role,
+      user,
     };
   };
 
@@ -70,7 +71,7 @@ export function useRoomUtils() {
     formatTime,
     formatTimer,
     copyRoomLink,
-    renderUserCard,
+    getUserCardData,
     checkPermissions,
   };
 }
