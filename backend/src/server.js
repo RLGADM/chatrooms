@@ -46,7 +46,7 @@ console.log('[SERVER] Maps rooms et users vidées au démarrage');
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: 'https://localhost:5173',
     credentials: true,
   },
 });
