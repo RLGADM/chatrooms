@@ -26,8 +26,8 @@ const Home: React.FC = () => {
     setUsername,
     inRoom,
     roomCode,
-    //setRoomCode, //inutile car récupérer de currentRoom
-    //redéclaration du inputRoomCode en useState
+    //setRoomCode, //inutile car récupérer de 
+    //redéclaration du inputRoomCode en useStatecurrentRoom
     inputRoomCode,
     setInputRoomCode,
     isCreating,

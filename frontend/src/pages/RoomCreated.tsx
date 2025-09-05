@@ -77,7 +77,7 @@ const RoomCreated: React.FC = () => {
 
   // Données dérivées pour le JSX
   const gameState = currentRoom.gameState;
-  const isGameActive = gameState?.currentPhase !== 0;
+  const isGameActive = gameState?.Status !== 0;
   const redTeam = currentRoom.users.filter((user) => user.team === 'red');
   const blueTeam = currentRoom.users.filter((user) => user.team === 'blue');
   const spectators = currentRoom.users.filter((user) => user.team === 'spectator');
