@@ -1,4 +1,4 @@
-# Guide de débogage Socket.IO Frontend/Backend
+<!-- # Guide de débogage Socket.IO Frontend/Backend
 
 ## Problèmes identifiés dans votre configuration
 
@@ -108,4 +108,4 @@ socket.emit('joinTeam', 'red', 'disciple');
 [CLIENT EVENT IN] teamJoinSuccess: [{team: "red", role: "disciple", gameState: {...}}]
 ```
 
-Si vous ne voyez pas ces logs, c'est qu'il y a un problème de communication.
+Si vous ne voyez pas ces logs, c'est qu'il y a un problème de communication. -->

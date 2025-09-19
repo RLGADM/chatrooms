@@ -1,4 +1,4 @@
-# Analyse des problèmes Socket.IO Frontend/Backend
+<!-- # Analyse des problèmes Socket.IO Frontend/Backend
 
 ## Problèmes identifiés dans votre code actuel
 
@@ -19,4 +19,4 @@ Render peut avoir des limitations sur les WebSockets.
 ### Backend amélioré avec debug complet
 ### Frontend avec meilleure gestion des erreurs
 ### Outils de debug intégrés
-### Tests de communication
+### Tests de communication -->
