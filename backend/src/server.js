@@ -108,8 +108,8 @@ io.on('connection', (socket) => {
     const existingUser = room.users.find((u) => u.id === userToken);
 
     if (existingUser) {
-      existingUser.socketId = socket.id;
-      users.set(socket.id, existingUser);
+      existingUser.userToken = userToken;
+      users.set(userToken, existingUser);
       socket.join(roomCode);
 
       console.log(`[REJOINT EXISTANT] ${username} avec token déjà présent`);

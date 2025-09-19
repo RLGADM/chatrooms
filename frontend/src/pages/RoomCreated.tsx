@@ -5,7 +5,7 @@ import {
   Users,
   LogOut,
   Check,
-  Settings,
+  // Settings,
   Play,
   Pause,
   Timer,
@@ -18,7 +18,7 @@ import {
   Eye,
   PlayCircle,
   PauseCircle,
-  X,
+  // X,
   RefreshCw,
 } from 'lucide-react';
 import { useRoomCreatedMain } from '../hooks/roomcreated';
@@ -36,7 +36,7 @@ const RoomCreated: React.FC = () => {
     // États UI
     proposal,
     copied,
-    showPlayersModal,
+    // showPlayersModal,
     showResetModal,
     teamJoinError,
     isJoiningTeam,
@@ -61,10 +61,12 @@ const RoomCreated: React.FC = () => {
     pauseGame,
     handleLeaveRoom,
     handleResetGame,
-    handleChangeUserRole,
-    handleKickUser,
-    handleBanUser,
+    // handleChangeUserRole,
+    // handleKickUser,
+    // handleBanUser,
   } = useRoomCreatedMain();
+
+  // const addAdmin = currentRoom?.users.find(user => user.role === 'admin');
 
   // Protection: si pas de room ou d'utilisateur
   if (!currentRoom || !currentUser) {

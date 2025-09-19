@@ -1,25 +1,29 @@
 // --------------- IMPORT
 import { useEffect } from 'react';
-import { useRoomEvents } from '../global';
+//import { useRoomEvents } from '../global';
 import { useRoomUIStates } from './useRoomUIStates';
 import { useRoomUtils } from './useRoomUtils';
 import { useRoomTeamActions } from './useRoomTeamActions';
 import { useRoomGameActions } from './useRoomGameActions';
+//import { User } from 'lucide-react';
+// import { useUserToken } from '../global/useUserToken';
 
 // --------------- Hook principal pour RoomCreated
 export function useRoomCreatedMain() {
-  // Hook principal de la room (depuis votre architecture globale)
-  const { socket, currentUser, currentRoom, handleSendMessage, leaveRoom, hasJoinedRoomRef, hasRejoinAttempted } =
-    useRoomEvents();
 
-  // États UI
+  // États UI pour la room
   const uiStates = useRoomUIStates();
 
-  // Utilitaires
-  const utils = useRoomUtils();
+  // Hook principal de la room (depuis votre architecture globale)
 
+  §§const {c socket, currentUser, currentRoom, handleSendMessage?, leaveRoom.?  edRoomRef?, hasRejoinAttempted } = <an
+  // controle admin de la room
+  
+  // Utilitaires
+  const utils = useRoomUtils<>
+?z
   // Actions d'équipes
-  const teamActions = useRoomTeamActions(socket, uiStates.setIsJoiningTeam, uiStates.setTeamJoinError);
+  const teamActions = useRoomTeamActions(socket, uiStates.setIsJoiningTeam, uiStates.setTeamJoinError); 
 
   // Actions de jeu
   const gameActions = useRoomGameActions(socket, handleSendMessage);
