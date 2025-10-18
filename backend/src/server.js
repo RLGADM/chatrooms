@@ -124,7 +124,6 @@ io.on('connection', (socket) => {
       if (typeof ack === 'function') {
         ack({ success: true });
       }
-
       // Aligner avec le front
       io.to(roomCode).emit('usersUpdate', getRoomUsers(roomCode));
       return;
@@ -164,27 +163,24 @@ io.on('connection', (socket) => {
     if (!socket?.connected) {
       return ack?.({ success: false, message: 'Socket non connecté' });
     }
-
+  
     const room = rooms.get(roomCode);
     if (!room) return ack?.({ success: false, message: 'Room introuvable' });
-
-    // Rechercher l'utilisateur par id (= userToken)
+  
+    // Rechercher par id (= userToken)
     const user = room.users.find((u) => u.id === userToken);
     if (!user) return ack?.({ success: false, message: 'Utilisateur non trouvé' });
-
+  
     if (user.team === team) {
       return ack?.({ success: false, message: 'Déjà dans cette équipe' });
     }
-
+  
     user.team = team;
-    // Rôle par défaut si non fourni: spectator pour spectateur, sinon disciple
     user.role = user.role || (team === 'spectator' ? 'spectator' : 'disciple');
     user.socketId = socket.id;
     if (username) user.username = username;
-
-    // Broadcast MAJ (nom d’event unifié)
+  
     io.to(roomCode).emit('usersUpdate', room.users);
-
     return ack?.({ success: true, message: 'Équipe rejointe avec succès' });
   });
 

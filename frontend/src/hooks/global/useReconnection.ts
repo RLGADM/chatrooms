@@ -24,13 +24,12 @@ export function useReconnection({ socket, isConnected, hasRejoinAttempted, handl
     const lastUsername = lastUsernameRaw ? JSON.parse(lastUsernameRaw) : '';
 
     if (!userToken || !lastRoomCode) return;
-
     if (hasLeftRoom === 'true') {
       setInRoom(false);
       return;
     }
 
-    // Passer le username, pas le token
+    // Utiliser le username, pas le token
     handleJoinRoom(socket, lastUsername, lastRoomCode).then((success) => {
       if (success) {
         setInRoom(true);
