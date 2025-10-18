@@ -80,7 +80,7 @@ export function useRoomEvents() {
         if (response.success) {
           console.log('socket emit success');
           localStorage.setItem('lastRoomCode', roomCode);
-          localStorage.setItem('lastUsername', JSON.stringify(username));
+          localStorage.setItem('lastUsername', username);
           setInRoom(true);
 
           //JoinTeamDefault

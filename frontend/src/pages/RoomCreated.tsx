@@ -1,5 +1,5 @@
 // --------------- IMPORT
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Copy,
   Users,
@@ -23,15 +23,51 @@ import {
 } from 'lucide-react';
 import { useRoomCreatedMain } from '../hooks/roomcreated';
 import { User } from '../types';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useSocket } from '../hooks/global/useSocket';
+import { useUserToken } from '../hooks/global/useUserToken';
 
 // --------------- Composant RoomCreated refactorisé
 const RoomCreated: React.FC = () => {
+  const { roomCode } = useParams<{ roomCode: string }>();
+  const navigate = useNavigate();
+  const { socket } = useSocket();
+  const userToken = useUserToken();
+  const [roomExists, setRoomExists] = useState<boolean | null>(null);
+  const [isChecking, setIsChecking] = useState<boolean>(true);
+  const [showUsernameModal, setShowUsernameModal] = useState<boolean>(false);
+  const [username, setUsername] = useState<string>('');
+  const [isJoining, setIsJoining] = useState<boolean>(false);
+
+  // Vérifier si la room existe réellement
+  useEffect(() => {
+    if (socket && roomCode) {
+      setIsChecking(true);
+      socket.emit('checkRoomExists', { roomCode }, (response: { exists: boolean }) => {
+        setRoomExists(response.exists);
+        setIsChecking(false);
+        
+        if (!response.exists) {
+          // Redirection immédiate si la room n'existe pas
+          navigate('/');
+        } else {
+          // Vérifier si l'utilisateur a un nom d'utilisateur
+          const savedUsername = localStorage.getItem('lastUsername');
+          if (!savedUsername) {
+            setShowUsernameModal(true);
+          }
+        }
+      });
+    }
+  }, [socket, roomCode, navigate]);
+
   // Hook principal qui gère toute la logique
   const {
     // Données
     currentUser,
     currentRoom,
     permissions,
+    handleJoinRoom,
 
     // États UI
     proposal,
@@ -66,14 +102,98 @@ const RoomCreated: React.FC = () => {
     handleBanUser,
   } = useRoomCreatedMain();
 
+  // Fonction pour rejoindre la room avec le nom d'utilisateur saisi
+  const handleJoinWithUsername = async () => {
+    if (!username.trim()) return;
+    
+    setIsJoining(true);
+    try {
+      if (socket && roomCode && userToken) {
+        const success = await handleJoinRoom(socket, username, roomCode);
+        if (success) {
+          setShowUsernameModal(false);
+          // S'assurer que le username est correctement stocké
+          localStorage.setItem('lastUsername', username);
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la connexion au salon:", error);
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  // Modal pour saisir le nom d'utilisateur
+  const UsernameModal = () => (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-slate-800 p-6 rounded-xl shadow-xl w-full max-w-md border border-slate-600">
+        <h2 className="text-white text-xl font-bold mb-4">Entrez votre pseudo</h2>
+        <p className="text-slate-300 mb-4">Pour rejoindre ce salon, veuillez entrer votre pseudo.</p>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Votre pseudo"
+          className="w-full p-3 rounded-lg bg-slate-700 text-white border border-slate-600 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onKeyDown={(e) => e.key === 'Enter' && handleJoinWithUsername()}
+        />
+        <div className="flex justify-end">
+          <button
+            onClick={() => navigate('/')}
+            className="px-4 py-2 rounded-lg bg-slate-700 text-white mr-2 hover:bg-slate-600 transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={handleJoinWithUsername}
+            disabled={!username.trim() || isJoining}
+            className={`px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors ${
+              !username.trim() || isJoining ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {isJoining ? 'Connexion...' : 'Rejoindre'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Afficher un message d'erreur si la room n'existe pas
+  if (roomExists === false) {
+    return (
+      <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 min-h-screen flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-2xl font-bold mb-4">Salon introuvable</div>
+          <div className="text-xl mb-6">Ce salon de jeu n'existe pas.</div>
+          <div className="text-sm">Redirection vers la page d'accueil...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Afficher un message de chargement pendant la vérification
+  if (isChecking || roomExists === null) {
+    return (
+      <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 min-h-screen flex items-center justify-center">
+        <div className="text-white text-xl">Vérification du salon...</div>
+      </div>
+    );
+  }
+
   // Protection: si pas de room ou d'utilisateur
-  if (!currentRoom || !currentUser) {
+  if ((!currentRoom || !currentUser) && !showUsernameModal) {
     return (
       <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 min-h-screen flex items-center justify-center">
         <div className="text-white text-xl">Chargement de la room...</div>
       </div>
     );
   }
+
+  return (
+    <>
+      {showUsernameModal && <UsernameModal />}
+      
+      {!showUsernameModal && currentRoom && currentUser && (
 
   // Données dérivées pour le JSX
   const gameState = currentRoom.gameState;
@@ -109,9 +229,13 @@ const RoomCreated: React.FC = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 min-h-screen transition-all duration-1000">
-      {/* Animated Background Pattern */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] animate-pulse opacity-5 pointer-events-none"></div>
+    <>
+      {showUsernameModal && <UsernameModal />}
+      
+      {!showUsernameModal && currentRoom && currentUser && (
+        <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 min-h-screen transition-all duration-1000">
+          {/* Animated Background Pattern */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] animate-pulse opacity-5 pointer-events-none"></div>
 
       {/* Error Toast */}
       {teamJoinError && (
@@ -581,9 +705,10 @@ const RoomCreated: React.FC = () => {
             </div>
           </div>
         </div>
+      )}</div>
+        </div>
       )}
-    </div>
+    </>
   );
 };
-
 export default RoomCreated;

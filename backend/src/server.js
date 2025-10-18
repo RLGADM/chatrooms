@@ -85,6 +85,23 @@ io.on('connection', (socket) => {
     return ack?.({ success: true, roomCode });
   });
 
+  // === 🔗 CHECK ROOM EXISTS ===
+  socket.on('checkRoomExists', (data, ack) => {
+    const { roomCode } = data;
+    
+    if (!roomCode) {
+      if (typeof ack === 'function') {
+        ack({ exists: false });
+      }
+      return;
+    }
+    
+    const room = rooms.get(roomCode);
+    if (typeof ack === 'function') {
+      ack({ exists: !!room });
+    }
+  });
+
   // === 🔗 JOIN ROOM ===
   socket.on('joinRoom', (data, ack) => {
     const { username, roomCode, userToken } = data;
