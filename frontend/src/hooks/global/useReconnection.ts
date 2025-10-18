@@ -20,17 +20,18 @@ export function useReconnection({ socket, isConnected, hasRejoinAttempted, handl
     const userToken = localStorage.getItem('userToken');
     const lastRoomCode = localStorage.getItem('lastRoomCode');
     const hasLeftRoom = localStorage.getItem('hasLeftRoom');
+    const lastUsernameRaw = localStorage.getItem('lastUsername');
+    const lastUsername = lastUsernameRaw ? JSON.parse(lastUsernameRaw) : '';
 
     if (!userToken || !lastRoomCode) return;
 
-    // Si l'utilisateur a quitté volontairement, ne pas tenter de rejoindre
     if (hasLeftRoom === 'true') {
       setInRoom(false);
       return;
     }
 
-    // Tenter de rejoindre la room avec un rôle spectateur
-    handleJoinRoom(socket, userToken, lastRoomCode).then((success) => {
+    // Passer le username, pas le token
+    handleJoinRoom(socket, lastUsername, lastRoomCode).then((success) => {
       if (success) {
         setInRoom(true);
         navigate(`/room/${lastRoomCode}`);

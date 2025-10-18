@@ -37,9 +37,21 @@ export function useRoomEvents() {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('roomCreated', (room: Room) => {
-      setCurrentRoom(room);
+    // Aligner avec le backend: usersUpdate
+    socket.on('usersUpdate', (users: User[]) => {
+      setRoomUsers(users);
     });
+
+    // Aligner avec le backend: newMessage
+    socket.on('newMessage', (message: Message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    return () => {
+      socket.off('usersUpdate');
+      socket.off('newMessage');
+    };
+  }, [socket]);
 
     socket.on('roomJoined', ({ user, room }: { user: User; room: Room }) => {
       setCurrentUser(user);
@@ -80,8 +92,11 @@ export function useRoomEvents() {
         if (response.success) {
           console.log('socket emit success');
           localStorage.setItem('lastRoomCode', roomCode);
-          localStorage.setItem('lastUsername', username);
+          localStorage.setItem('lastUsername', JSON.stringify(username));
           setInRoom(true);
+
+          // Assurer un roomCode pour la navigation, même sans event server
+          setCurrentRoom((prev) => ({ ...prev, code: roomCode }));
 
           //JoinTeamDefault
           socket.emit('joinTeam', {
@@ -91,13 +106,6 @@ export function useRoomEvents() {
           });
 
           console.log('1 :', roomCode, '2 :', username, '3 : ', inRoom);
-
-          // setCurrentUser({
-          //   id: socket.id as string,
-          //   username,
-          //   room: roomCode,
-          // });
-
           resolve(true);
         } else {
           setError(response.error);
@@ -126,9 +134,8 @@ export function useRoomEvents() {
         if (response.success && response.roomCode) {
           handleJoinRoom(socket, username, response.roomCode);
 
-          currentRoom.code = response.roomCode;
-          //console.log(currentRoom.code);
-          //console.log('getcode');
+          // Ne pas muter l'état directement
+          setCurrentRoom((prev) => ({ ...prev, code: response.roomCode }));
 
           //console.log('entré dans le success emit createRoom');
         } else {

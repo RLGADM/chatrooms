@@ -29,6 +29,13 @@ const allowedOrigins = [
   'https://kenshou.netlify.app',
   'https://kensho-hab0.onrender.com',
 ];
+
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+  },
+});
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
@@ -85,23 +92,6 @@ io.on('connection', (socket) => {
     return ack?.({ success: true, roomCode });
   });
 
-  // === 🔗 CHECK ROOM EXISTS ===
-  socket.on('checkRoomExists', (data, ack) => {
-    const { roomCode } = data;
-    
-    if (!roomCode) {
-      if (typeof ack === 'function') {
-        ack({ exists: false });
-      }
-      return;
-    }
-    
-    const room = rooms.get(roomCode);
-    if (typeof ack === 'function') {
-      ack({ exists: !!room });
-    }
-  });
-
   // === 🔗 JOIN ROOM ===
   socket.on('joinRoom', (data, ack) => {
     const { username, roomCode, userToken } = data;
@@ -135,7 +125,8 @@ io.on('connection', (socket) => {
         ack({ success: true });
       }
 
-      io.to(roomCode).emit('updateRoomUsers', getRoomUsers(roomCode));
+      // Aligner avec le front
+      io.to(roomCode).emit('usersUpdate', getRoomUsers(roomCode));
       return;
     }
 
@@ -164,7 +155,8 @@ io.on('connection', (socket) => {
       ack({ success: true });
     }
 
-    io.to(roomCode).emit('updateRoomUsers', getRoomUsers(roomCode));
+    // Aligner avec le front
+    io.to(roomCode).emit('usersUpdate', getRoomUsers(roomCode));
   });
 
   // === 🧩 JOIN TEAM ===
@@ -176,22 +168,22 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomCode);
     if (!room) return ack?.({ success: false, message: 'Room introuvable' });
 
-    // Rechercher l'utilisateur dans la room par userToken (≠ username !)
-    const user = room.users.find((u) => u.userToken === userToken);
+    // Rechercher l'utilisateur par id (= userToken)
+    const user = room.users.find((u) => u.id === userToken);
     if (!user) return ack?.({ success: false, message: 'Utilisateur non trouvé' });
 
-    // Empêcher de "changer d'équipe" si c'est la même
     if (user.team === team) {
       return ack?.({ success: false, message: 'Déjà dans cette équipe' });
     }
 
     user.team = team;
-    user.role = role;
+    // Rôle par défaut si non fourni: spectator pour spectateur, sinon disciple
+    user.role = user.role || (team === 'spectator' ? 'spectator' : 'disciple');
     user.socketId = socket.id;
-    user.username = username;
+    if (username) user.username = username;
 
-    // Broadcast MAJ
-    io.to(roomCode).emit('updateUsers', room.users);
+    // Broadcast MAJ (nom d’event unifié)
+    io.to(roomCode).emit('usersUpdate', room.users);
 
     return ack?.({ success: true, message: 'Équipe rejointe avec succès' });
   });
