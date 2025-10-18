@@ -1,0 +1,10 @@
+[build]
+  # Option A: utiliser 'base' pour construire depuis le dossier frontend
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+# Si vous préférez Option B (sans base), utilisez plutôt:
+# [build]
+#   command = "npm run build --workspace frontend"
+#   publish = "frontend/dist"
