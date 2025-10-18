@@ -59,20 +59,15 @@ export function useRoomEvents() {
     return new Promise((resolve) => {
       socket.emit('joinRoom', { username, roomCode, userToken }, (response: any) => {
         if (response.success) {
-          console.log('socket emit success');
-
-          // Persistance
           localStorage.setItem('lastRoomCode', roomCode);
-          localStorage.setItem('roomCode', roomCode); // pour hydratation future
+          localStorage.setItem('roomCode', roomCode); // pour hydratation
           localStorage.setItem('lastUsername', JSON.stringify(username));
 
           setInRoom(true);
           setCurrentRoom((prev) => ({ ...prev, code: roomCode }));
 
-          // Spectateur par défaut
           socket.emit('joinTeam', { roomCode, userToken, team: 'spectator' });
 
-          console.log('1 :', roomCode, '2 :', username, '3 : ', inRoom);
           resolve(true);
         } else {
           setError(response.error);
@@ -89,7 +84,6 @@ export function useRoomEvents() {
     gameMode: 'standard' | 'custom',
     parameters: GameParameters
   ) => {
-    console.log('entré dans handlecreateroom');
     if (!socket) return;
 
     socket.emit(
@@ -97,9 +91,7 @@ export function useRoomEvents() {
       { username, gameMode, parameters, userToken },
       (response: { success: boolean; roomCode?: string; error?: string }) => {
         if (response.success && response.roomCode) {
-          // Join immédiat
           handleJoinRoom(socket, username, response.roomCode);
-          // Préparer l’état pour la navigation
           setCurrentRoom((prev) => ({ ...prev, code: response.roomCode }));
         } else {
           setError(response.error || 'Erreur lors de la création de la salle.');

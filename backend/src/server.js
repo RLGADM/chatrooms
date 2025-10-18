@@ -23,6 +23,7 @@ server.listen(PORT, () => {
 });
 
 // --- CORS ---
+// Configuration Socket.IO CORS (évite blocages d’origines)
 const allowedOrigins = [
   'http://localhost:5173',
   'https://localhost:5173',
@@ -124,6 +125,7 @@ io.on('connection', (socket) => {
       if (typeof ack === 'function') {
         ack({ success: true });
       }
+
       // Aligner avec le front
       io.to(roomCode).emit('usersUpdate', getRoomUsers(roomCode));
       return;
@@ -163,23 +165,22 @@ io.on('connection', (socket) => {
     if (!socket?.connected) {
       return ack?.({ success: false, message: 'Socket non connecté' });
     }
-  
     const room = rooms.get(roomCode);
     if (!room) return ack?.({ success: false, message: 'Room introuvable' });
-  
+
     // Rechercher par id (= userToken)
     const user = room.users.find((u) => u.id === userToken);
     if (!user) return ack?.({ success: false, message: 'Utilisateur non trouvé' });
-  
+
     if (user.team === team) {
       return ack?.({ success: false, message: 'Déjà dans cette équipe' });
     }
-  
+
     user.team = team;
     user.role = user.role || (team === 'spectator' ? 'spectator' : 'disciple');
     user.socketId = socket.id;
     if (username) user.username = username;
-  
+
     io.to(roomCode).emit('usersUpdate', room.users);
     return ack?.({ success: true, message: 'Équipe rejointe avec succès' });
   });
