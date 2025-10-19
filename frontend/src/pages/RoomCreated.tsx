@@ -435,7 +435,7 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
     </div>
   </div>
 );
-const RoomCreated: React.FC = () => {
+function RoomCreated() {
   // intégration useParams et useState
   const { roomCode: routeRoomCode } = useParams();
   const [tempUsername, setTempUsername] = useState('');
@@ -649,6 +649,27 @@ const RoomCreated: React.FC = () => {
                   <span>Joueurs</span>
                 </button>
               )}
+
+              {/* Jouer / Pause — visible pour tous */}
+              <button
+                onClick={() => (isGameActive ? pauseGame() : startGame())}
+                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-full border border-white/30 text-sm font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105"
+                title={isGameActive ? 'Mettre en pause' : 'Démarrer la partie'}
+              >
+                {isGameActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                <span>{isGameActive ? 'Pause' : 'Jouer'}</span>
+              </button>
+
+              {/* Rejouer — visible pour tous */}
+              <button
+                onClick={handleResetGame}
+                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-full border border-white/30 text-sm font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105"
+                title="Rejouer (nouvelle partie)"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Rejouer</span>
+              </button>
+
               <button
                 onClick={handleLeaveRoom}
                 className="bg-red-500/80 backdrop-blur-sm hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105"
