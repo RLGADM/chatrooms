@@ -45,9 +45,9 @@ const Home: React.FC = () => {
 
   //navigate
   useEffect(() => {
-    console.log('1 ', inRoom, '2 ', roomCode);
+    console.log('1 ', inRoom, '2 ', roomCode, '3', localStorage.getItem('hasLeftRoom'));
     if (inRoom && roomCode) {
-      console.log('3 ', inRoom, '4 ', roomCode);
+      console.log('3 ', inRoom, '4 ', roomCode, '3', localStorage.getItem('hasLeftRoom'));
       navigate(`/room/${roomCode}`);
     }
   }, [inRoom, roomCode]);

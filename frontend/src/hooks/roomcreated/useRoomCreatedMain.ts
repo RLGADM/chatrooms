@@ -6,12 +6,26 @@ import { useRoomUtils } from './useRoomUtils';
 import { useRoomTeamActions } from './useRoomTeamActions';
 import { useRoomGameActions } from './useRoomGameActions';
 import { useNavigate } from 'react-router-dom';
+import { useSocketContext } from '@/components/SocketContext';
+import { User } from '@/types';
 
 // --------------- Hook principal pour RoomCreated
 export function useRoomCreatedMain() {
   // Hook principal de la room (depuis votre architecture globale)
-  const { socket, currentUser, currentRoom, handleSendMessage, leaveRoom, hasJoinedRoomRef, hasRejoinAttempted } =
-    useRoomEvents();
+  const {
+      socket: _unusedLocalSocket,
+      currentUser,
+      currentRoom,
+      handleSendMessage,
+      leaveRoom,
+      hasJoinedRoomRef,
+      hasRejoinAttempted,
+      setCurrentRoom,
+      handleJoinRoom,
+      inRoom,
+  } = useRoomEvents();
+  const navigate = useNavigate();
+  const { socket } = useSocketContext();
 
   // États UI
   const uiStates = useRoomUIStates();
@@ -19,10 +33,15 @@ export function useRoomCreatedMain() {
   // Utilitaires
   const utils = useRoomUtils();
 
-  // Actions d'équipes
-  const teamActions = useRoomTeamActions(socket, uiStates.setIsJoiningTeam, uiStates.setTeamJoinError);
+  // Actions d'équipes (branchées sur le socket global)
+  // Actions d'équipes: câble avec les setters UI depuis uiStates
+  const teamActions = useRoomTeamActions(
+    socket,
+    uiStates.setIsJoiningTeam,
+    uiStates.setTeamJoinError
+  );
 
-  // Actions de jeu
+  // Actions de jeu (branchées sur le socket global)
   const gameActions = useRoomGameActions(socket, handleSendMessage);
 
   // Effet pour auto-scroll des messages
@@ -40,6 +59,18 @@ export function useRoomCreatedMain() {
     }
   }, [currentUser?.team]);
 
+  // Écoute `usersUpdate` sur le socket global pour alimenter le compteur joueurs
+  useEffect(() => {
+      if (!socket) return;
+      const onUsersUpdate = (users: User[]) => {
+          setCurrentRoom((prev) => ({ ...prev, users }));
+      };
+      socket.on('usersUpdate', onUsersUpdate);
+      return () => {
+          socket.off('usersUpdate', onUsersUpdate);
+      };
+  }, [socket, setCurrentRoom]);
+
   // Permissions utilisateur
   const permissions = currentUser ? utils.checkPermissions(currentUser) : { isAdmin: false, canControlGame: false };
 
@@ -47,11 +78,16 @@ export function useRoomCreatedMain() {
   const enhancedActions = {
     ...gameActions,
     ...teamActions,
+    // Mettre les utilitaires AVANT pour éviter d'écraser la copie locale
+    ...utils,
 
-    // Action pour copier le lien avec gestion de l'état
+    // Action pour copier le lien avec gestion de l'état (sans argument)
     copyRoomLink: () => {
-      if (currentRoom?.code) {
-        utils.copyRoomLink(currentRoom.code, uiStates.setCopied);
+      const code = currentRoom?.code;
+      if (typeof code === 'string' && code) {
+        utils.copyRoomLink(code, uiStates.setCopied);
+      } else {
+        console.warn('Room code indisponible ou invalide pour la copie:', code);
       }
     },
 
@@ -67,7 +103,7 @@ export function useRoomCreatedMain() {
       hasRejoinAttempted.current = false;
       localStorage.setItem('hasLeftRoom', 'yes');
       localStorage.removeItem('lastRoomCode');
-      navigate('/'); // redirection immédiate vers l’accueil
+      navigate('/'); // redirection vers l’accueil
     },
 
     // Gérer reset avec fermeture de modal
@@ -75,22 +111,28 @@ export function useRoomCreatedMain() {
       gameActions.resetGame();
       uiStates.setShowResetModal(false);
     },
-  };
 
-  return {
-    // Données de base
+    // Données de base (expose le socket global)
     socket,
     currentUser,
     currentRoom,
+    inRoom,
     permissions,
 
-    // États UI
+    // Expose pour le modal pseudo
+    handleJoinRoom,
+
+    // États UI (inclut isJoiningTeam, teamJoinError, etc.)
     ...uiStates,
-
-    // Utilitaires
-    ...utils,
-
-    // Actions
-    ...enhancedActions,
   };
+
+  // Hydrater le code de la room depuis le localStorage pour cette instance
+  useEffect(() => {
+    const storedRoomCode = localStorage.getItem('roomCode') || localStorage.getItem('lastRoomCode');
+    if (storedRoomCode && !currentRoom.code) {
+      setCurrentRoom((prev) => ({ ...prev, code: storedRoomCode }));
+    }
+  }, [currentRoom.code, setCurrentRoom]);
+
+  return enhancedActions;
 }

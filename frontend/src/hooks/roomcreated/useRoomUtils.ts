@@ -20,30 +20,45 @@ export function useRoomUtils() {
 
   // Copier le lien de la room
   const copyRoomLink = async (roomCode: string, setCopied: (value: boolean) => void) => {
+    const roomUrl = `${window.location.origin}/room/${roomCode}`;
+
+    const fallbackCopy = () => {
+      const textarea = document.createElement('textarea');
+      textarea.value = roomUrl;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    };
+
     try {
-      const roomUrl = `${window.location.origin}/room/${roomCode}`;
       if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
         await navigator.clipboard.writeText(roomUrl);
       } else {
-        const textarea = document.createElement('textarea');
-        textarea.value = roomUrl;
-        textarea.style.position = 'fixed';
-        textarea.style.left = '-9999px';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
+        fallbackCopy();
       }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Erreur lors de la copie:', error);
+      console.warn('Clipboard API a échoué, fallback utilisé:', error);
+      try {
+        fallbackCopy();
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (fallbackError) {
+        console.error('Erreur lors de la copie (fallback):', fallbackError);
+      }
     }
   };
 
   // Obtenir les données pour le rendu d'une carte utilisateur
   const getUserCardData = (user: User, currentUserToken: string) => {
-    const isCurrentUser = user.userToken === currentUserToken;
+    // Le serveur utilise `id`, le front `userToken` → fallback
+    const token = (user as any).userToken ?? (user as any).id;
+    const isCurrentUser = token === currentUserToken;
+
     const team = user.team || 'spectator';
     const role = user.role || 'spectator';
 

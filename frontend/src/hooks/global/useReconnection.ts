@@ -1,5 +1,6 @@
 import { useEffect, MutableRefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 type Params = {
   socket: any;
@@ -18,24 +19,37 @@ export function useReconnection({ socket, isConnected, hasRejoinAttempted, handl
     hasRejoinAttempted.current = true;
 
     const userToken = localStorage.getItem('userToken');
-    const lastRoomCode = localStorage.getItem('lastRoomCode');
     const hasLeftRoom = localStorage.getItem('hasLeftRoom');
-    const lastUsernameRaw = localStorage.getItem('lastUsername');
-    const lastUsername = lastUsernameRaw ? JSON.parse(lastUsernameRaw) : '';
 
-    if (!userToken || !lastRoomCode) return;
+    // Fallback sur roomCode si lastRoomCode absent
+    const roomCode = localStorage.getItem('lastRoomCode') || localStorage.getItem('roomCode');
+
+    // Fallback sur username si lastUsername absent
+    const lastUsernameRaw = localStorage.getItem('lastUsername');
+    const usernameStored = localStorage.getItem('username');
+    const username = lastUsernameRaw ? JSON.parse(lastUsernameRaw) : (usernameStored || '');
+
+    // Prérequis stricts
+    if (!userToken || !roomCode || !username) {
+      setInRoom(false);
+      return;
+    }
     if (hasLeftRoom === 'true' || hasLeftRoom === 'yes') {
       setInRoom(false);
       return;
     }
 
-    // Utiliser le username, pas le token
-    handleJoinRoom(socket, lastUsername, lastRoomCode).then((success) => {
+    // Tentative de reconnexion
+    handleJoinRoom(socket, username, roomCode).then((success) => {
       if (success) {
         setInRoom(true);
-        navigate(`/room/${lastRoomCode}`);
+        navigate(`/room/${roomCode}`);
       } else {
+        // Échec: informer et nettoyer le localStorage
         setInRoom(false);
+        localStorage.removeItem('roomCode');
+        localStorage.removeItem('lastRoomCode');
+        toast.error(`Le salon ${roomCode} n'existe plus ou a été supprimé.`);
       }
     });
   }, [isConnected]);

@@ -1,15 +1,15 @@
 // import framework
 import { useEffect, useState, useRef } from 'react';
-import type { Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 // import ts et hooks
 import { useSocket } from './useSocket';
-import { GameParameters, Message, Room, User, GameState, emptyRoom, emptyUser } from '@/types';
+import { GameParameters, Message, Room, User, emptyRoom, emptyUser } from '@/types';
 import { useUserToken } from './useUserToken';
 
 export function useRoomEvents() {
+  // Déclaration ts hooks
   const userToken = useUserToken();
   const { socket, isConnected: socketIsConnected } = useSocket();
-
   const [currentUser, setCurrentUser] = useState<User>(emptyUser);
   const [currentRoom, setCurrentRoom] = useState<Room>(emptyRoom);
   const [roomUsers, setRoomUsers] = useState<User[]>([]);
@@ -21,6 +21,20 @@ export function useRoomEvents() {
   const hasJoinedRoomRef = useRef<boolean>(false);
   const hasRejoinAttempted = useRef<boolean>(false);
 
+  // Écoute des événements de room
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('roomCreated', (room: Room) => {
+      setCurrentRoom(room);
+      setInRoom(true);
+    });
+
+    return () => {
+      socket.off('roomCreated');
+    };
+  }, [socket]);
+
   // Hydrater le code de la room depuis le localStorage au montage
   useEffect(() => {
     const storedRoomCode = localStorage.getItem('roomCode') || localStorage.getItem('lastRoomCode');
@@ -29,76 +43,27 @@ export function useRoomEvents() {
     }
   }, []);
 
-  // Événements principaux de room
-  useEffect(() => {
-    if (!socket) return;
-
-    const onRoomCreated = (room: Room) => {
-      setCurrentRoom(room);
-      setRoomUsers(room.users || []);
-      setInRoom(true);
-      localStorage.setItem('roomCode', room.code);
-      localStorage.setItem('lastRoomCode', room.code);
-      localStorage.setItem('hasLeftRoom', 'false');
-    };
-
-    const onRoomJoined = (room: Room) => {
-      setCurrentRoom(room);
-      setRoomUsers(room.users || []);
-      setInRoom(true);
-      localStorage.setItem('roomCode', room.code);
-      localStorage.setItem('lastRoomCode', room.code);
-      localStorage.setItem('hasLeftRoom', 'false');
-
-      // Synchronise currentUser à partir de la liste d'utilisateurs
-      const token = userToken || localStorage.getItem('userToken') || '';
-      const self = (room.users || []).find((u: any) => ((u as any).userToken ?? (u as any).id) === token);
-      if (self) {
-        setCurrentUser((prev) => ({
-          ...prev,
-          ...self,
-          userToken: (self as any).userToken ?? (self as any).id,
-        }));
-      }
-    };
-
-    const onRoomNotFound = () => {
-      setError('Salon introuvable');
-      setInRoom(false);
-    };
-
-    const onUsernameTaken = () => {
-      setError('Nom d’utilisateur déjà pris');
-    };
-
-    socket.on('roomCreated', onRoomCreated);
-    socket.on('roomJoined', onRoomJoined);
-    socket.on('roomNotFound', onRoomNotFound);
-    socket.on('usernameTaken', onUsernameTaken);
-
-    return () => {
-      socket.off('roomCreated', onRoomCreated);
-      socket.off('roomJoined', onRoomJoined);
-      socket.off('roomNotFound', onRoomNotFound);
-      socket.off('usernameTaken', onUsernameTaken);
-    };
-  }, [socket, userToken]);
-
-  // Autres listeners socket (users/messages/game)
+  // Autres listeners socket (users/messages)
   useEffect(() => {
     if (!socket) return;
 
     const onUsersUpdate = (users: User[]) => {
+      // hydrate la liste des utilisateurs
       setRoomUsers(users);
+
+      // met à jour currentRoom.users pour le compteur
       setCurrentRoom((prev) => ({ ...prev, users }));
 
-      // Synchronise currentUser avec la source serveur
+      // synchronise currentUser avec la source serveur (token: userToken côté front, id côté serveur)
       const storedToken = userToken || localStorage.getItem('userToken') || '';
-      const self = users.find((u: any) => ((u as any).userToken ?? (u as any).id) === storedToken);
+      const self = users.find(
+        (u: any) => ((u as any).userToken ?? (u as any).id) === storedToken
+      );
       if (self) {
         setCurrentUser((prev) => ({
           ...prev,
           ...self,
+          // Normalise : toujours avoir userToken côté front
           userToken: (self as any).userToken ?? (self as any).id,
         }));
       }
@@ -108,48 +73,50 @@ export function useRoomEvents() {
       setMessages((prev) => [...prev, message]);
     };
 
-    const onGameStateUpdate = (gameState: GameState) => {
-      setCurrentRoom((prev) => ({ ...prev, gameState }));
-    };
-
-    const onTeamJoinSuccess = (data: { team: string; role: string; gameState: GameState }) => {
-      setCurrentRoom((prev) => ({ ...prev, gameState: data.gameState }));
-      setCurrentUser((prev) => ({ ...prev, team: data.team as any, role: data.role as any }));
-    };
-
-    const onTeamJoinError = (err: string) => {
-      setError(err || "Erreur lors de la jonction de l'équipe");
-    };
-
     socket.on('usersUpdate', onUsersUpdate);
     socket.on('newMessage', onNewMessage);
-    socket.on('gameStateUpdate', onGameStateUpdate);
-    socket.on('teamJoinSuccess', onTeamJoinSuccess);
-    socket.on('teamJoinError', onTeamJoinError);
 
     return () => {
       socket.off('usersUpdate', onUsersUpdate);
       socket.off('newMessage', onNewMessage);
-      socket.off('gameStateUpdate', onGameStateUpdate);
-      socket.off('teamJoinSuccess', onTeamJoinSuccess);
-      socket.off('teamJoinError', onTeamJoinError);
     };
   }, [socket, userToken]);
 
-  // Actions
+    setCurrentRoom((prev) => ({ ...prev, users }));
+
+      // Hydrate currentUser depuis la liste renvoyée par le serveur
+      const myToken = localStorage.getItem('userToken');
+      const self = users.find((u: any) => u?.id === myToken || u?.userToken === myToken);
+      if (self) {
+        setCurrentUser((prev) => ({
+          ...prev,
+          ...self,
+          // Normalise : toujours avoir userToken côté front
+          userToken: self.userToken ?? self.id,
+        }));
+      }
+    });
+
+    socket.on('newMessage', (message: Message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    return () => {
+      socket.off('usersUpdate');
+      socket.off('newMessage');
+    };
+  }, [socket]);
+
   const handleJoinRoom = async (socket: Socket, username: string, roomCode: string): Promise<boolean> => {
     if (!socket?.connected) return false;
-    if (!username?.trim() || !roomCode?.trim()) return false;
+    if (!userToken) return false;
 
     return new Promise((resolve) => {
-      socket.emit('joinRoom', { username, roomCode, userToken }, (response: { success: boolean; error?: string }) => {
-        if (response?.success) {
-          // Persistance minimale + état
+      socket.emit('joinRoom', { username, roomCode, userToken }, (response: any) => {
+        if (response.success) {
           localStorage.setItem('lastRoomCode', roomCode);
           localStorage.setItem('roomCode', roomCode);
           localStorage.setItem('lastUsername', JSON.stringify(username));
-          localStorage.setItem('hasLeftRoom', 'false');
-
           setInRoom(true);
           setCurrentRoom((prev) => ({ ...prev, code: roomCode }));
 
@@ -161,14 +128,14 @@ export function useRoomEvents() {
             room: roomCode,
             team: 'spectator',
             role: 'spectator',
-            socketId: socket.id ?? prev.socketId ?? '', // garantir string
+            socketId: socket.id,
           }));
 
           // Aligner côté serveur (avec role explicite)
           socket.emit('joinTeam', { roomCode, userToken, team: 'spectator', role: 'spectator' });
           resolve(true);
         } else {
-          setError(response?.error || 'Échec de la jonction à la salle.');
+          setError(response.error);
           localStorage.removeItem('lastRoomCode');
           resolve(false);
         }
@@ -188,16 +155,25 @@ export function useRoomEvents() {
       'createRoom',
       { username, gameMode, parameters, userToken },
       (response: { success: boolean; roomCode?: string; error?: string }) => {
-        if (response?.success && response.roomCode) {
-          // Chaîne la jonction + hydrate code
+        if (response.success && response.roomCode) {
           handleJoinRoom(socket, username, response.roomCode);
-          setCurrentRoom((prev) => ({ ...prev, code: response.roomCode ?? prev.code }));
+          setCurrentRoom((prev) => ({ ...prev, code: response.roomCode }));
         } else {
-          setError(response?.error || 'Erreur lors de la création de la salle.');
+          setError(response.error || 'Erreur lors de la création de la salle.');
         }
       }
     );
   };
+
+  //TODO le déplacer dans le hook du game
+  // const handleLeaveRoom = () => {
+  //   if (!socket || !currentRoom) return;
+
+  //   socket.emit('leaveRoom', currentRoom.code);
+  //   setRoomUsers([]);
+  //   setMessages([]);
+  //   setError(null);
+  // };
 
   const handleSendMessage = (message: string) => {
     if (!socket || !message?.trim()) return;
@@ -227,6 +203,7 @@ export function useRoomEvents() {
   };
 
   return {
+    // Retourner le socket du hook central
     socket,
     currentUser,
     currentRoom,

@@ -117,8 +117,10 @@ const App: React.FC = () => {
           {/* <Route path="/demo" element={<DemoMode />} /> */}
         </Routes>
       </SocketContext.Provider>
+
+      {/* Déplace l'image À L'INTÉRIEUR du fragment */}
+      <img src={logoUrl} alt="Kenshou" className="h-8 w-auto" />
     </>
-    <img src={logoUrl} alt="Kenshou" className="h-8 w-auto" />
   );
 };
 export default App;

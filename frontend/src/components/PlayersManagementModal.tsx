@@ -106,17 +106,17 @@ const PlayersManagementModal: React.FC<PlayersManagementModalProps> = ({
           )}
           
           <div className="space-y-4">
-            {usersWithAdminRole.map((user) => {// Check if the user is the current user
-              const isCurrentUser = user.id === currentUser.id;
-              // Un admin peut modifier tous les utilisateurs sauf lui-même
-              // Mais il peut se promouvoir d'autres utilisateurs en Admin
+            {usersWithAdminRole.map((user) => {
+              const userId = (user as any).userToken ?? (user as any).id;
+              const currentUserId = (currentUser as any).userToken ?? (currentUser as any).id;
+              const isCurrentUser = userId === currentUserId;
               const canModify = isAdmin && !isCurrentUser;
-              const canChangeRole = isAdmin; // Admin peut changer tous les rôles
+              const canChangeRole = isAdmin;
               
               console.log(`User ${user.username}: canModify=${canModify}, canChangeRole=${canChangeRole}, isCurrentUser=${isCurrentUser}`);
               
               return (
-                <div key={user.id} className={`rounded-xl p-4 border-2 transition-all duration-300 ${
+                <div key={userId} className={`rounded-xl p-4 border-2 transition-all durée-300 ${
                   isCurrentUser ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'
                 }`}>
                   <div className="flex items-center justify-between">
@@ -138,16 +138,14 @@ const PlayersManagementModal: React.FC<PlayersManagementModalProps> = ({
                     
                     {canChangeRole && (
                       <div className="flex items-center space-x-3">
-                        {/* Role Selector */}
                         {isCurrentUser ? (
-                          // L'utilisateur actuel ne peut pas changer son propre rôle
                           <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-500">
                             {user.roomRole || 'Débutant'} (Vous)
                           </div>
                         ) : (
                           <select
                             value={user.roomRole || 'Débutant'}
-                            onChange={(e) => handleRoleChange(user.id, e.target.value as RoomRole)}
+                            onChange={(e) => handleRoleChange(userId, e.target.value as RoomRole)}
                             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                           >
                             <option value="Débutant">Débutant</option>
@@ -156,19 +154,18 @@ const PlayersManagementModal: React.FC<PlayersManagementModalProps> = ({
                           </select>
                         )}
                         
-                        {/* Action Buttons */}
                         {!isCurrentUser && (
                           <>
                             <button
-                              onClick={() => setSelectedAction({ userId: user.id, action: 'kick' })}
+                              onClick={() => setSelectedAction({ userId, action: 'kick' })}
                               className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg transition-all duration-300 hover:scale-105"
                               title="Expulser"
                             >
                               <UserX className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => setSelectedAction({ userId: user.id, action: 'ban' })}
-                              className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-all duration-300 hover:scale-105"
+                              onClick={() => setSelectedAction({ userId, action: 'ban' })}
+                              className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-all durée-300 hover:scale-105"
                               title="Bannir"
                             >
                               <Ban className="w-4 h-4" />

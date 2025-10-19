@@ -144,7 +144,17 @@ export interface ClientToServerEvents {
   joinRoom: (username: string, roomCode: string) => void;
   sendMessage: (message: string) => void;
   disconnect: () => void;
-  joinTeam: (team: string, role: string) => void;
+  // Mise à jour: supporte payload + ack
+  joinTeam: (
+    payload: {
+      roomCode: string;
+      userToken: string;
+      username?: string;
+      team: 'red' | 'blue' | 'spectator';
+      role: 'sage' | 'disciple' | 'spectator';
+    },
+    ack?: (resp: { success: boolean; message?: string }) => void
+  ) => void;
   submitProposal: (proposal: string) => void;
   startGame: () => void;
   pauseGame: () => void;

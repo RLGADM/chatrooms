@@ -52,14 +52,18 @@ rooms.clear();
 users.clear();
 console.log('[SERVER] Maps rooms et users vidées au démarrage');
 
-const io = new Server(server, {
-  cors: {
-    origin: 'https://localhost:5173',
-    credentials: true,
-  },
-});
+// Ajout: Map des timers de suppression des rooms vides
+const roomDeletionTimers = new Map();
 
-// emit du serverReset pour clear les données frontend.
+// SUPPRIMÉ: seconde déclaration de `io` ici
+// const io = new Server(server, {
+//   cors: {
+//     origin: 'https://localhost:5173',
+//     credentials: true,
+//   },
+// });
+
+// Réutiliser l’instance `io` existante
 io.emit('serverReset', 'Serveur redémarré');
 
 io.on('connection', (socket) => {
@@ -90,6 +94,22 @@ io.on('connection', (socket) => {
 
     console.log(`[SERVER] Room ${roomCode} créée avec le mode ${gameMode}`);
 
+    // Si la room reste vide, suppression dans 5 minutes
+    const existingTimer = roomDeletionTimers.get(roomCode);
+    if (!existingTimer && room.users.length === 0) {
+      const timer = setTimeout(() => {
+        const r = rooms.get(roomCode);
+        if (r && r.users.length === 0) {
+          rooms.delete(roomCode);
+          gameStates.delete(roomCode);
+          console.log(`🗑️ Salle ${roomCode} supprimée après 5 min sans joueurs`);
+        }
+        roomDeletionTimers.delete(roomCode);
+      }, 5 * 60 * 1000);
+      roomDeletionTimers.set(roomCode, timer);
+      console.log(`[⏳] Salle ${roomCode} créée vide, suppression programmée dans 5 minutes`);
+    }
+
     return ack?.({ success: true, roomCode });
   });
 
@@ -119,14 +139,42 @@ io.on('connection', (socket) => {
       existingUser.socketId = socket.id;
       users.set(socket.id, existingUser);
       socket.join(roomCode);
-
-      console.log(`[REJOINT EXISTANT] ${username} avec token déjà présent`);
-
+  
+      // Annuler suppression si programmée
+      const pendingTimer = roomDeletionTimers.get(roomCode);
+      if (pendingTimer) {
+        clearTimeout(pendingTimer);
+        roomDeletionTimers.delete(roomCode);
+        console.log(`[🛑] Suppression de la salle ${roomCode} annulée: un utilisateur existant a rejoint.`);
+      }
+  
+      // Reset à spectateur par défaut lors du retour sur le salon
+      existingUser.team = 'spectator';
+      existingUser.role = 'spectator';
+      if (room.gameState) {
+        const gs = room.gameState;
+        gs.spectators = gs.spectators.filter((u) => u?.id !== existingUser.id);
+        gs.teams.red.disciples = gs.teams.red.disciples.filter((u) => u?.id !== existingUser.id);
+        gs.teams.blue.disciples = gs.teams.blue.disciples.filter((u) => u?.id !== existingUser.id);
+        if (gs.teams.red.sage?.id === existingUser.id) gs.teams.red.sage = null;
+        if (gs.teams.blue.sage?.id === existingUser.id) gs.teams.blue.sage = null;
+  
+        gs.spectators.push({
+          id: existingUser.id,
+          username: existingUser.username,
+          room: roomCode,
+          team: 'spectator',
+          role: 'spectator',
+        });
+      }
+  
+      console.log(`[REJOINT EXISTANT] ${username} replacé en spectator`);
+  
       if (typeof ack === 'function') {
         ack({ success: true });
       }
-
-      // Aligner avec le front
+  
+      io.to(roomCode).emit('gameStateUpdate', room.gameState);
       io.to(roomCode).emit('usersUpdate', getRoomUsers(roomCode));
       return;
     }
@@ -149,6 +197,14 @@ io.on('connection', (socket) => {
     users.set(socket.id, newUser);
     socket.join(roomCode);
 
+    // Annuler suppression si programmée
+    const pendingTimer = roomDeletionTimers.get(roomCode);
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      roomDeletionTimers.delete(roomCode);
+      console.log(`[🛑] Suppression de la salle ${roomCode} annulée: un nouveau joueur a rejoint.`);
+    }
+
     console.log(`[JOIN ROOM] ${username} rejoint ${roomCode} en tant que ${newUser.roomRole}`);
 
     if (typeof ack === 'function') {
@@ -161,28 +217,102 @@ io.on('connection', (socket) => {
   });
 
   // === 🧩 JOIN TEAM ===
-  socket.on('joinTeam', async ({ roomCode, userToken, username, team }, ack) => {
+  socket.on('joinTeam', (firstArg, maybeAck) => {
+    // Normalise payload et ack
+    const ack = typeof maybeAck === 'function' ? maybeAck : undefined;
+
+    let roomCode, userToken, username, team, role;
+
+    // Nouveau format: objet
+    if (typeof firstArg === 'object' && firstArg !== null) {
+      ({ roomCode, userToken, username, team, role } = firstArg);
+    } else {
+      // Ancien format: (team, role)
+      team = firstArg;
+      if (typeof maybeAck === 'string') {
+        role = maybeAck;
+      }
+      const existingUser = users.get(socket.id);
+      if (existingUser) {
+        roomCode = existingUser.room;
+        userToken = existingUser.id;
+        username = existingUser.username;
+      }
+    }
+
     if (!socket?.connected) {
-      return ack?.({ success: false, message: 'Socket non connecté' });
+      if (ack) ack({ success: false, message: 'Socket non connecté' });
+      return;
     }
+
     const room = rooms.get(roomCode);
-    if (!room) return ack?.({ success: false, message: 'Room introuvable' });
-
-    // Rechercher par id (= userToken)
-    const user = room.users.find((u) => u.id === userToken);
-    if (!user) return ack?.({ success: false, message: 'Utilisateur non trouvé' });
-
-    if (user.team === team) {
-      return ack?.({ success: false, message: 'Déjà dans cette équipe' });
+    if (!room) {
+      if (ack) ack({ success: false, message: 'Room introuvable' });
+      return;
     }
 
+    // Rechercher l’utilisateur par token, sinon fallback socket.id
+    let user = room.users.find((u) => u.id === userToken);
+    if (!user) {
+      user = users.get(socket.id);
+      if (!user) {
+        if (ack) ack({ success: false, message: 'Utilisateur non trouvé' });
+        return;
+      }
+    }
+
+    // Déterminer le rôle souhaité (disciple par défaut en équipe; spectateur sinon)
+    const desiredRole = role || (team === 'spectator' ? 'spectator' : 'disciple');
+
+    // Règle: un seul Sage par équipe, mais disciples illimités
+    if (desiredRole === 'sage') {
+      const existingSage = room.users.find(
+        (u) => u.team === team && u.role === 'sage' && u.id !== user.id
+      );
+      if (existingSage) {
+        if (ack) ack({ success: false, message: 'Il y a déjà un Sage dans cette équipe !' });
+        return;
+      }
+    }
+
+    // Initialiser le gameState si manquant
+    if (!room.gameState) {
+      room.gameState = initializeGameState();
+    }
+
+    // Nettoyer la position précédente dans le gameState
+    const gs = room.gameState;
+    const token = user.id;
+    gs.spectators = gs.spectators.filter((u) => u?.id !== token);
+    gs.teams.red.disciples = gs.teams.red.disciples.filter((u) => u?.id !== token);
+    gs.teams.blue.disciples = gs.teams.blue.disciples.filter((u) => u?.id !== token);
+    if (gs.teams.red.sage?.id === token) gs.teams.red.sage = null;
+    if (gs.teams.blue.sage?.id === token) gs.teams.blue.sage = null;
+
+    // Appliquer l’équipe/rôle
     user.team = team;
-    user.role = user.role || (team === 'spectator' ? 'spectator' : 'disciple');
+    user.role = desiredRole;
     user.socketId = socket.id;
     if (username) user.username = username;
 
+    // Reporter dans le gameState
+    const entry = { id: token, username: user.username, room: roomCode, team, role: user.role };
+    if (team === 'spectator') {
+      gs.spectators.push(entry);
+    } else if (user.role === 'sage') {
+      gs.teams[team].sage = entry;
+    } else {
+      gs.teams[team].disciples.push(entry);
+    }
+
+    // Mettre à jour la map globale des users (clé: socket.id)
+    users.set(socket.id, user);
+
+    // Sync front
+    io.to(roomCode).emit('gameStateUpdate', room.gameState);
     io.to(roomCode).emit('usersUpdate', room.users);
-    return ack?.({ success: true, message: 'Équipe rejointe avec succès' });
+
+    if (ack) ack({ success: true, message: 'Équipe rejointe avec succès' });
   });
 
   // === ▶️ START GAME ===
@@ -242,9 +372,26 @@ io.on('connection', (socket) => {
       socket.to(user.room).emit('userLeft', socket.id);
       io.to(user.room).emit('gameStateUpdate', room.gameState);
       io.to(user.room).emit('usersUpdate', room.users);
+
       if (room.users.length === 0) {
-        rooms.delete(user.room);
-        console.log(`🗑️ Salle ${user.room} supprimée car vide`);
+        // Suppression différée si la room est vide
+        const existingTimer = roomDeletionTimers.get(user.room);
+        if (!existingTimer) {
+          const timer = setTimeout(() => {
+            const r = rooms.get(user.room);
+            if (r && r.users.length === 0) {
+              rooms.delete(user.room);
+              gameStates.delete(user.room);
+              console.log(`🗑️ Salle ${user.room} supprimée après 5 min d'inactivité`);
+            } else {
+              console.log(`[ℹ️] Salle ${user.room} non supprimée: des utilisateurs ont rejoint entre-temps`);
+            }
+            roomDeletionTimers.delete(user.room);
+          }, 5 * 60 * 1000); // 5 minutes
+
+          roomDeletionTimers.set(user.room, timer);
+          console.log(`[⏳] Salle ${user.room} vide, suppression programmée dans 5 minutes`);
+        }
       }
     }
   });
