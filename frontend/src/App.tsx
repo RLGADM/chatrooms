@@ -111,15 +111,10 @@ const App: React.FC = () => {
         {/* rootage */}
         <Routes>
           <Route path="/" element={<Home />} />
-
           <Route path="/room/:roomCode" element={<RoomCreated />} />
-
           {/* <Route path="/demo" element={<DemoMode />} /> */}
         </Routes>
       </SocketContext.Provider>
-
-      {/* Déplace l'image À L'INTÉRIEUR du fragment */}
-      <img src={logoUrl} alt="Kenshou" className="h-8 w-auto" />
     </>
   );
 };

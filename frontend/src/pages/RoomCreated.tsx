@@ -26,6 +26,7 @@ import { useRoomCreatedMain } from '../hooks/roomcreated';
 import type { User } from '@/types';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import logo from '@/assets/logo.png'; // Ajout: import du logo
 
 // Déclaration const columns
 interface LeftColumnProps {
@@ -158,9 +159,7 @@ const RightColumn: React.FC<RightColumnProps> = ({
           onClick={joinSpectator}
           disabled={
             isJoiningTeam ||
-            spectators.some(
-              (u: any) => (u.userToken ?? u.id) === (currentUser.userToken ?? (currentUser as any).id)
-            )
+            spectators.some((u: any) => (u.userToken ?? u.id) === (currentUser.userToken ?? (currentUser as any).id))
           }
           className="bg-gray-500/20 hover:bg-gray-500/40 text-gray-200 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border border-gray-300/30 hover:border-gray-300/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -222,6 +221,19 @@ const CenterColumn: React.FC<CenterColumnProps> = ({
                   : '0%',
               }}
             ></div>
+          </div>
+        </div>
+        {/* Ligne score Rouge vs Bleu */}
+        <div className="mt-3">
+          <div className="h-px bg-white/20 mb-3"></div>
+          <div className="flex items-center justify-center space-x-4">
+            <span className="text-red-300 font-semibold">
+              Rouge: {currentRoom?.gameState?.teams?.red?.score ?? 0}
+            </span>
+            <span className="text-white/40">|</span>
+            <span className="text-blue-300 font-semibold">
+              Bleu: {currentRoom?.gameState?.teams?.blue?.score ?? 0}
+            </span>
           </div>
         </div>
       </div>
@@ -381,7 +393,11 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
           )}
         </div>
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          {redSage ? renderUserCard(redSage) : <div className="text-center text-white/60 text-sm py-4">Aucun Sage assigné</div>}
+          {redSage ? (
+            renderUserCard(redSage)
+          ) : (
+            <div className="text-center text-white/60 text-sm py-4">Aucun Sage assigné</div>
+          )}
         </div>
       </div>
 
@@ -410,7 +426,9 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
           ) : (
             redTeam
               .filter((u) => u.role === 'disciple')
-              .map((disciple) => <div key={(disciple as any).userToken ?? (disciple as any).id}>{renderUserCard(disciple)}</div>)
+              .map((disciple) => (
+                <div key={(disciple as any).userToken ?? (disciple as any).id}>{renderUserCard(disciple)}</div>
+              ))
           )}
         </div>
       </div>
@@ -433,7 +451,7 @@ const RoomCreated: React.FC = () => {
     // États UI
     proposal,
     copied,
-    showPlayersModal,
+    showPlayersModal, // ← requis
     showResetModal,
     teamJoinError,
     isJoiningTeam,
@@ -442,7 +460,7 @@ const RoomCreated: React.FC = () => {
 
     // Setters
     setProposal,
-    setShowPlayersModal,
+    setShowPlayersModal, // ← requis (corriger toute typo "setShowPlayersLModal")
     setShowResetModal,
 
     // Utilitaires
@@ -570,31 +588,29 @@ const RoomCreated: React.FC = () => {
 
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2V6h4V4h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] animate-pulse opacity-5 pointer-events-none"></div>
-
-      {/* Error Toast */}
-      {teamJoinError && (
-        <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg">
-          {teamJoinError}
-        </div>
-      )}
-
       {/* Header */}
       <header className="relative z-10 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             {/* Left Side - Game Title and Room Info */}
             <div className="flex items-center space-x-4">
+              {/* Logo + Titre */}
+              <div className="w-10 h-10 flex items-center justify-center">
+                <img src={logo} alt="Kensho Logo" className="w-full h-full object-contain rounded-2xl" />
+              </div>
               <h1
                 className="text-white text-3xl font-black tracking-wider"
                 style={{ fontFamily: 'Montserrat, sans-serif' }}
               >
                 KENSHO
               </h1>
+              {/* Salon info */}
               <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
                 <span className="text-white text-sm font-semibold">
                   Salon : <span className="text-yellow-300 font-bold">{currentRoom.code}</span>
                 </span>
               </div>
+              {/* Copier l'URL */}
               <button
                 onClick={copyRoomLink}
                 disabled={!currentRoom.code}
@@ -603,14 +619,16 @@ const RoomCreated: React.FC = () => {
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 <span>{copied ? 'Copié !' : "Copier l'URL"}</span>
               </button>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
-                <span className="text-white text-sm font-semibold">
-                  <Users className="w-4 h-4 inline mr-1" />
-                  {currentRoom.users.length} joueurs
-                </span>
-              </div>
+              {/* Compteur joueurs → cliquable pour ouvrir le modal */}
+              <button
+                onClick={() => setShowPlayersModal(true)}
+                className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30 text-white text-sm font-semibold transition-all duration-300 hover:bg-white/30 hover:scale-105 flex items-center space-x-2"
+                title="Voir la liste des joueurs connectés"
+              >
+                <Users className="w-4 h-4" />
+                <span>{currentRoom.users.length} joueurs</span> {/* ← currentRoom utilisé ici */}
+              </button>
             </div>
-
             {/* Right Side - Actions */}
             <div className="flex items-center space-x-4">
               {permissions.canControlGame && (
@@ -683,6 +701,63 @@ const RoomCreated: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Modal: liste des joueurs */}
+      {showPlayersModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-800 rounded-xl p-6 border border-white/20 max-w-lg w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-white text-xl font-bold">Joueurs connectés</h2>
+              <button
+                onClick={() => setShowPlayersModal(false)}
+                className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full border border-white/30 transition-all duration-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+              {currentRoom?.users?.length ? (
+                currentRoom.users.map((u) => {
+                  const token = (u as any).userToken ?? (u as any).id;
+                  const isCreator = currentRoom?.creatorToken && token === currentRoom.creatorToken;
+                  const teamLabel =
+                    (u.team === 'red' && 'Équipe Rouge') || (u.team === 'blue' && 'Équipe Bleue') || 'Spectateur';
+                  const roleLabel = u.role || 'spectator';
+
+                  return (
+                    <div
+                      key={token}
+                      className="flex items-center justify-between bg-white/10 border border-white/20 rounded-lg p-3"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                          {u.username?.[0]?.toUpperCase() || '?'}
+                        </div>
+                        <div className="text-white">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold">{u.username || 'Utilisateur'}</span>
+                            {isCreator && (
+                              <span className="inline-flex items-center text-yellow-300 text-xs font-bold">
+                                <Crown className="w-3 h-3 mr-1" /> Créateur
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-white/70">
+                            {teamLabel} • {roleLabel}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-white/70 text-sm">Aucun joueur pour le moment.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reset Modal */}
       {showResetModal && (
