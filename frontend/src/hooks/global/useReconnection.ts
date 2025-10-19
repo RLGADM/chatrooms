@@ -24,7 +24,7 @@ export function useReconnection({ socket, isConnected, hasRejoinAttempted, handl
     const lastUsername = lastUsernameRaw ? JSON.parse(lastUsernameRaw) : '';
 
     if (!userToken || !lastRoomCode) return;
-    if (hasLeftRoom === 'true') {
+    if (hasLeftRoom === 'true' || hasLeftRoom === 'yes') {
       setInRoom(false);
       return;
     }

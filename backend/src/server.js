@@ -236,16 +236,12 @@ io.on('connection', (socket) => {
       console.log(`⚠️ Socket ${socket.id} déconnecté sans utilisateur associé`);
       return;
     }
-
     const room = rooms.get(user.room);
     if (room) {
-      room.users = room.users.filter((u) => u.id !== socket.id);
-
+      room.users = room.users.filter((u) => u.id !== user.id);
       socket.to(user.room).emit('userLeft', socket.id);
       io.to(user.room).emit('gameStateUpdate', room.gameState);
       io.to(user.room).emit('usersUpdate', room.users);
-      console.log(`👋 ${user.username} a quitté la salle ${user.room}`);
-
       if (room.users.length === 0) {
         rooms.delete(user.room);
         console.log(`🗑️ Salle ${user.room} supprimée car vide`);
@@ -352,31 +348,24 @@ function addUserToRoom(user, roomCode) {
   return { success: true, room };
 }
 
-function removeUserFromRoom(userId) {
-  const user = users.get(userId);
+function removeUserFromRoom(socketId) {
+  const user = users.get(socketId);
   if (!user) return null;
   const room = rooms.get(user.room);
+  const userToken = user.id;
+
   if (room) {
-    room.users = room.users.filter((u) => u && u.id !== userId);
+    room.users = room.users.filter((u) => u && u.id !== userToken);
     if (room.gameState) {
       const gs = room.gameState;
-      gs.spectators = gs.spectators.filter((u) => u.id !== userId);
-      gs.teams.red.disciples = gs.teams.red.disciples.filter((u) => u.id !== userId);
-      gs.teams.blue.disciples = gs.teams.blue.disciples.filter((u) => u.id !== userId);
-      if (gs.teams.red.sage?.id === userId) gs.teams.red.sage = null;
-      if (gs.teams.blue.sage?.id === userId) gs.teams.blue.sage = null;
-    }
-    if (room.users.length === 0) {
-      setTimeout(() => {
-        const currentRoom = rooms.get(user.room);
-        if (currentRoom && currentRoom.users.length === 0) {
-          rooms.delete(user.room);
-          gameStates.delete(user.room);
-        }
-      }, 60000);
+      gs.spectators = gs.spectators.filter((u) => u.id !== userToken);
+      gs.teams.red.disciples = gs.teams.red.disciples.filter((u) => u.id !== userToken);
+      gs.teams.blue.disciples = gs.teams.blue.disciples.filter((u) => u.id !== userToken);
+      if (gs.teams.red.sage?.id === userToken) gs.teams.red.sage = null;
+      if (gs.teams.blue.sage?.id === userToken) gs.teams.blue.sage = null;
     }
   }
-  users.delete(userId);
+  users.delete(socketId);
   return user;
 }
 

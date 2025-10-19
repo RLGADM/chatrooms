@@ -64,6 +64,7 @@ export function useRoomCreatedMain() {
       leaveRoom();
       hasJoinedRoomRef.current = false;
       hasRejoinAttempted.current = false;
+      localStorage.setItem('hasLeftRoom', 'yes');
       localStorage.removeItem('lastRoomCode');
     },
 

@@ -40,6 +40,7 @@ export function useRoomEvents() {
     // Événements alignés avec le backend
     socket.on('usersUpdate', (users: User[]) => {
       setRoomUsers(users);
+      setCurrentRoom((prev) => ({ ...prev, users }));
     });
 
     socket.on('newMessage', (message: Message) => {
