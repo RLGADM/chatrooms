@@ -1,5 +1,5 @@
 // import framework
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 // import ts et hooks
 import { useSocket } from './useSocket';
@@ -18,6 +18,9 @@ export function useRoomEvents() {
   const [error, setError] = useState<string | null>(null);
   const [inRoom, setInRoom] = useState<boolean>(false);
 
+  // Refs utilisés par RoomCreatedMain
+  const hasJoinedRoomRef = useRef<boolean>(false);
+  const hasRejoinAttempted = useRef<boolean>(false);
   // Envoi donné inRoom et currentRoom.code à home.tsx
   useEffect(() => {
     if (!socket) return;
@@ -40,7 +43,7 @@ export function useRoomEvents() {
     // Événements alignés avec le backend
     socket.on('usersUpdate', (users: User[]) => {
       setRoomUsers(users);
-      setCurrentRoom((prev) => ({ ...prev, users }));
+      setCurrentRoom((prev) => ({ ...prev, users })); // garde currentRoom.users à jour
     });
 
     socket.on('newMessage', (message: Message) => {
@@ -111,6 +114,33 @@ export function useRoomEvents() {
   //   setError(null);
   // };
 
+  const handleSendMessage = (message: string) => {
+    if (!socket || !message?.trim()) return;
+    socket.emit('sendMessage', message.trim());
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        username: currentUser.username,
+        message: message.trim(),
+        timestamp: new Date(),
+      },
+    ]);
+  };
+
+  const leaveRoom = () => {
+    if (socket && currentRoom?.code) {
+      socket.emit('leaveRoom', currentRoom.code);
+    }
+    localStorage.setItem('hasLeftRoom', 'yes');
+    localStorage.removeItem('lastRoomCode');
+    setInRoom(false);
+    setCurrentRoom(emptyRoom);
+    setRoomUsers([]);
+    setMessages([]);
+    setError(null);
+  };
+
   return {
     socket,
     currentUser,
@@ -122,7 +152,10 @@ export function useRoomEvents() {
     socketIsConnected,
     handleCreateRoom,
     handleJoinRoom,
-    //handleLeaveRoom,
+    handleSendMessage,
+    leaveRoom,
+    hasJoinedRoomRef,
+    hasRejoinAttempted,
     setCurrentUser,
     setCurrentRoom,
     setInRoom,

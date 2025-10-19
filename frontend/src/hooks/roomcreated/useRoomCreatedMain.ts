@@ -5,6 +5,7 @@ import { useRoomUIStates } from './useRoomUIStates';
 import { useRoomUtils } from './useRoomUtils';
 import { useRoomTeamActions } from './useRoomTeamActions';
 import { useRoomGameActions } from './useRoomGameActions';
+import { useNavigate } from 'react-router-dom';
 
 // --------------- Hook principal pour RoomCreated
 export function useRoomCreatedMain() {
@@ -66,6 +67,7 @@ export function useRoomCreatedMain() {
       hasRejoinAttempted.current = false;
       localStorage.setItem('hasLeftRoom', 'yes');
       localStorage.removeItem('lastRoomCode');
+      navigate('/'); // redirection immédiate vers l’accueil
     },
 
     // Gérer reset avec fermeture de modal

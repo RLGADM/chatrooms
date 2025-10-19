@@ -22,7 +22,18 @@ export function useRoomUtils() {
   const copyRoomLink = async (roomCode: string, setCopied: (value: boolean) => void) => {
     try {
       const roomUrl = `${window.location.origin}/room/${roomCode}`;
-      await navigator.clipboard.writeText(roomUrl);
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(roomUrl);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = roomUrl;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {

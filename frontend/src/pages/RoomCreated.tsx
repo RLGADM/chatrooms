@@ -132,7 +132,7 @@ const RoomCreated: React.FC = () => {
               >
                 KENSHO
               </h1>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300">
+              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
                 <span className="text-white text-sm font-semibold">
                   Salon : <span className="text-yellow-300 font-bold">{currentRoom.code}</span>
                 </span>
