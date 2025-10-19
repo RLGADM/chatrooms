@@ -201,24 +201,22 @@ const CenterColumn: React.FC<CenterColumnProps> = ({
     <div className="max-w-[520px] mx-auto mb-6">
       <div className="w-full px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white font-semibold transition-all duration-300 mb-4">
         <div className="flex items-center justify-center">
-          <span className="text-white font-bold text-lg">{formatTimer(currentPhaseState?.timeRemaining || 0)}</span>
+          <span className="text-white font-bold text-lg">
+            {formatTimer(currentPhaseState?.timeRemaining ?? currentRoom?.gameState?.timeRemaining ?? 0)}
+          </span>
         </div>
         <div className="relative mt-3">
           <div className="bg-white/20 rounded-full h-3 overflow-hidden">
             <div
               className="h-3 rounded-full transition-all duration-1000 bg-gradient-to-r from-green-400 to-red-500"
               style={{
-                width: currentPhaseState?.timer
-                  ? `${Math.max(
-                      0,
-                      Math.min(
-                        100,
-                        (((currentPhaseState.timer ?? 0) - (currentPhaseState.timeRemaining ?? 0)) /
-                          (currentPhaseState.timer ?? 1)) *
-                          100
-                      )
-                    )}%`
-                  : '0%',
+                width: (() => {
+                  const total = currentPhaseState?.timer ?? currentRoom?.gameState?.totalTime ?? 0;
+                  const remaining = currentPhaseState?.timeRemaining ?? currentRoom?.gameState?.timeRemaining ?? 0;
+                  if (!total) return '0%';
+                  const pct = Math.max(0, Math.min(100, ((total - remaining) / (total || 1)) * 100));
+                  return `${pct}%`;
+                })(),
               }}
             ></div>
           </div>
@@ -227,13 +225,9 @@ const CenterColumn: React.FC<CenterColumnProps> = ({
         <div className="mt-3">
           <div className="h-px bg-white/20 mb-3"></div>
           <div className="flex items-center justify-center space-x-4">
-            <span className="text-red-300 font-semibold">
-              Rouge: {currentRoom?.gameState?.teams?.red?.score ?? 0}
-            </span>
+            <span className="text-red-300 font-semibold">Rouge: {currentRoom?.gameState?.score?.red ?? 0}</span>
             <span className="text-white/40">|</span>
-            <span className="text-blue-300 font-semibold">
-              Bleu: {currentRoom?.gameState?.teams?.blue?.score ?? 0}
-            </span>
+            <span className="text-blue-300 font-semibold">Bleu: {currentRoom?.gameState?.score?.blue ?? 0}</span>
           </div>
         </div>
       </div>
@@ -271,7 +265,7 @@ const CenterColumn: React.FC<CenterColumnProps> = ({
             <History className="w-6 h-6 mr-3 text-blue-400" />
             Historique
           </h3>
-
+        
           <div
             className="space-y-3 h-[520px] overflow-y-auto"
             style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)' }}
@@ -283,7 +277,8 @@ const CenterColumn: React.FC<CenterColumnProps> = ({
                 <p className="text-sm">L'historique apparaîtra ici</p>
               </div>
             ) : (
-              currentRoom.messages.map((msg: any) => (
+              // Afficher le plus récent en haut
+              [...currentRoom.messages].slice().reverse().map((msg: any) => (
                 <div
                   key={msg.id}
                   className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:bg-white/20 transition-all duration-300"
@@ -497,6 +492,13 @@ function RoomCreated() {
   const currentRoundState = gameState?.rounds?.[gameState.currentRound];
   const currentPhaseIndex = currentRoundState?.currentPhase ?? 0;
   const currentPhaseState = currentRoundState?.phases?.[currentPhaseIndex];
+
+  // Fallback timer: utilise gameState.timeRemaining / totalTime si pas de données de phase locales
+  const uiCurrentPhaseState = currentPhaseState ?? {
+    timeRemaining: gameState?.timeRemaining ?? 0,
+    timer: gameState?.totalTime ?? 0,
+  };
+
   const redTeam = currentRoom?.users?.filter((user: User) => user.team === 'red') ?? [];
   const blueTeam = currentRoom?.users?.filter((user: User) => user.team === 'blue') ?? [];
   const spectators = currentRoom?.users?.filter((user: User) => user.team === 'spectator') ?? [];
@@ -631,48 +633,39 @@ function RoomCreated() {
             </div>
             {/* Right Side - Actions */}
             <div className="flex items-center space-x-4">
-              {permissions.canControlGame && (
+              {/* Supprimé: Relancer la partie */}
+              {/* Supprimé: Joueurs */}
+            
+              <div className="flex items-center space-x-4">
+                {/* Jouer / Pause — visible pour tous */}
                 <button
-                  onClick={() => setShowResetModal(true)}
-                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 border border-white/30 flex items-center space-x-2 hover:scale-105"
+                  onClick={() => {
+                    console.log('[UI] Header Play/Pause clicked', { isGameActive });
+                    isGameActive ? pauseGame() : startGame();
+                  }}
+                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-full border border-white/30 text-sm font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105"
+                  title={isGameActive ? 'Mettre en pause' : 'Démarrer la partie'}
                 >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>Relancer la partie</span>
+                  {isGameActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  <span>{isGameActive ? 'Pause' : 'Jouer'}</span>
                 </button>
-              )}
-              {permissions.isAdmin && (
+            
+                {/* Rejouer — visible pour tous (réinitialise la partie) */}
                 <button
-                  onClick={() => setShowPlayersModal(true)}
-                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 border border-white/30 flex items-center space-x-2 hover:scale-105"
+                  onClick={handleResetGame}
+                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-full border border-white/30 text-sm font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105"
+                  title="Rejouer (nouvelle partie)"
                 >
-                  <Users className="w-4 h-4" />
-                  <span>Joueurs</span>
+                  <PauseCircle className="w-4 h-4" />
+                  <span>Rejouer</span>
                 </button>
-              )}
-
-              {/* Jouer / Pause — visible pour tous */}
-              <button
-                onClick={() => (isGameActive ? pauseGame() : startGame())}
-                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-full border border-white/30 text-sm font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105"
-                title={isGameActive ? 'Mettre en pause' : 'Démarrer la partie'}
-              >
-                {isGameActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                <span>{isGameActive ? 'Pause' : 'Jouer'}</span>
-              </button>
-
-              {/* Rejouer — visible pour tous */}
-              <button
-                onClick={handleResetGame}
-                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-full border border-white/30 text-sm font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105"
-                title="Rejouer (nouvelle partie)"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>Rejouer</span>
-              </button>
-
+              </div>
+            
+              {/* Restauré: Quitter — visible pour tous */}
               <button
                 onClick={handleLeaveRoom}
                 className="bg-red-500/80 backdrop-blur-sm hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105"
+                title="Quitter le salon"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Quitter</span>
@@ -699,7 +692,7 @@ function RoomCreated() {
               proposal={proposal}
               setProposal={setProposal}
               formatTimer={formatTimer}
-              currentPhaseState={currentPhaseState}
+              currentPhaseState={uiCurrentPhaseState}
               sendProposal={sendProposal}
               currentRoom={currentRoom}
               formatTime={formatTime}
@@ -807,6 +800,6 @@ function RoomCreated() {
       )}
     </div>
   );
-};
+}
 
 export default RoomCreated;

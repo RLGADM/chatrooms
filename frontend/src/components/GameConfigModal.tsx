@@ -378,7 +378,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({ isOpen, onClose, onCo
               onParamChange={handleParameterChange}
               onWordsListChange={handleWordsListChange}
             />
-          )}
+          )}  
           {gameMode === 'standard' && <StandardSummary />}
           <ActionButtons onClose={onClose} onConfirm={handleConfirm} canConfirm={canConfirm} />
         </div>

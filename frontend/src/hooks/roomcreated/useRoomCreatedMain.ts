@@ -13,16 +13,16 @@ import { User } from '@/types';
 export function useRoomCreatedMain() {
   // Hook principal de la room (depuis votre architecture globale)
   const {
-      socket: _unusedLocalSocket,
-      currentUser,
-      currentRoom,
-      handleSendMessage,
-      leaveRoom,
-      hasJoinedRoomRef,
-      hasRejoinAttempted,
-      setCurrentRoom,
-      handleJoinRoom,
-      inRoom,
+    socket: _unusedLocalSocket,
+    currentUser,
+    currentRoom,
+    handleSendMessage,
+    leaveRoom,
+    hasJoinedRoomRef,
+    hasRejoinAttempted,
+    setCurrentRoom,
+    handleJoinRoom,
+    inRoom,
   } = useRoomEvents();
   const navigate = useNavigate();
   const { socket } = useSocketContext();
@@ -35,21 +35,10 @@ export function useRoomCreatedMain() {
 
   // Actions d'équipes (branchées sur le socket global)
   // Actions d'équipes: câble avec les setters UI depuis uiStates
-  const teamActions = useRoomTeamActions(
-    socket,
-    uiStates.setIsJoiningTeam,
-    uiStates.setTeamJoinError
-  );
+  const teamActions = useRoomTeamActions(socket, uiStates.setIsJoiningTeam, uiStates.setTeamJoinError);
 
   // Actions de jeu (branchées sur le socket global)
   const gameActions = useRoomGameActions(socket, handleSendMessage);
-
-  // Effet pour auto-scroll des messages
-  useEffect(() => {
-    if (uiStates.historyEndRef.current) {
-      uiStates.historyEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [currentRoom?.messages]);
 
   // Effet pour nettoyer l'état isJoiningTeam quand l'utilisateur rejoint effectivement une équipe
   useEffect(() => {
@@ -61,14 +50,14 @@ export function useRoomCreatedMain() {
 
   // Écoute `usersUpdate` sur le socket global pour alimenter le compteur joueurs
   useEffect(() => {
-      if (!socket) return;
-      const onUsersUpdate = (users: User[]) => {
-          setCurrentRoom((prev) => ({ ...prev, users }));
-      };
-      socket.on('usersUpdate', onUsersUpdate);
-      return () => {
-          socket.off('usersUpdate', onUsersUpdate);
-      };
+    if (!socket) return;
+    const onUsersUpdate = (users: User[]) => {
+      setCurrentRoom((prev) => ({ ...prev, users }));
+    };
+    socket.on('usersUpdate', onUsersUpdate);
+    return () => {
+      socket.off('usersUpdate', onUsersUpdate);
+    };
   }, [socket, setCurrentRoom]);
 
   // Permissions utilisateur

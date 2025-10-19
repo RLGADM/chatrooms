@@ -672,13 +672,7 @@ function startPhaseTimer(roomCode, duration) {
     }
     if (!r.gameState.isPlaying) return;
     r.gameState.timeRemaining = Math.max(0, (r.gameState.timeRemaining || 0) - 1);
-    io.to(roomCode).volatile.emit('gameTick', {
-      timeRemaining: r.gameState.timeRemaining,
-      totalTime: r.gameState.totalTime,
-      currentPhase: r.gameState.currentPhase,
-    });
     io.to(roomCode).emit('gameStateUpdate', r.gameState);
-
     if (r.gameState.timeRemaining <= 0) {
       clearPhaseTimer(roomCode);
       onPhaseEnd(roomCode);

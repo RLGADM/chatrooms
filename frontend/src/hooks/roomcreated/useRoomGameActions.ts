@@ -1,16 +1,20 @@
 // --------------- IMPORT
 import { SocketType } from '../../types';
+import { useRef } from 'react';
 
 // --------------- Hook pour gérer les actions de jeu
 export function useRoomGameActions(socket: SocketType | null, handleSendMessage: (message: string) => void) {
-  // Démarrer la partie
+  const wasPausedRef = useRef(false);
+  const announcedResumeRef = useRef(false);
+
+  // Démarrer ou reprendre la partie (ton UI appelle startGame pour les deux cas)
   const startGame = () => {
     if (!socket) {
       console.log('No socket connection for starting game');
       return;
     }
-
-    handleSendMessage('Début de la Phase 1 - Choix du mot');
+    console.log('[FRONT] Emitting startGame', { socketId: socket.id });
+    // Ne pas annoncer ici; l’annonce “Jeu repris” sera faite par onGameStateUpdate
     socket.emit('startGame');
   };
 
@@ -20,20 +24,13 @@ export function useRoomGameActions(socket: SocketType | null, handleSendMessage:
       console.log('No socket connection for pausing game');
       return;
     }
-
-    handleSendMessage('Jeu mis en pause');
+    console.log('[FRONT] Emitting pauseGame', { socketId: socket.id });
+    // Ne pas annoncer ici; l’annonce “Jeu mis en pause” sera faite par onGameStateUpdate
     socket.emit('pauseGame');
-  };
 
-  // Reprendre la partie
-  const resumeGame = () => {
-    if (!socket) {
-      console.log('No socket connection for resuming game');
-      return;
-    }
-
-    handleSendMessage('Jeu repris');
-    socket.emit('resumeGame');
+    // La prochaine reprise doit annoncer "Jeu repris" une seule fois
+    wasPausedRef.current = true;
+    announcedResumeRef.current = false;
   };
 
   // Réinitialiser la partie
@@ -42,8 +39,8 @@ export function useRoomGameActions(socket: SocketType | null, handleSendMessage:
       console.log('No socket connection for resetting game');
       return;
     }
-
-    handleSendMessage("La partie a été réinitialisée par l'Admin");
+    console.log('[FRONT] Emitting resetGame', { socketId: socket.id });
+    handleSendMessage('La partie a été réinitialisée.');
     socket.emit('resetGame');
   };
 
@@ -73,7 +70,7 @@ export function useRoomGameActions(socket: SocketType | null, handleSendMessage:
   return {
     startGame,
     pauseGame,
-    resumeGame,
+    //resumeGame,
     resetGame,
     sendProposal,
     sendPing,

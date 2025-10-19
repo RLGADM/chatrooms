@@ -112,6 +112,12 @@ export interface GameState {
   spectators: User[];
   isPlaying: boolean;
   winner: 'red' | 'blue' | 'draw' | null;
+  currentPhase?: number;
+  phases?: string[];
+  timer?: number | null;
+  timeRemaining?: number;
+  totalTime?: number;
+  score?: { red: number; blue: number };
 }
 export interface ServerToClientEvents {
   roomJoined: (room: Room) => void;
@@ -129,6 +135,7 @@ export interface ServerToClientEvents {
   gameParametersSet: (parameters: GameParameters) => void;
   userKicked: (data: { userId: string; reason: string }) => void;
   userBanned: (data: { userId: string; reason: string }) => void;
+  gameTick: (data: { timeRemaining: number; totalTime?: number; currentPhase?: number }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -158,6 +165,7 @@ export interface ClientToServerEvents {
   submitProposal: (proposal: string) => void;
   startGame: () => void;
   pauseGame: () => void;
+  resetGame: () => void;
   gameError: (error: string) => void;
   ping: () => void;
   debugGetUsers: () => void;

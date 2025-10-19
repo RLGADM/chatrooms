@@ -1,14 +1,29 @@
-// import framework
+// Hook central pour la gestion des événements de salle et du chat.
+// Organisation:
+// 1) États locaux et primitives
+// 2) Helpers internes
+// 3) Hydratation initiale (localStorage)
+// 4) Listeners "room" (création/entrée/erreurs)
+// 5) Listeners "updates" (users/messages/game/timer)
+// 6) Actions UI (create/join/send/leave)
+// 7) Valeurs exposées
+
 import { useEffect, useState, useRef } from 'react';
 import type { Socket } from 'socket.io-client';
-// import ts et hooks
 import { useSocket } from './useSocket';
-import { GameParameters, Message, Room, User, GameState, emptyRoom, emptyUser } from '@/types';
+import { useSocketContext } from '@/components/SocketContext';
 import { useUserToken } from './useUserToken';
+import { GameParameters, Message, Room, User, GameState, emptyRoom, emptyUser } from '@/types';
 
 export function useRoomEvents() {
+  // 1) États locaux et primitives
   const userToken = useUserToken();
-  const { socket, isConnected: socketIsConnected } = useSocket();
+
+  // Prend le socket global du contexte si disponible, sinon fallback local
+  const { socket: ctxSocket } = useSocketContext();
+  const { socket: localSocket, isConnected: localIsConnected } = useSocket();
+  const socket = ctxSocket ?? localSocket;
+  const socketIsConnected = Boolean(socket?.connected) || localIsConnected;
 
   const [currentUser, setCurrentUser] = useState<User>(emptyUser);
   const [currentRoom, setCurrentRoom] = useState<Room>(emptyRoom);
@@ -17,58 +32,74 @@ export function useRoomEvents() {
   const [error, setError] = useState<string | null>(null);
   const [inRoom, setInRoom] = useState<boolean>(false);
 
-  // Refs utilisés par RoomCreatedMain
+  // Refs utiles à d’autres hooks pour gérer la reconnexion ou éviter les doubles-joins
   const hasJoinedRoomRef = useRef<boolean>(false);
   const hasRejoinAttempted = useRef<boolean>(false);
 
-  // Hydrater le code de la room depuis le localStorage au montage
+  // Garde: dernières transitions annoncées
+  const hasGameStartedRef = useRef<boolean>(false);
+
+  // Utilitaire pour formater le nom de phase (utilise `phases` si dispo)
+
+  // Annonce contrôlée des transitions (phase / play-pause)
+
+  // 2) Helpers internes (non exportés)
+  const getSelfFromUsers = (users: User[], token: string) => {
+    return users.find((u: any) => ((u as any).userToken ?? (u as any).id) === token);
+  };
+
+  // 3) Hydratation initiale depuis localStorage (facultative mais pratique)
   useEffect(() => {
-    const storedRoomCode = localStorage.getItem('roomCode') || localStorage.getItem('lastRoomCode');
-    if (storedRoomCode && !currentRoom.code) {
-      setCurrentRoom((prev) => ({ ...prev, code: storedRoomCode }));
+    try {
+      const lastUsernameRaw = localStorage.getItem('lastUsername');
+      if (lastUsernameRaw) {
+        const lastUsername = JSON.parse(lastUsernameRaw);
+        if (typeof lastUsername === 'string' && lastUsername.trim()) {
+          setCurrentUser((prev) => ({ ...prev, username: lastUsername.trim(), userToken }));
+        }
+      }
+      // Hydrate le code de la room si présent (utile pour affichage)
+      const storedRoomCode = localStorage.getItem('roomCode') || localStorage.getItem('lastRoomCode');
+      if (storedRoomCode && !currentRoom.code) {
+        setCurrentRoom((prev) => ({ ...prev, code: storedRoomCode }));
+      }
+    } catch (e) {
+      console.warn('Hydratation localStorage échouée', e);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Événements principaux de room
+  // 4) Listeners "room" (création/entrée/erreurs)
   useEffect(() => {
     if (!socket) return;
 
     const onRoomCreated = (room: Room) => {
-      setCurrentRoom(room);
-      setRoomUsers(room.users || []);
-      setInRoom(true);
-      localStorage.setItem('roomCode', room.code);
-      localStorage.setItem('lastRoomCode', room.code);
-      localStorage.setItem('hasLeftRoom', 'false');
+      setCurrentRoom((prev) => ({ ...prev, ...room }));
+      if (room?.code) {
+        localStorage.setItem('roomCode', room.code);
+        localStorage.setItem('lastRoomCode', room.code);
+      }
+      setError(null);
     };
 
     const onRoomJoined = (room: Room) => {
-      setCurrentRoom(room);
-      setRoomUsers(room.users || []);
-      setInRoom(true);
-      localStorage.setItem('roomCode', room.code);
-      localStorage.setItem('lastRoomCode', room.code);
-      localStorage.setItem('hasLeftRoom', 'false');
-
-      // Synchronise currentUser à partir de la liste d'utilisateurs
-      const token = userToken || localStorage.getItem('userToken') || '';
-      const self = (room.users || []).find((u: any) => ((u as any).userToken ?? (u as any).id) === token);
-      if (self) {
-        setCurrentUser((prev) => ({
-          ...prev,
-          ...self,
-          userToken: (self as any).userToken ?? (self as any).id,
-        }));
+      setCurrentRoom((prev) => ({ ...prev, ...room }));
+      if (room?.code) {
+        localStorage.setItem('roomCode', room.code);
+        localStorage.setItem('lastRoomCode', room.code);
       }
+      setInRoom(true);
+      hasJoinedRoomRef.current = true;
+      setError(null);
     };
 
     const onRoomNotFound = () => {
-      setError('Salon introuvable');
+      setError('Salle introuvable.');
       setInRoom(false);
     };
 
     const onUsernameTaken = () => {
-      setError('Nom d’utilisateur déjà pris');
+      setError('Nom d’utilisateur déjà pris.');
     };
 
     socket.on('roomCreated', onRoomCreated);
@@ -82,94 +113,174 @@ export function useRoomEvents() {
       socket.off('roomNotFound', onRoomNotFound);
       socket.off('usernameTaken', onUsernameTaken);
     };
-  }, [socket, userToken]);
+  }, [socket]);
 
-  // Autres listeners socket (users/messages/game)
+  // 5) Listeners "updates" (users/messages/game) + timer tick
   useEffect(() => {
     if (!socket) return;
 
     const onUsersUpdate = (users: User[]) => {
       setRoomUsers(users);
-      setCurrentRoom((prev) => ({ ...prev, users }));
-
-      // Synchronise currentUser avec la source serveur
-      const storedToken = userToken || localStorage.getItem('userToken') || '';
-      const self = users.find((u: any) => ((u as any).userToken ?? (u as any).id) === storedToken);
-      if (self) {
-        setCurrentUser((prev) => ({
-          ...prev,
-          ...self,
-          userToken: (self as any).userToken ?? (self as any).id,
-        }));
+      if (userToken) {
+        const self = getSelfFromUsers(users, userToken);
+        if (self) {
+          setCurrentUser((prev) => ({ ...prev, ...self }));
+        }
       }
     };
 
     const onNewMessage = (message: Message) => {
       setMessages((prev) => [...prev, message]);
+      // Conserver aussi dans currentRoom.messages si utile au rendu
+      setCurrentRoom((prev) => ({ ...prev, messages: [...(prev.messages || []), message] }));
     };
 
     const onGameStateUpdate = (gameState: GameState) => {
-      setCurrentRoom((prev) => ({ ...prev, gameState }));
+      setCurrentRoom((prev) => {
+        const prevPhase = prev.gameState?.currentPhase ?? null;
+        const nextPhase = gameState.currentPhase ?? null;
+        const prevPlaying = prev.gameState?.isPlaying ?? false;
+        const nextPlaying = gameState.isPlaying ?? false;
+
+        const isInitialHydration = prevPhase === null;
+        const isWaitingPhase = nextPhase === 0 || nextPhase === null;
+
+        const shouldAnnouncePhase = prevPhase !== nextPhase && nextPhase !== null;
+        const shouldAnnouncePlayPause = prevPlaying !== nextPlaying;
+
+        // Réinitialiser la garde si le jeu revient à l’attente (nouvelle room / reset)
+        if (gameState.status !== 'started' && !gameState.isPlaying) {
+          hasGameStartedRef.current = false;
+        }
+
+        if (shouldAnnouncePhase) {
+          const sysMsg: Message = {
+            id: `sys-${Date.now()}`,
+            username: 'SYSTEM',
+            message:
+              nextPhase === 1
+                ? 'Phase 1 - Choisissez votre mot'
+                : nextPhase === 2
+                  ? 'Phase 2 - Choisissez vos interdits'
+                  : nextPhase === 3
+                    ? 'Phase 3 - Préparez votre laius !'
+                    : isInitialHydration && isWaitingPhase
+                      ? 'Bienvenue sur Kensho !'
+                      : 'Retour à l’attente',
+            timestamp: new Date(),
+          };
+          setMessages((prevMsgs) => [...prevMsgs, sysMsg]);
+          return { ...prev, gameState, messages: [...(prev.messages || []), sysMsg] };
+        } else if (shouldAnnouncePlayPause) {
+          const startingNow = !prevPlaying && nextPlaying;
+
+          const message =
+            startingNow && !hasGameStartedRef.current
+              ? 'La partie commence ! GL HF !'
+              : nextPlaying
+                ? 'Jeu repris'
+                : 'Jeu mis en pause';
+
+          // Marquer la partie comme “déjà démarrée” après le premier start
+          if (startingNow && !hasGameStartedRef.current) {
+            hasGameStartedRef.current = true;
+          }
+
+          const sysMsg: Message = {
+            id: `sys-${Date.now()}`,
+            username: 'SYSTEM',
+            message,
+            timestamp: new Date(),
+          };
+          setMessages((prevMsgs) => [...prevMsgs, sysMsg]);
+          return { ...prev, gameState, messages: [...(prev.messages || []), sysMsg] };
+        }
+
+        return { ...prev, gameState };
+      });
     };
 
-    const onTeamJoinSuccess = (data: { team: string; role: string; gameState: GameState }) => {
-      setCurrentRoom((prev) => ({ ...prev, gameState: data.gameState }));
-      setCurrentUser((prev) => ({ ...prev, team: data.team as any, role: data.role as any }));
-    };
+    const onGameTick = (tick: { timeRemaining: number; totalTime?: number; currentPhase?: number }) => {
+      setCurrentRoom((prev) => {
+        const prevState = (prev.gameState || {}) as Partial<GameState>;
+        const nextState = {
+          ...prevState,
+          timeRemaining: tick.timeRemaining,
+          totalTime: typeof tick.totalTime === 'number' ? tick.totalTime : (prevState.totalTime ?? 0),
+          currentPhase: typeof tick.currentPhase === 'number' ? tick.currentPhase : prevState.currentPhase,
+          // Conserver le reste du state sans le modifier
+          gameParameters: prevState.gameParameters ?? prev.parameters,
+          status: prevState.status ?? 'waiting',
+          isPlaying: prevState.isPlaying ?? false,
+          rounds: prevState.rounds ?? [],
+          currentRound: prevState.currentRound ?? 0,
+          teams: prevState.teams ?? {
+            red: { sage: null, disciples: [], score: 0 },
+            blue: { sage: null, disciples: [], score: 0 },
+          },
+          spectators: prevState.spectators ?? [],
+        } as GameState;
 
-    const onTeamJoinError = (err: string) => {
-      setError(err || "Erreur lors de la jonction de l'équipe");
-    };
+        return { ...prev, gameState: nextState };
+      });
 
+      // Pas de handleSendMessage ici pour éviter les doublons/spam.
+    };
     socket.on('usersUpdate', onUsersUpdate);
     socket.on('newMessage', onNewMessage);
     socket.on('gameStateUpdate', onGameStateUpdate);
-    socket.on('teamJoinSuccess', onTeamJoinSuccess);
-    socket.on('teamJoinError', onTeamJoinError);
+    socket.on('gameTick', onGameTick);
 
     return () => {
       socket.off('usersUpdate', onUsersUpdate);
       socket.off('newMessage', onNewMessage);
       socket.off('gameStateUpdate', onGameStateUpdate);
-      socket.off('teamJoinSuccess', onTeamJoinSuccess);
-      socket.off('teamJoinError', onTeamJoinError);
+      socket.off('gameTick', onGameTick);
     };
   }, [socket, userToken]);
 
-  // Actions
-  const handleJoinRoom = async (socket: Socket, username: string, roomCode: string): Promise<boolean> => {
-    if (!socket?.connected) return false;
-    if (!username?.trim() || !roomCode?.trim()) return false;
+  // 6) Actions UI (create/join/send/leave) — alignées avec les appels externes
+  const handleJoinRoom = async (socketParam: Socket, username: string, roomCode: string): Promise<boolean> => {
+    if (!socketParam?.connected) return false;
+    if (!userToken) return false;
 
     return new Promise((resolve) => {
-      socket.emit('joinRoom', { username, roomCode, userToken }, (response: { success: boolean; error?: string }) => {
+      socketParam.emit('joinRoom', { username, roomCode, userToken }, (response: any) => {
         if (response?.success) {
-          // Persistance minimale + état
           localStorage.setItem('lastRoomCode', roomCode);
           localStorage.setItem('roomCode', roomCode);
           localStorage.setItem('lastUsername', JSON.stringify(username));
-          localStorage.setItem('hasLeftRoom', 'false');
 
           setInRoom(true);
           setCurrentRoom((prev) => ({ ...prev, code: roomCode }));
+          // Correction: normalisation typée pour respecter User
+          setCurrentUser((prev) => {
+            const normalizedUsername = String(username ?? prev.username ?? '');
+            const normalizedRoomCode = String(roomCode ?? prev.room ?? '');
+            const normalizedSocketId = String(socketParam?.id ?? prev.socketId ?? '');
+            const normalizedToken = String(userToken ?? prev.userToken ?? '');
 
-          // Hydrate immédiatement currentUser côté client
-          setCurrentUser((prev) => ({
-            ...prev,
-            userToken,
-            username,
-            room: roomCode,
-            team: 'spectator',
-            role: 'spectator',
-            socketId: socket.id ?? prev.socketId ?? '', // garantir string
-          }));
+            return {
+              ...prev,
+              userToken: normalizedToken,
+              username: normalizedUsername,
+              room: normalizedRoomCode,
+              team: 'spectator',
+              role: 'spectator',
+              socketId: normalizedSocketId,
+            } as User;
+          });
 
-          // Aligner côté serveur (avec role explicite)
-          socket.emit('joinTeam', { roomCode, userToken, team: 'spectator', role: 'spectator' });
+          // Alignement côté serveur (par défaut spectateur)
+          socketParam.emit('joinTeam', { roomCode, userToken, team: 'spectator', role: 'spectator' });
+
+          hasJoinedRoomRef.current = true;
+          setError(null);
           resolve(true);
         } else {
-          setError(response?.error || 'Échec de la jonction à la salle.');
+          setError(response?.error || 'Échec de la jointure de la salle.');
           localStorage.removeItem('lastRoomCode');
+          setInRoom(false);
           resolve(false);
         }
       });
@@ -177,21 +288,22 @@ export function useRoomEvents() {
   };
 
   const handleCreateRoom = (
-    socket: Socket,
+    socketParam: Socket,
     username: string,
     gameMode: 'standard' | 'custom',
     parameters: GameParameters
   ) => {
-    if (!socket) return;
+    if (!socketParam) return;
+    if (!username?.trim()) return;
 
-    socket.emit(
+    socketParam.emit(
       'createRoom',
       { username, gameMode, parameters, userToken },
       (response: { success: boolean; roomCode?: string; error?: string }) => {
         if (response?.success && response.roomCode) {
-          // Chaîne la jonction + hydrate code
-          handleJoinRoom(socket, username, response.roomCode);
-          setCurrentRoom((prev) => ({ ...prev, code: response.roomCode ?? prev.code }));
+          setCurrentRoom((prev) => ({ ...prev, code: response.roomCode! }));
+          // Joindre automatiquement la salle nouvellement créée
+          handleJoinRoom(socketParam, username, response.roomCode!);
         } else {
           setError(response?.error || 'Erreur lors de la création de la salle.');
         }
@@ -199,46 +311,62 @@ export function useRoomEvents() {
     );
   };
 
+  // Envoyer un message (avec UI optimiste)
   const handleSendMessage = (message: string) => {
     if (!socket || !message?.trim()) return;
     socket.emit('sendMessage', message.trim());
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        username: currentUser.username,
-        message: message.trim(),
-        timestamp: new Date(),
-      },
-    ]);
+
+    const msgObj: Message = {
+      id: Date.now().toString(),
+      username: currentUser.username,
+      message: message.trim(),
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, msgObj]);
+    setCurrentRoom((prev) => ({ ...prev, messages: [...(prev.messages || []), msgObj] }));
   };
 
+  // Quitter la salle et nettoyer l’état
   const leaveRoom = () => {
-    if (socket && currentRoom?.code) {
-      socket.emit('leaveRoom', currentRoom.code);
+    try {
+      if (socket && currentRoom?.code) {
+        socket.emit('leaveRoom', currentRoom.code);
+      }
+      localStorage.setItem('hasLeftRoom', 'true');
+      localStorage.removeItem('roomCode');
+
+      setInRoom(false);
+      setCurrentRoom(emptyRoom);
+      setRoomUsers([]);
+      setMessages([]);
+      setError(null);
+      hasJoinedRoomRef.current = false;
+    } catch (e) {
+      console.warn('Erreur au leaveRoom', e);
     }
-    localStorage.setItem('hasLeftRoom', 'yes');
-    localStorage.removeItem('lastRoomCode');
-    setInRoom(false);
-    setCurrentRoom(emptyRoom);
-    setRoomUsers([]);
-    setMessages([]);
-    setError(null);
   };
 
+  // 7) Valeurs exposées par le hook
   return {
+    // Socket
     socket,
+    socketIsConnected,
+
+    // États
     currentUser,
     currentRoom,
     roomUsers,
     messages,
     error,
     inRoom,
-    socketIsConnected,
+
+    // Actions UI
     handleCreateRoom,
     handleJoinRoom,
     handleSendMessage,
     leaveRoom,
+
+    // Expose pour autres hooks/compos
     hasJoinedRoomRef,
     hasRejoinAttempted,
     setCurrentUser,
