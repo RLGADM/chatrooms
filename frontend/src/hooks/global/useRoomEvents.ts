@@ -17,6 +17,8 @@ export function useRoomEvents() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [inRoom, setInRoom] = useState<boolean>(false);
+  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   // Refs utilisés par RoomCreatedMain
   const hasJoinedRoomRef = useRef<boolean>(false);
@@ -164,3 +166,39 @@ export function useRoomEvents() {
     setError,
   };
 }
+
+useEffect(() => {
+    if (!socketRef.current) {
+        const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://kensho-hab0.onrender.com';
+        // Transports: 'polling' d'abord, upgrade vers 'websocket' ensuite
+        socketRef.current = io(SERVER_URL, {
+            path: '/socket.io',
+            transports: ['polling', 'websocket'],
+            reconnection: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 500,
+            reconnectionDelayMax: 2000,
+            withCredentials: true,
+        });
+    
+        // Logs plus propres (optionnel)
+        socketRef.current.on('connect', () => {
+            console.log('Socket connected:', socketRef.current?.id);
+        });
+        socketRef.current.on('connect_error', (err) => {
+            console.warn('[socket connect_error]', err.message);
+        });
+        socketRef.current.on('disconnect', (reason) => {
+            console.warn('[socket disconnect]', reason);
+        });
+    }
+
+    setSocket(socketRef.current);
+
+    // Nettoyage minimal des listeners (ne détruit pas l’instance pour éviter les reconnections multiples)
+    return () => {
+        socketRef.current?.off('connect');
+        socketRef.current?.off('connect_error');
+        socketRef.current?.off('disconnect');
+    };
+}, []);

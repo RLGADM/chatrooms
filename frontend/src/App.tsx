@@ -22,6 +22,7 @@ import KeepAlive from './components/KeepAlive';
 
 //const serveur
 const SERVER_URL = import.meta.env.PROD ? 'https://kensho-hab0.onrender.com' : 'http://localhost:3000';
+import logoUrl from './assets/logo.png';
 
 // Déclaration du main
 const App: React.FC = () => {
@@ -117,6 +118,7 @@ const App: React.FC = () => {
         </Routes>
       </SocketContext.Provider>
     </>
+    <img src={logoUrl} alt="Kenshou" className="h-8 w-auto" />
   );
 };
 export default App;
