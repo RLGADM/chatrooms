@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const SERVER_URL = import.meta.env.PROD ? 'https://kensho-hab0.onrender.com' : 'http://localhost:3000';
+const SERVER_URL =
+  import.meta.env.VITE_SERVER_URL ??
+  (import.meta.env.PROD ? 'https://chatrooms-server.onrender.com' : 'http://localhost:3000');
 
 export function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null);

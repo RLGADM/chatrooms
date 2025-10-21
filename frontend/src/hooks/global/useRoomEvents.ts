@@ -35,8 +35,12 @@ export function useRoomEvents() {
   // Refs utiles à d’autres hooks pour gérer la reconnexion ou éviter les doubles-joins
   const hasJoinedRoomRef = useRef<boolean>(false);
   const hasRejoinAttempted = useRef<boolean>(false);
+
+  // Garde: dernières transitions annoncées
   const hasGameStartedRef = useRef<boolean>(false);
   const suppressNextResumeRef = useRef<boolean>(false);
+  // Séquence pour IDs uniques (évite collisions à la milliseconde)
+  const msgSeqRef = useRef<number>(0);
 
   // Utilitaire pour formater le nom de phase (utilise `phases` si dispo)
 
@@ -129,9 +133,16 @@ export function useRoomEvents() {
     };
 
     const onNewMessage = (message: Message) => {
-      setMessages((prev) => [...prev, message]);
-      // Conserver aussi dans currentRoom.messages si utile au rendu
-      setCurrentRoom((prev) => ({ ...prev, messages: [...(prev.messages || []), message] }));
+      // Dédup côté client: si un message avec le même id existe déjà, on ignore
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [...prev, message];
+      });
+      setCurrentRoom((prev) => {
+        const existing = prev.messages || [];
+        if (existing.some((m) => m.id === message.id)) return prev;
+        return { ...prev, messages: [...existing, message] };
+      });
     };
 
     const onGameStateUpdate = (gameState: GameState) => {
@@ -156,7 +167,7 @@ export function useRoomEvents() {
           const isFirstStart = (prevPhase === 0 || isInitialHydration) && nextPhase === 1;
 
           const sysMsg: Message = {
-            id: `sys-${Date.now()}`,
+            id: `sys-${Date.now()}-${++msgSeqRef.current}`,
             username: 'SYSTEM',
             message: isFirstStart
               ? 'La partie commence ! GL HF !'
@@ -191,7 +202,7 @@ export function useRoomEvents() {
           const message = nextPlaying ? 'Jeu repris' : 'Jeu mis en pause';
 
           const sysMsg: Message = {
-            id: `sys-${Date.now()}`,
+            id: `sys-${Date.now()}-${++msgSeqRef.current}`,
             username: 'SYSTEM',
             message,
             timestamp: new Date(),
@@ -321,7 +332,7 @@ export function useRoomEvents() {
     socket.emit('sendMessage', message.trim());
 
     const msgObj: Message = {
-      id: Date.now().toString(),
+      id: `client-${Date.now()}-${++msgSeqRef.current}`,
       username: currentUser.username,
       message: message.trim(),
       timestamp: new Date(),

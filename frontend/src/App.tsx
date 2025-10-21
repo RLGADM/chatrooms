@@ -21,8 +21,10 @@ import KeepAlive from './components/KeepAlive';
 // --------------- Déclaration des consts
 
 //const serveur
-const SERVER_URL = import.meta.env.PROD ? 'https://kensho-hab0.onrender.com' : 'http://localhost:3000';
-import logoUrl from './assets/logo.png';
+const SERVER_URL =
+  import.meta.env.VITE_SERVER_URL ??
+  (import.meta.env.PROD ? 'https://chatrooms-server.onrender.com' : 'http://localhost:3000');
+//<<import logoUrl from './assets/logo.png';
 
 // Déclaration du main
 const App: React.FC = () => {
