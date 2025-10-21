@@ -31,13 +31,45 @@ const allowedOrigins = [
   'https://kensho-hab0.onrender.com',
 ];
 
+// Remplace la liste fixe par un contrôle d’origine dynamique
+const allowedOriginsList = [
+  'http://localhost:5173',
+  'https://localhost:5173',
+  process.env.NETLIFY_SITE_URL,   // ex: https://<site>.netlify.app
+  process.env.DEPLOY_PRIME_URL,   // ex: https://<deploy-id>--<site>.netlify.app
+  'https://kenshou.netlify.app',  // conservé si c’est ton site principal
+];
+
+function isNetlifySubdomain(origin) {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname.endsWith('.netlify.app');
+  } catch {
+    return false;
+  }
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // allow server-to-server or curl
+  const allowList = allowedOriginsList.filter(Boolean);
+  if (allowList.includes(origin)) return true;
+  if (isNetlifySubdomain(origin)) return true;
+  return false;
+}
+
+const corsOrigin = (origin, cb) => {
+  if (isAllowedOrigin(origin)) cb(null, true);
+  else cb(new Error(`CORS blocked for origin: ${origin}`));
+};
+
+// Instancie Socket.io et Express avec la même stratégie CORS
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: corsOrigin,
     credentials: true,
   },
 });
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 
 //fonction pour récupérer les utilisateurs d'une room
