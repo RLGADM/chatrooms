@@ -265,7 +265,7 @@ const CenterColumn: React.FC<CenterColumnProps> = ({
             <History className="w-6 h-6 mr-3 text-blue-400" />
             Historique
           </h3>
-        
+
           <div
             className="space-y-3 h-[520px] overflow-y-auto"
             style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)' }}
@@ -278,24 +278,27 @@ const CenterColumn: React.FC<CenterColumnProps> = ({
               </div>
             ) : (
               // Afficher le plus récent en haut
-              [...currentRoom.messages].slice().reverse().map((msg: any) => (
-                <div
-                  key={msg.id}
-                  className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:bg-white/20 transition-all duration-300"
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Users className="w-3 h-3 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-white text-sm font-medium">{msg.message}</p>
-                      <p className="text-white/60 text-xs mt-1">
-                        {formatTime(msg.timestamp)} - {msg.username}
-                      </p>
+              [...currentRoom.messages]
+                .slice()
+                .reverse()
+                .map((msg: any) => (
+                  <div
+                    key={msg.id}
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Users className="w-3 h-3 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white text-sm font-medium">{msg.message}</p>
+                        <p className="text-white/60 text-xs mt-1">
+                          {formatTime(msg.timestamp)} - {msg.username}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))
             )}
             <div ref={historyEndRef} />
           </div>
@@ -327,28 +330,6 @@ const CenterColumn: React.FC<CenterColumnProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-2 h-full content-start"></div>
           </div>
-
-          {/* Game Controls */}
-          {permissions?.canControlGame && (
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={startGame}
-                disabled={isGameActive}
-                className="bg-green-500/20 backdrop-blur-sm hover:bg-green-500/40 text-green-200 p-4 rounded-xl font-semibold transition-all duration-300 border border-green-300/30 flex items-center justify-center space-x-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Play className="w-5 h-5" />
-                <span>Commencer</span>
-              </button>
-              <button
-                onClick={pauseGame}
-                disabled={!isGameActive}
-                className="bg-red-500/20 backdrop-blur-sm hover:bg-red-500/40 text-red-200 p-4 rounded-xl font-semibold transition-all duration-300 border border-red-300/30 flex items-center justify-center space-x-2 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Pause className="w-5 h-5" />
-                <span>Pause</span>
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -635,7 +616,7 @@ function RoomCreated() {
             <div className="flex items-center space-x-4">
               {/* Supprimé: Relancer la partie */}
               {/* Supprimé: Joueurs */}
-            
+
               <div className="flex items-center space-x-4">
                 {/* Jouer / Pause — visible pour tous */}
                 <button
@@ -649,7 +630,7 @@ function RoomCreated() {
                   {isGameActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                   <span>{isGameActive ? 'Pause' : 'Jouer'}</span>
                 </button>
-            
+
                 {/* Rejouer — visible pour tous (réinitialise la partie) */}
                 <button
                   onClick={handleResetGame}
@@ -660,7 +641,7 @@ function RoomCreated() {
                   <span>Rejouer</span>
                 </button>
               </div>
-            
+
               {/* Restauré: Quitter — visible pour tous */}
               <button
                 onClick={handleLeaveRoom}

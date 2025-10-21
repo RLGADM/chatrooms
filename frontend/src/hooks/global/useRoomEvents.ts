@@ -35,9 +35,8 @@ export function useRoomEvents() {
   // Refs utiles à d’autres hooks pour gérer la reconnexion ou éviter les doubles-joins
   const hasJoinedRoomRef = useRef<boolean>(false);
   const hasRejoinAttempted = useRef<boolean>(false);
-
-  // Garde: dernières transitions annoncées
   const hasGameStartedRef = useRef<boolean>(false);
+  const suppressNextResumeRef = useRef<boolean>(false);
 
   // Utilitaire pour formater le nom de phase (utilise `phases` si dispo)
 
@@ -148,17 +147,20 @@ export function useRoomEvents() {
         const shouldAnnouncePhase = prevPhase !== nextPhase && nextPhase !== null;
         const shouldAnnouncePlayPause = prevPlaying !== nextPlaying;
 
-        // Réinitialiser la garde si le jeu revient à l’attente (nouvelle room / reset)
+        // Réinitialiser la garde si retour à l’attente
         if (gameState.status !== 'started' && !gameState.isPlaying) {
           hasGameStartedRef.current = false;
         }
 
         if (shouldAnnouncePhase) {
+          const isFirstStart = (prevPhase === 0 || isInitialHydration) && nextPhase === 1;
+
           const sysMsg: Message = {
             id: `sys-${Date.now()}`,
             username: 'SYSTEM',
-            message:
-              nextPhase === 1
+            message: isFirstStart
+              ? 'La partie commence ! GL HF !'
+              : nextPhase === 1
                 ? 'Phase 1 - Choisissez votre mot'
                 : nextPhase === 2
                   ? 'Phase 2 - Choisissez vos interdits'
@@ -169,22 +171,24 @@ export function useRoomEvents() {
                       : 'Retour à l’attente',
             timestamp: new Date(),
           };
+
+          if (isFirstStart) {
+            hasGameStartedRef.current = true;
+            suppressNextResumeRef.current = true; // évite "Jeu repris" juste après démarrage
+          }
+
           setMessages((prevMsgs) => [...prevMsgs, sysMsg]);
           return { ...prev, gameState, messages: [...(prev.messages || []), sysMsg] };
         } else if (shouldAnnouncePlayPause) {
           const startingNow = !prevPlaying && nextPlaying;
 
-          const message =
-            startingNow && !hasGameStartedRef.current
-              ? 'La partie commence ! GL HF !'
-              : nextPlaying
-                ? 'Jeu repris'
-                : 'Jeu mis en pause';
-
-          // Marquer la partie comme “déjà démarrée” après le premier start
-          if (startingNow && !hasGameStartedRef.current) {
-            hasGameStartedRef.current = true;
+          // Ne pas annoncer "Jeu repris" immédiatement après le tout premier démarrage
+          if (startingNow && suppressNextResumeRef.current) {
+            suppressNextResumeRef.current = false;
+            return { ...prev, gameState };
           }
+
+          const message = nextPlaying ? 'Jeu repris' : 'Jeu mis en pause';
 
           const sysMsg: Message = {
             id: `sys-${Date.now()}`,
